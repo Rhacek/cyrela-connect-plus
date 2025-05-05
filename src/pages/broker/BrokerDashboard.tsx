@@ -77,7 +77,7 @@ const BrokerDashboard = () => {
       <BrokerSidebar />
       
       <div className="flex-1 overflow-y-auto pl-0 lg:pl-64">
-        <div className="p-4 md:p-6 lg:p-8 w-full">
+        <div className="p-4 md:p-6 lg:p-8 w-full h-full flex flex-col">
           <DashboardHeader 
             title="Dashboard" 
             description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
@@ -87,7 +87,7 @@ const BrokerDashboard = () => {
           
           <StatsGrid performance={mockPerformance} target={mockTarget} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
             <div className="lg:col-span-2 space-y-6">
               <RecentLeadsSection leads={mockLeads} />
               
