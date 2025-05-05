@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function QuickAccess() {
   return (
-    <div>
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg md:text-xl font-semibold">Acesso rápido</h2>
       </div>
@@ -16,8 +16,8 @@ export function QuickAccess() {
         >
           <Search size={24} className="mr-4 flex-shrink-0" />
           <div className="text-left overflow-hidden">
-            <h3 className="font-medium text-base md:text-lg truncate">Catálogo de imóveis</h3>
-            <p className="text-cyrela-gray-dark text-xs md:text-sm line-clamp-2">
+            <h3 className="font-medium text-base truncate">Catálogo de imóveis</h3>
+            <p className="text-cyrela-gray-dark text-sm line-clamp-1">
               Explore os empreendimentos disponíveis
             </p>
           </div>
@@ -29,8 +29,8 @@ export function QuickAccess() {
         >
           <Share size={24} className="mr-4 flex-shrink-0" />
           <div className="text-left overflow-hidden">
-            <h3 className="font-medium text-base md:text-lg truncate">Compartilhar</h3>
-            <p className="text-cyrela-gray-dark text-xs md:text-sm line-clamp-2">
+            <h3 className="font-medium text-base truncate">Compartilhar</h3>
+            <p className="text-cyrela-gray-dark text-sm line-clamp-1">
               Gere links personalizados para clientes
             </p>
           </div>
@@ -42,8 +42,8 @@ export function QuickAccess() {
         >
           <Calendar size={24} className="mr-4 flex-shrink-0" />
           <div className="text-left overflow-hidden">
-            <h3 className="font-medium text-base md:text-lg truncate">Agendamentos</h3>
-            <p className="text-cyrela-gray-dark text-xs md:text-sm line-clamp-2">
+            <h3 className="font-medium text-base truncate">Agendamentos</h3>
+            <p className="text-cyrela-gray-dark text-sm line-clamp-1">
               Gerencie suas visitas e compromissos
             </p>
           </div>
@@ -55,8 +55,8 @@ export function QuickAccess() {
         >
           <Home size={24} className="mr-4 flex-shrink-0" />
           <div className="text-left overflow-hidden">
-            <h3 className="font-medium text-base md:text-lg truncate">Meu perfil</h3>
-            <p className="text-cyrela-gray-dark text-xs md:text-sm line-clamp-2">
+            <h3 className="font-medium text-base truncate">Meu perfil</h3>
+            <p className="text-cyrela-gray-dark text-sm line-clamp-1">
               Personalize sua página pública
             </p>
           </div>

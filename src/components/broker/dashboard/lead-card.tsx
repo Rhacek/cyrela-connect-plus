@@ -71,23 +71,23 @@ export function LeadCard({ lead, showActions = true, className }: LeadCardProps)
 
   return (
     <div className={cn(
-      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter",
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col",
       lead.isManual && "border-l-4 border-l-cyrela-blue",
       className
     )}>
       <div className="flex justify-between items-start">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-cyrela-gray-lighter flex items-center justify-center">
+        <div className="flex items-center min-w-0 flex-1">
+          <div className="w-10 h-10 rounded-full bg-cyrela-gray-lighter flex items-center justify-center flex-shrink-0">
             <User size={20} className="text-cyrela-gray-dark" />
           </div>
-          <div className="ml-3">
-            <h3 className="font-medium">{lead.name}</h3>
-            <p className="text-sm text-cyrela-gray-dark">{lead.source}</p>
+          <div className="ml-3 min-w-0 flex-1">
+            <h3 className="font-medium truncate">{lead.name}</h3>
+            <p className="text-sm text-cyrela-gray-dark truncate">{lead.source}</p>
           </div>
         </div>
         
         <Badge className={cn(
-          "px-2 py-1 font-normal",
+          "px-2 py-1 font-normal whitespace-nowrap ml-2 flex-shrink-0",
           getStatusColor(lead.status)
         )}>
           {getStatusLabel(lead.status)}
@@ -96,26 +96,30 @@ export function LeadCard({ lead, showActions = true, className }: LeadCardProps)
       
       <div className="mt-4 space-y-2">
         <div className="flex items-center text-sm">
-          <Phone size={16} className="mr-2 text-cyrela-gray-dark" />
-          <span>{lead.phone}</span>
+          <Phone size={16} className="mr-2 text-cyrela-gray-dark flex-shrink-0" />
+          <span className="truncate">{lead.phone}</span>
         </div>
         
         <div className="flex items-center text-sm">
-          <Mail size={16} className="mr-2 text-cyrela-gray-dark" />
-          <span>{lead.email}</span>
+          <Mail size={16} className="mr-2 text-cyrela-gray-dark flex-shrink-0" />
+          <span className="truncate">{lead.email}</span>
         </div>
         
-        <div className="flex items-center text-sm">
-          <Calendar size={16} className="mr-2 text-cyrela-gray-dark" />
-          <span>{formatDate(lead.createdAt)}</span>
-          <Clock size={16} className="ml-4 mr-2 text-cyrela-gray-dark" />
-          <span>{formatTime(lead.createdAt)}</span>
+        <div className="flex items-center text-sm flex-wrap">
+          <div className="flex items-center mr-4 mb-1">
+            <Calendar size={16} className="mr-2 text-cyrela-gray-dark flex-shrink-0" />
+            <span>{formatDate(lead.createdAt)}</span>
+          </div>
+          <div className="flex items-center">
+            <Clock size={16} className="mr-2 text-cyrela-gray-dark flex-shrink-0" />
+            <span>{formatTime(lead.createdAt)}</span>
+          </div>
         </div>
       </div>
       
       {lead.notes && (
-        <div className="mt-3 p-2 bg-cyrela-gray-lightest rounded text-sm">
-          <p className="text-cyrela-gray-dark">{lead.notes}</p>
+        <div className="mt-3 p-3 bg-cyrela-gray-lightest rounded text-sm">
+          <p className="text-cyrela-gray-dark line-clamp-2">{lead.notes}</p>
         </div>
       )}
       

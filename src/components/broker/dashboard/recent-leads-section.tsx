@@ -9,7 +9,7 @@ interface RecentLeadsSectionProps {
 
 export function RecentLeadsSection({ leads }: RecentLeadsSectionProps) {
   return (
-    <div>
+    <div className="bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg md:text-xl font-semibold">Leads recentes</h2>
         <Button 

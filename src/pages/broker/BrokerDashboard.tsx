@@ -94,7 +94,7 @@ const BrokerDashboard = () => {
               <QuickAccess />
             </div>
             
-            <div>
+            <div className="h-full">
               <ProgressCard 
                 target={mockTarget} 
                 performance={mockPerformance} 

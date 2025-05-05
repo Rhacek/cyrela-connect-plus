@@ -38,18 +38,18 @@ export function ProgressCard({
       "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter",
       className
     )}>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <h3 className="font-medium">Progresso de metas</h3>
-        <Badge variant="outline">
+        <Badge variant="outline" className="flex-shrink-0">
           {getMonthName(target.month)}/{target.year}
         </Badge>
       </div>
       
-      <div className="mt-5 space-y-4">
+      <div className="space-y-4">
         <div>
           <div className="flex justify-between mb-1 text-sm">
-            <span>Compartilhamentos</span>
-            <span className="font-medium">{performance.shares}/{target.shareTarget}</span>
+            <span className="truncate pr-2">Compartilhamentos</span>
+            <span className="flex-shrink-0 font-medium">{performance.shares}/{target.shareTarget}</span>
           </div>
           <div className="w-full bg-cyrela-gray-lighter rounded-full h-2">
             <div
@@ -64,8 +64,8 @@ export function ProgressCard({
         
         <div>
           <div className="flex justify-between mb-1 text-sm">
-            <span>Leads</span>
-            <span className="font-medium">{performance.leads}/{target.leadTarget}</span>
+            <span className="truncate pr-2">Leads</span>
+            <span className="flex-shrink-0 font-medium">{performance.leads}/{target.leadTarget}</span>
           </div>
           <div className="w-full bg-cyrela-gray-lighter rounded-full h-2">
             <div
@@ -80,8 +80,8 @@ export function ProgressCard({
         
         <div>
           <div className="flex justify-between mb-1 text-sm">
-            <span>Agendamentos</span>
-            <span className="font-medium">{performance.schedules}/{target.scheduleTarget}</span>
+            <span className="truncate pr-2">Agendamentos</span>
+            <span className="flex-shrink-0 font-medium">{performance.schedules}/{target.scheduleTarget}</span>
           </div>
           <div className="w-full bg-cyrela-gray-lighter rounded-full h-2">
             <div
@@ -96,8 +96,8 @@ export function ProgressCard({
         
         <div>
           <div className="flex justify-between mb-1 text-sm">
-            <span>Visitas</span>
-            <span className="font-medium">{performance.visits}/{target.visitTarget}</span>
+            <span className="truncate pr-2">Visitas</span>
+            <span className="flex-shrink-0 font-medium">{performance.visits}/{target.visitTarget}</span>
           </div>
           <div className="w-full bg-cyrela-gray-lighter rounded-full h-2">
             <div
@@ -112,8 +112,8 @@ export function ProgressCard({
         
         <div>
           <div className="flex justify-between mb-1 text-sm">
-            <span>Vendas</span>
-            <span className="font-medium">{performance.sales}/{target.saleTarget}</span>
+            <span className="truncate pr-2">Vendas</span>
+            <span className="flex-shrink-0 font-medium">{performance.sales}/{target.saleTarget}</span>
           </div>
           <div className="w-full bg-cyrela-gray-lighter rounded-full h-2">
             <div

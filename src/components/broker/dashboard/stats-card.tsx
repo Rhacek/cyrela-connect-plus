@@ -24,12 +24,12 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter",
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col",
       className
     )}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-sm font-medium text-cyrela-gray-dark">{title}</h3>
+      <div className="flex justify-between items-start mb-3">
+        <div className="overflow-hidden">
+          <h3 className="text-sm font-medium text-cyrela-gray-dark truncate">{title}</h3>
           <div className="mt-1 flex items-end">
             <p className="text-2xl font-semibold text-cyrela-blue">{value}</p>
             
@@ -47,21 +47,21 @@ export function StatsCard({
         </div>
         
         {icon && (
-          <div className="p-2 bg-cyrela-gray-lighter rounded-md">
+          <div className="p-2 bg-cyrela-gray-lighter rounded-md flex-shrink-0">
             {icon}
           </div>
         )}
       </div>
       
       {(description || target) && (
-        <div className="mt-3 text-xs text-cyrela-gray-dark">
-          {description && <p>{description}</p>}
+        <div className="mt-auto text-xs text-cyrela-gray-dark">
+          {description && <p className="truncate mb-2">{description}</p>}
           
           {target && (
             <div className="mt-2">
               <div className="flex justify-between mb-1">
-                <span>Progresso</span>
-                <span>{value}/{target}</span>
+                <span className="truncate pr-2">Progresso</span>
+                <span className="flex-shrink-0">{value}/{target}</span>
               </div>
               <div className="w-full bg-cyrela-gray-lighter rounded-full h-1.5">
                 <div 
