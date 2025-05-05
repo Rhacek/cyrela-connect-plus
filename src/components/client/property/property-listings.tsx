@@ -18,15 +18,9 @@ export function PropertyListings({ properties }: PropertyListingsProps) {
         <div className="flex items-center gap-2 w-full md:w-auto">
           <Button 
             variant="outline" 
-            className="flex-1 md:flex-none bg-white text-cyrela-gray-dark border-cyrela-gray-lighter hover:bg-cyrela-gray-lighter"
+            className="w-full md:w-auto bg-white text-cyrela-gray-dark border-cyrela-gray-lighter hover:bg-cyrela-gray-lighter"
           >
             Ordenar por relevância
-          </Button>
-          
-          <Button 
-            className="flex-1 md:flex-none bg-cyrela-blue text-white hover:bg-cyrela-blue hover:opacity-90"
-          >
-            Mapa
           </Button>
         </div>
       </div>
