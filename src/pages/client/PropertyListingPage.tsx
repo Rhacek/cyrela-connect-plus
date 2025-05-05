@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PropertyCard } from "@/components/broker/dashboard/property-card";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { AppLogo } from "@/components/ui/app-logo";
-import { Search, X, Menu, Filter, Share, Phone, WhatsApp } from "lucide-react";
+import { Search, X, Menu, Filter, Share, Phone, MessageSquare } from "lucide-react";
 import { PropertyStatus } from "@/types";
 
 const PropertyListingPage = () => {
@@ -203,7 +203,7 @@ const PropertyListingPage = () => {
               className="md:hidden flex items-center bg-green-500 hover:bg-green-600 text-white rounded-full p-2"
               size="icon"
             >
-              <WhatsApp size={16} />
+              <MessageSquare size={16} />
             </Button>
           </div>
         </div>
@@ -303,7 +303,7 @@ const PropertyListingPage = () => {
         <Button
           className="rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white h-14 w-14 flex items-center justify-center"
         >
-          <WhatsApp size={24} />
+          <MessageSquare size={24} />
         </Button>
       </div>
     </div>
