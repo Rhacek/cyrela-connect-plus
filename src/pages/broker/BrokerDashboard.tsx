@@ -77,7 +77,7 @@ const BrokerDashboard = () => {
       <BrokerSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
       <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-0 lg:ml-64'}`}>
-        <div className="flex flex-col h-full w-full p-4 md:p-6">
+        <div className="flex flex-col h-full w-full p-4 md:p-6 max-w-7xl mx-auto">
           <DashboardHeader 
             title="Dashboard" 
             description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
