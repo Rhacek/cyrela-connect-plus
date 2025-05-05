@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { BrokerSidebar } from "@/components/broker/dashboard/broker-sidebar";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
@@ -7,9 +6,11 @@ import { RecentLeadsSection } from "@/components/broker/dashboard/recent-leads-s
 import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { LeadStatus } from "@/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BrokerDashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isMobile = useIsMobile();
   
   // Mock data
   const mockTarget = {
@@ -77,7 +78,7 @@ const BrokerDashboard = () => {
       <BrokerSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
       <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-0 lg:ml-64'}`}>
-        <div className="flex flex-col h-full w-full p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
           <DashboardHeader 
             title="Dashboard" 
             description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
@@ -88,26 +89,40 @@ const BrokerDashboard = () => {
           <StatsGrid 
             performance={mockPerformance} 
             target={mockTarget} 
-            className="w-full mb-6"
+            className="w-full mb-4 sm:mb-6"
           />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 w-full">
-            <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 flex-1 w-full">
+            <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
               <RecentLeadsSection 
                 leads={mockLeads} 
                 className="flex-1 w-full" 
               />
               
-              <QuickAccess className="flex-1 w-full" />
+              {isMobile ? (
+                <ProgressCard 
+                  target={mockTarget} 
+                  performance={mockPerformance} 
+                  className="w-full"
+                />
+              ) : (
+                <QuickAccess className="flex-1 w-full" />
+              )}
             </div>
             
-            <div className="h-full">
-              <ProgressCard 
-                target={mockTarget} 
-                performance={mockPerformance} 
-                className="h-full w-full"
-              />
-            </div>
+            {!isMobile && (
+              <div className="h-full">
+                <ProgressCard 
+                  target={mockTarget} 
+                  performance={mockPerformance} 
+                  className="h-full w-full"
+                />
+              </div>
+            )}
+            
+            {isMobile && (
+              <QuickAccess className="w-full" />
+            )}
           </div>
         </div>
       </main>

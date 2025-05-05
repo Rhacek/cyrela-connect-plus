@@ -13,7 +13,7 @@ interface StatsGridProps {
 export function StatsGrid({ performance, target, className }: StatsGridProps) {
   return (
     <div className={cn(
-      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full",
+      "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 w-full",
       className
     )}>
       <StatsCard
@@ -22,7 +22,7 @@ export function StatsGrid({ performance, target, className }: StatsGridProps) {
         trend="up"
         trendValue="15% ↑"
         target={target.shareTarget}
-        icon={<Share size={18} className="text-cyrela-blue" />}
+        icon={<Share size={16} className="sm:size-18 text-cyrela-blue" />}
         className="w-full h-full"
       />
       
@@ -32,7 +32,7 @@ export function StatsGrid({ performance, target, className }: StatsGridProps) {
         trend="up"
         trendValue="8% ↑"
         target={target.leadTarget}
-        icon={<Users size={18} className="text-cyrela-blue" />}
+        icon={<Users size={16} className="sm:size-18 text-cyrela-blue" />}
         className="w-full h-full"
       />
       
@@ -42,7 +42,7 @@ export function StatsGrid({ performance, target, className }: StatsGridProps) {
         trend="neutral"
         trendValue="0% ="
         target={target.scheduleTarget}
-        icon={<Calendar size={18} className="text-cyrela-blue" />}
+        icon={<Calendar size={16} className="sm:size-18 text-cyrela-blue" />}
         className="w-full h-full"
       />
       
@@ -52,7 +52,7 @@ export function StatsGrid({ performance, target, className }: StatsGridProps) {
         trend="up"
         trendValue="33% ↑"
         target={target.visitTarget}
-        icon={<Home size={18} className="text-cyrela-blue" />}
+        icon={<Home size={16} className="sm:size-18 text-cyrela-blue" />}
         className="w-full h-full"
       />
     </div>
