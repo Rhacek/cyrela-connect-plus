@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, X, Filter, SortDesc } from "lucide-react";
 
@@ -11,8 +12,33 @@ export function PropertySearchBar({
   isMobileFilterOpen, 
   setIsMobileFilterOpen 
 }: PropertySearchBarProps) {
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Hide when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <div className="bg-cyrela-blue text-white sticky top-[69px] z-10">
+    <div 
+      className={`bg-cyrela-blue text-white sticky top-[69px] z-10 transition-transform duration-300 ease-in-out ${
+        isVisible ? 'transform translate-y-0' : 'transform -translate-y-full'
+      }`}
+    >
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-auto md:flex-1 max-w-2xl">
