@@ -12,7 +12,7 @@ interface RecentLeadsSectionProps {
 export function RecentLeadsSection({ leads, className }: RecentLeadsSectionProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col",
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col h-full",
       className
     )}>
       <div className="flex items-center justify-between mb-4">
@@ -27,7 +27,7 @@ export function RecentLeadsSection({ leads, className }: RecentLeadsSectionProps
         </Button>
       </div>
       
-      <div className="grid gap-4 flex-1">
+      <div className="grid gap-4 flex-1 overflow-auto">
         {leads.map(lead => (
           <LeadCard 
             key={lead.id} 

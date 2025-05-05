@@ -2,15 +2,20 @@
 import { Share, Users, Calendar, Home } from "lucide-react";
 import { StatsCard } from "@/components/broker/dashboard/stats-card";
 import { Performance, Target } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface StatsGridProps {
   performance: Performance;
   target: Target;
+  className?: string;
 }
 
-export function StatsGrid({ performance, target }: StatsGridProps) {
+export function StatsGrid({ performance, target, className }: StatsGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
+    <div className={cn(
+      "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full",
+      className
+    )}>
       <div className="h-full w-full">
         <StatsCard
           title="Compartilhamentos"

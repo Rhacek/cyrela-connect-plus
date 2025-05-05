@@ -9,7 +9,7 @@ import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { LeadStatus } from "@/types";
 
 const BrokerDashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Mock data
   const mockTarget = {
@@ -73,11 +73,11 @@ const BrokerDashboard = () => {
   };
   
   return (
-    <div className="flex min-h-screen bg-cyrela-gray-lightest w-full">
-      <BrokerSidebar />
+    <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
+      <BrokerSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
-      <div className="flex-1 overflow-y-auto pl-0 lg:pl-64 w-full">
-        <div className="p-4 md:p-6 lg:p-8 w-full h-full flex flex-col min-h-[calc(100vh-1rem)]">
+      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-0 lg:ml-64'}`}>
+        <div className="flex flex-col h-full w-full p-4 md:p-6">
           <DashboardHeader 
             title="Dashboard" 
             description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
@@ -85,25 +85,32 @@ const BrokerDashboard = () => {
             onButtonClick={handleAddLead}
           />
           
-          <StatsGrid performance={mockPerformance} target={mockTarget} />
+          <StatsGrid 
+            performance={mockPerformance} 
+            target={mockTarget} 
+            className="w-full mb-6"
+          />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
-            <div className="lg:col-span-2 space-y-6 flex flex-col">
-              <RecentLeadsSection leads={mockLeads} className="flex-1" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 w-full">
+            <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+              <RecentLeadsSection 
+                leads={mockLeads} 
+                className="flex-1 w-full" 
+              />
               
-              <QuickAccess className="flex-1" />
+              <QuickAccess className="flex-1 w-full" />
             </div>
             
-            <div className="h-full flex">
+            <div className="h-full">
               <ProgressCard 
                 target={mockTarget} 
                 performance={mockPerformance} 
-                className="h-full w-full flex-1"
+                className="h-full w-full"
               />
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

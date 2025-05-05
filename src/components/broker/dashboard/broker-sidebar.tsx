@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Home, 
   User, 
@@ -22,6 +22,11 @@ interface SidebarLinkProps {
   isActive?: boolean;
 }
 
+interface BrokerSidebarProps {
+  collapsed?: boolean;
+  setCollapsed?: (collapsed: boolean) => void;
+}
+
 const SidebarLink = ({ icon, label, href, isActive }: SidebarLinkProps) => (
   <a
     href={href}
@@ -35,14 +40,27 @@ const SidebarLink = ({ icon, label, href, isActive }: SidebarLinkProps) => (
   </a>
 );
 
-export function BrokerSidebar() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function BrokerSidebar({ collapsed = false, setCollapsed }: BrokerSidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(collapsed);
+  
+  useEffect(() => {
+    if (collapsed !== undefined && collapsed !== isCollapsed) {
+      setIsCollapsed(collapsed);
+    }
+  }, [collapsed]);
+
+  const handleToggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    if (setCollapsed) {
+      setCollapsed(newState);
+    }
+  };
 
   return (
-    <div className={cn(
-      "fixed inset-y-0 left-0 bg-white border-r border-cyrela-gray-light transition-all duration-300 z-20 flex flex-col",
-      isCollapsed ? "w-20" : "w-64",
-      "lg:relative"
+    <aside className={cn(
+      "fixed inset-y-0 left-0 z-20 flex flex-col bg-white border-r border-cyrela-gray-light transition-all duration-300",
+      isCollapsed ? "w-20" : "w-64"
     )}>
       <div className="flex items-center p-4 border-b border-cyrela-gray-light">
         {isCollapsed ? (
@@ -52,10 +70,13 @@ export function BrokerSidebar() {
         )}
         
         <button 
-          className="ml-auto lg:hidden text-cyrela-gray-dark hover:text-cyrela-blue"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "ml-auto text-cyrela-gray-dark hover:text-cyrela-blue",
+            !isCollapsed ? "block" : "hidden"
+          )}
+          onClick={handleToggleCollapse}
         >
-          {isCollapsed ? <Menu size={20} /> : <X size={20} />}
+          <X size={20} />
         </button>
       </div>
       
@@ -171,8 +192,11 @@ export function BrokerSidebar() {
         
         <div className="mt-4">
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-cyrela-blue"
+            onClick={handleToggleCollapse}
+            className={cn(
+              "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-cyrela-blue",
+              isCollapsed ? "mx-auto" : ""
+            )}
           >
             {isCollapsed ? (
               <Menu size={20} />
@@ -182,6 +206,6 @@ export function BrokerSidebar() {
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

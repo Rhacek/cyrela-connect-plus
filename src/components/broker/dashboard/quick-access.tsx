@@ -10,7 +10,7 @@ interface QuickAccessProps {
 export function QuickAccess({ className }: QuickAccessProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter",
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter h-full",
       className
     )}>
       <div className="flex items-center justify-between mb-4">
