@@ -72,7 +72,7 @@ const BrokerDashboard = () => {
       
       <div className="flex-1 overflow-y-auto pl-0 lg:pl-64">
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div className="max-w-2xl">
               <h1 className="text-xl md:text-2xl font-bold text-cyrela-blue truncate">Dashboard</h1>
               <p className="text-cyrela-gray-dark text-sm md:text-base line-clamp-2">
@@ -81,14 +81,14 @@ const BrokerDashboard = () => {
             </div>
             
             <Button 
-              className="bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white whitespace-nowrap"
+              className="bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white whitespace-nowrap self-start sm:self-center"
             >
               <Plus size={16} className="mr-2" />
               Cadastrar lead
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <StatsCard
               title="Compartilhamentos"
               value={mockPerformance.shares}
