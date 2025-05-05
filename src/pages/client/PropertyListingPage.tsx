@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PropertyCard } from "@/components/broker/dashboard/property-card";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { AppLogo } from "@/components/ui/app-logo";
-import { Search, X, Menu, Filter, Share, Phone, MessageSquare } from "lucide-react";
+import { Search, X, Menu, Filter, Share, Phone, MessageSquare, SortDesc } from "lucide-react";
 import { PropertyStatus } from "@/types";
 
 const PropertyListingPage = () => {
@@ -227,24 +226,25 @@ const PropertyListingPage = () => {
             <div className="flex items-center gap-2 w-full md:w-auto">
               <Button
                 variant="outline"
-                className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter"
+                className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium"
                 onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
               >
                 {isMobileFilterOpen ? (
                   <>
                     <X size={16} className="mr-2 shrink-0" />
-                    <span>Fechar filtros</span>
+                    <span className="font-medium">Fechar filtros</span>
                   </>
                 ) : (
                   <>
                     <Filter size={16} className="mr-2 shrink-0" />
-                    <span>Filtros</span>
+                    <span className="font-medium">Filtros</span>
                   </>
                 )}
               </Button>
               
-              <Button className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter">
-                Ordenar
+              <Button className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium">
+                <SortDesc size={16} className="mr-2 shrink-0" />
+                <span className="font-medium">Ordenar</span>
               </Button>
             </div>
           </div>
