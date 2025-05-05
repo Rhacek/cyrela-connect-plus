@@ -1,10 +1,18 @@
 
 import { Search, Share, Calendar, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function QuickAccess() {
+interface QuickAccessProps {
+  className?: string;
+}
+
+export function QuickAccess({ className }: QuickAccessProps) {
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter">
+    <div className={cn(
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter",
+      className
+    )}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg md:text-xl font-semibold">Acesso rápido</h2>
       </div>

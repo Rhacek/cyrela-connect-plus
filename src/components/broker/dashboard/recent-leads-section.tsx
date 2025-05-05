@@ -2,14 +2,19 @@
 import { Button } from "@/components/ui/button";
 import { LeadCard } from "@/components/broker/dashboard/lead-card";
 import { Lead } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface RecentLeadsSectionProps {
   leads: Lead[];
+  className?: string;
 }
 
-export function RecentLeadsSection({ leads }: RecentLeadsSectionProps) {
+export function RecentLeadsSection({ leads, className }: RecentLeadsSectionProps) {
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter">
+    <div className={cn(
+      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col",
+      className
+    )}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg md:text-xl font-semibold">Leads recentes</h2>
         <Button 
@@ -22,12 +27,12 @@ export function RecentLeadsSection({ leads }: RecentLeadsSectionProps) {
         </Button>
       </div>
       
-      <div className="grid gap-4">
+      <div className="grid gap-4 flex-1">
         {leads.map(lead => (
           <LeadCard 
             key={lead.id} 
             lead={lead} 
-            className="h-full"
+            className="h-full w-full"
           />
         ))}
       </div>
