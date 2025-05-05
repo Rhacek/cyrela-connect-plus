@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { BrokerSidebar } from "@/components/broker/dashboard/broker-sidebar";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
@@ -77,7 +76,7 @@ const BrokerDashboard = () => {
       <BrokerSidebar />
       
       <div className="flex-1 overflow-y-auto pl-0 lg:pl-64">
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-6 lg:p-8">
           <DashboardHeader 
             title="Dashboard" 
             description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
