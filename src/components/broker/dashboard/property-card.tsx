@@ -41,12 +41,13 @@ export function PropertyCard({ property, showActions = true, className }: Proper
     return value.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
+      maximumFractionDigits: 0,
     });
   };
 
   return (
     <div className={cn(
-      "bg-white rounded-lg overflow-hidden shadow-sm border border-cyrela-gray-lighter hover:shadow-md transition-all duration-200",
+      "bg-white rounded-lg overflow-hidden shadow-sm border border-cyrela-gray-lighter hover:shadow-md transition-all duration-200 flex flex-col h-full",
       property.isHighlighted && "border-living-gold",
       className
     )}>
@@ -59,7 +60,7 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         
         <div className="absolute top-0 left-0 right-0 p-3 flex justify-between">
           <span className={cn(
-            "px-2 py-1 text-xs font-medium rounded font-inter",
+            "px-2 py-1 text-xs font-medium rounded font-inter max-w-[120px] truncate",
             getStatusColor(property.status)
           )}>
             {getStatusLabel(property.status)}
@@ -73,18 +74,18 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         </div>
       </div>
       
-      <div className="p-4">
-        <div>
-          <h3 className="font-semibold text-lg line-clamp-1 font-poppins">{property.title}</h3>
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="mb-3">
+          <h3 className="font-semibold text-base line-clamp-1 font-poppins">{property.title}</h3>
           <div className="flex items-center mt-1 text-cyrela-gray-dark text-sm font-inter">
-            <MapPin size={16} className="mr-1" />
+            <MapPin size={16} className="mr-1 shrink-0" />
             <span className="line-clamp-1">
               {property.neighborhood}, {property.city}
             </span>
           </div>
         </div>
         
-        <div className="mt-3">
+        <div className="mb-3">
           <div className="flex justify-between items-center">
             <span className="text-xs text-cyrela-gray-dark font-inter">Valor</span>
             <span className="text-xs text-cyrela-gray-dark font-inter">Tipo</span>
@@ -94,42 +95,57 @@ export function PropertyCard({ property, showActions = true, className }: Proper
               {formatCurrency(property.price)}
             </span>
             <div className="flex items-center font-inter">
-              <Building size={16} className="mr-1 text-cyrela-gray-dark" />
+              <Building size={16} className="mr-1 text-cyrela-gray-dark shrink-0" />
               <span className="text-sm">{property.type}</span>
             </div>
           </div>
         </div>
         
-        <div className="mt-3 flex justify-between text-sm font-inter">
-          <div className="flex items-center">
-            <Bed size={16} className="mr-1 text-cyrela-gray-dark" />
-            <span>{property.bedrooms} {property.bedrooms === 1 ? 'quarto' : 'quartos'}</span>
+        <div className="grid grid-cols-4 gap-2 text-xs font-inter mt-auto mb-3">
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
+              <Bed size={16} className="text-cyrela-gray-dark" />
+            </div>
+            <span className="mt-1">{property.bedrooms}</span>
           </div>
           
-          <div className="flex items-center">
-            <Bath size={16} className="mr-1 text-cyrela-gray-dark" />
-            <span>{property.bathrooms} {property.bathrooms === 1 ? 'banho' : 'banhos'}</span>
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
+              <Bath size={16} className="text-cyrela-gray-dark" />
+            </div>
+            <span className="mt-1">{property.bathrooms}</span>
           </div>
           
-          <div className="flex items-center">
-            <Square size={16} className="mr-1 text-cyrela-gray-dark" />
-            <span>{property.area}m²</span>
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
+              <Square size={16} className="text-cyrela-gray-dark" />
+            </div>
+            <span className="mt-1">{property.area}m²</span>
           </div>
           
-          <div className="flex items-center">
-            <Car size={16} className="mr-1 text-cyrela-gray-dark" />
-            <span>{property.parkingSpaces}</span>
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
+              <Car size={16} className="text-cyrela-gray-dark" />
+            </div>
+            <span className="mt-1">{property.parkingSpaces}</span>
           </div>
         </div>
         
         {showActions && (
-          <div className="mt-4 pt-3 border-t border-cyrela-gray-lighter flex justify-between">
-            <Button variant="outline" size="sm" className="bg-white border-primary text-primary hover:bg-cyrela-gray-lighter font-inter">
-              <Share size={16} className="mr-2" />
-              Compartilhar
+          <div className="pt-3 border-t border-cyrela-gray-lighter flex justify-between mt-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white border-primary text-primary hover:bg-cyrela-gray-lighter font-inter text-xs px-2"
+            >
+              <Share size={14} className="mr-1 shrink-0" />
+              <span className="truncate">Compartilhar</span>
             </Button>
             
-            <Button className="bg-primary hover:bg-primary hover:opacity-90 text-white font-inter" size="sm">
+            <Button 
+              className="bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-xs" 
+              size="sm"
+            >
               Ver detalhes
             </Button>
           </div>

@@ -164,14 +164,14 @@ export function PropertyFilter({
   };
   
   return (
-    <div className={cn("bg-white border border-cyrela-gray-lighter rounded-lg shadow-sm", className)}>
+    <div className={cn("bg-white border border-cyrela-gray-lighter rounded-lg shadow-sm overflow-hidden", className)}>
       <div className="p-4 border-b border-cyrela-gray-lighter flex justify-between items-center">
-        <h3 className="font-medium">Filtros</h3>
+        <h3 className="font-medium truncate">Filtros</h3>
         <Button 
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="text-cyrela-gray-dark hover:text-cyrela-blue"
+          className="text-cyrela-gray-dark hover:text-cyrela-blue shrink-0 ml-2"
         >
           <X size={16} className="mr-1" />
           Limpar
@@ -183,16 +183,16 @@ export function PropertyFilter({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyrela-gray-dark" size={16} />
           <Input
             placeholder="Buscar por nome ou bairro"
-            className="pl-9 cyrela-input"
+            className="pl-9 cyrela-input text-sm"
           />
         </div>
         
-        <Accordion type="single" collapsible className="mt-4">
-          <AccordionItem value="price">
-            <AccordionTrigger className="py-2">Faixa de preço</AccordionTrigger>
+        <Accordion type="single" collapsible className="mt-4 w-full">
+          <AccordionItem value="price" className="border-b border-cyrela-gray-lighter">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Faixa de preço</AccordionTrigger>
             <AccordionContent>
               <div className="px-1 pt-2 pb-6">
-                <div className="flex justify-between text-sm text-cyrela-gray-dark mb-4">
+                <div className="flex justify-between text-xs text-cyrela-gray-dark mb-4">
                   <span>{formatCurrency(priceRange[0])}</span>
                   <span>{formatCurrency(priceRange[1])}</span>
                 </div>
@@ -208,8 +208,8 @@ export function PropertyFilter({
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="stage">
-            <AccordionTrigger className="py-2">Estágio da obra</AccordionTrigger>
+          <AccordionItem value="stage" className="border-b border-cyrela-gray-lighter">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Estágio da obra</AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-1 gap-2">
                 {constructionStages.map((stage) => (
@@ -218,24 +218,24 @@ export function PropertyFilter({
                     variant="outline"
                     size="sm"
                     className={cn(
-                      "justify-start text-left",
+                      "justify-start text-left text-sm h-auto py-1.5 overflow-hidden",
                       isFilterSelected("constructionStage", stage.id) && 
                       "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white"
                     )}
                     onClick={() => handleFilterClick("constructionStage", stage.id)}
                   >
                     {isFilterSelected("constructionStage", stage.id) && (
-                      <CheckCheck size={16} className="mr-2" />
+                      <CheckCheck size={16} className="mr-2 shrink-0" />
                     )}
-                    {stage.label}
+                    <span className="truncate">{stage.label}</span>
                   </Button>
                 ))}
               </div>
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="location">
-            <AccordionTrigger className="py-2">Localização</AccordionTrigger>
+          <AccordionItem value="location" className="border-b border-cyrela-gray-lighter">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Localização</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-3">
                 <h4 className="text-sm font-medium mb-2">Cidade</h4>
@@ -246,16 +246,16 @@ export function PropertyFilter({
                       variant="outline"
                       size="sm"
                       className={cn(
-                        "justify-start text-left",
+                        "justify-start text-left text-sm h-auto py-1.5 overflow-hidden",
                         isFilterSelected("city", city.id) && 
                         "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white"
                       )}
                       onClick={() => handleFilterClick("city", city.id)}
                     >
                       {isFilterSelected("city", city.id) && (
-                        <CheckCheck size={16} className="mr-2" />
+                        <CheckCheck size={16} className="mr-2 shrink-0" />
                       )}
-                      {city.label}
+                      <span className="truncate">{city.label}</span>
                     </Button>
                   ))}
                 </div>
@@ -268,16 +268,16 @@ export function PropertyFilter({
                       variant="outline"
                       size="sm"
                       className={cn(
-                        "justify-start text-left",
+                        "justify-start text-left text-sm h-auto py-1.5 overflow-hidden",
                         isFilterSelected("zone", zone.id) && 
                         "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white"
                       )}
                       onClick={() => handleFilterClick("zone", zone.id)}
                     >
                       {isFilterSelected("zone", zone.id) && (
-                        <CheckCheck size={16} className="mr-2" />
+                        <CheckCheck size={16} className="mr-2 shrink-0" />
                       )}
-                      {zone.label}
+                      <span className="truncate">{zone.label}</span>
                     </Button>
                   ))}
                 </div>
@@ -294,16 +294,16 @@ export function PropertyFilter({
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "justify-start text-left",
+                            "justify-start text-left text-sm h-auto py-1.5 overflow-hidden",
                             isFilterSelected("neighborhood", neighborhood.id) && 
                             "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white"
                           )}
                           onClick={() => handleFilterClick("neighborhood", neighborhood.id)}
                         >
                           {isFilterSelected("neighborhood", neighborhood.id) && (
-                            <CheckCheck size={16} className="mr-2" />
+                            <CheckCheck size={16} className="mr-2 shrink-0" />
                           )}
-                          {neighborhood.label}
+                          <span className="truncate">{neighborhood.label}</span>
                         </Button>
                       ))}
                     </div>
@@ -313,8 +313,8 @@ export function PropertyFilter({
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="features">
-            <AccordionTrigger className="py-2">Características</AccordionTrigger>
+          <AccordionItem value="features" className="border-b-0">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Características</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-3">
                 <h4 className="text-sm font-medium mb-2">Dormitórios</h4>
@@ -325,7 +325,7 @@ export function PropertyFilter({
                       variant="outline"
                       size="sm"
                       className={cn(
-                        "justify-center",
+                        "justify-center p-1 text-sm h-8",
                         isFilterSelected("bedrooms", bedroom.id) && 
                         "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white"
                       )}

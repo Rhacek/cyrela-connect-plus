@@ -169,27 +169,29 @@ const PropertyListingPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-cyrela-gray-lightest">
       {/* Header */}
-      <header className="bg-white border-b border-cyrela-gray-lighter">
+      <header className="bg-white border-b border-cyrela-gray-lighter sticky top-0 z-20">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <AppLogo />
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Button
               variant="outline"
               size="sm"
               className="hidden md:flex items-center text-cyrela-gray-dark"
               onClick={() => window.location.href = "/client/broker"}
             >
-              <Phone size={16} className="mr-2" />
-              Falar com o corretor
+              <Phone size={16} className="mr-2 shrink-0" />
+              <span className="hidden lg:inline">Falar com o corretor</span>
+              <span className="lg:hidden">Corretor</span>
             </Button>
             
             <Button
               className="hidden md:flex items-center bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white"
               size="sm"
             >
-              <Share size={16} className="mr-2" />
-              Compartilhar resultados
+              <Share size={16} className="mr-2 shrink-0" />
+              <span className="hidden lg:inline">Compartilhar resultados</span>
+              <span className="lg:hidden">Compartilhar</span>
             </Button>
             
             <Button
@@ -210,7 +212,7 @@ const PropertyListingPage = () => {
       </header>
       
       {/* Search bar */}
-      <div className="bg-cyrela-blue text-white">
+      <div className="bg-cyrela-blue text-white sticky top-[69px] z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="relative w-full md:w-auto md:flex-1 max-w-2xl">
@@ -218,7 +220,7 @@ const PropertyListingPage = () => {
               <input
                 type="text"
                 placeholder="Buscar por localização, empreendimento ou características"
-                className="w-full pl-10 pr-4 py-2 rounded-md border border-cyrela-gray-lighter focus:outline-none focus:ring-2 focus:ring-cyrela-blue focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-md border border-cyrela-gray-lighter focus:outline-none focus:ring-2 focus:ring-cyrela-blue focus:border-transparent text-black"
               />
             </div>
             
@@ -230,13 +232,13 @@ const PropertyListingPage = () => {
               >
                 {isMobileFilterOpen ? (
                   <>
-                    <X size={16} className="mr-2" />
-                    Fechar filtros
+                    <X size={16} className="mr-2 shrink-0" />
+                    <span>Fechar filtros</span>
                   </>
                 ) : (
                   <>
-                    <Filter size={16} className="mr-2" />
-                    Filtros
+                    <Filter size={16} className="mr-2 shrink-0" />
+                    <span>Filtros</span>
                   </>
                 )}
               </Button>
@@ -253,9 +255,8 @@ const PropertyListingPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar filters */}
           <div className={`
-            ${isMobileFilterOpen ? 'block' : 'hidden'} 
-            lg:block
-            fixed lg:relative top-0 left-0 w-full h-full lg:h-auto lg:w-auto
+            ${isMobileFilterOpen ? 'fixed' : 'hidden'} 
+            lg:block lg:relative top-[133px] lg:top-0 left-0 w-full h-[calc(100vh-133px)] lg:h-auto lg:w-auto
             z-50 bg-cyrela-gray-lightest lg:bg-transparent
             overflow-y-auto lg:overflow-visible p-4 lg:p-0
           `}>
@@ -273,6 +274,7 @@ const PropertyListingPage = () => {
               <PropertyFilter 
                 onApplyFilters={handleApplyFilters}
                 onReset={handleResetFilters}
+                className="max-h-[calc(100vh-180px)] lg:max-h-full overflow-auto"
               />
             </div>
           </div>
@@ -285,12 +287,13 @@ const PropertyListingPage = () => {
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {mockProperties.map(property => (
                 <PropertyCard 
                   key={property.id} 
                   property={property}
                   showActions={true}
+                  className="h-full"
                 />
               ))}
             </div>
@@ -299,13 +302,21 @@ const PropertyListingPage = () => {
       </div>
       
       {/* Floating button to contact broker on mobile */}
-      <div className="fixed bottom-6 right-6 md:hidden">
+      <div className="fixed bottom-6 right-6 md:hidden z-30">
         <Button
           className="rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white h-14 w-14 flex items-center justify-center"
         >
           <MessageSquare size={24} />
         </Button>
       </div>
+      
+      {/* Overlay for mobile filter */}
+      {isMobileFilterOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsMobileFilterOpen(false)}
+        />
+      )}
     </div>
   );
 };
