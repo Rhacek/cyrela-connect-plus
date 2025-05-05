@@ -32,11 +32,11 @@ const SidebarLink = ({ icon, label, href, isActive }: SidebarLinkProps) => (
     href={href}
     className={cn(
       "flex items-center gap-3 px-4 py-3 rounded-md transition-colors hover:bg-cyrela-gray-lighter",
-      isActive && "bg-cyrela-blue text-white hover:bg-cyrela-blue"
+      isActive && "bg-primary text-white hover:bg-primary hover:bg-opacity-90"
     )}
   >
     <div className="text-lg">{icon}</div>
-    <span>{label}</span>
+    <span className="font-inter">{label}</span>
   </a>
 );
 
@@ -71,7 +71,7 @@ export function BrokerSidebar({ collapsed = false, setCollapsed }: BrokerSidebar
         
         <button 
           className={cn(
-            "ml-auto text-cyrela-gray-dark hover:text-cyrela-blue",
+            "ml-auto text-cyrela-gray-dark hover:text-primary",
             !isCollapsed ? "block" : "hidden"
           )}
           onClick={handleToggleCollapse}
@@ -86,7 +86,7 @@ export function BrokerSidebar({ collapsed = false, setCollapsed }: BrokerSidebar
             <>
               <div className="flex justify-center mb-6">
                 <a href="/broker/dashboard" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-                  <Home size={24} className="text-cyrela-blue" />
+                  <Home size={24} className="text-primary" />
                 </a>
               </div>
               <div className="flex justify-center mb-6">
@@ -170,8 +170,8 @@ export function BrokerSidebar({ collapsed = false, setCollapsed }: BrokerSidebar
               <User size={20} className="text-cyrela-gray-dark" />
             </div>
             <div>
-              <p className="font-medium text-sm">Ana Silva</p>
-              <p className="text-xs text-cyrela-gray-dark">Corretor PRO</p>
+              <p className="font-medium text-sm font-poppins">Ana Silva</p>
+              <p className="text-xs text-cyrela-gray-dark font-inter">Corretor PRO</p>
             </div>
           </div>
         )}
@@ -194,7 +194,7 @@ export function BrokerSidebar({ collapsed = false, setCollapsed }: BrokerSidebar
           <button
             onClick={handleToggleCollapse}
             className={cn(
-              "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-cyrela-blue",
+              "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-primary font-inter",
               isCollapsed ? "mx-auto" : ""
             )}
           >

@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 210 100% 31%; /* Cyrela Blue */
+    --primary: 356 80% 58%; /* Cyrela Red */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -37,7 +39,7 @@
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 210 100% 31%;
+    --sidebar-primary: 356 80% 58%; /* Updated to Cyrela Red */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
@@ -55,8 +57,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 356 80% 58%; /* Cyrela Red */
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -75,7 +77,7 @@
     --ring: 212.7 26.8% 83.9%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 356 80% 58%; /* Updated to Cyrela Red */
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
@@ -90,7 +92,35 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-semibold;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl leading-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl leading-snug;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  h5 {
+    @apply text-lg md:text-xl;
+  }
+
+  h6 {
+    @apply text-base md:text-lg;
   }
 }
 
@@ -104,13 +134,32 @@
 
 /* Custom styling for Cyrela Connect+ */
 .cyrela-input {
-  @apply rounded-md border border-cyrela-gray-light bg-white px-4 py-2 focus:border-cyrela-blue focus:outline-none focus:ring-1 focus:ring-cyrela-blue;
+  @apply rounded-md border border-cyrela-gray-light bg-white px-4 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary;
 }
 
 .cyrela-button-primary {
-  @apply bg-cyrela-blue text-white hover:bg-opacity-90 transition-colors rounded-md px-6 py-3 font-medium;
+  @apply bg-primary text-white hover:bg-opacity-90 transition-colors rounded-md px-6 py-3 font-medium;
 }
 
 .cyrela-button-secondary {
-  @apply bg-cyrela-gray-lighter text-cyrela-blue hover:bg-cyrela-gray-light transition-colors rounded-md px-6 py-3 font-medium;
+  @apply bg-cyrela-gray-lighter text-primary hover:bg-cyrela-gray-light transition-colors rounded-md px-6 py-3 font-medium;
+}
+
+.cyrela-card {
+  @apply bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter transition-all duration-200 hover:shadow-md;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

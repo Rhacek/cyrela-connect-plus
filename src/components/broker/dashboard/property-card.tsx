@@ -46,7 +46,7 @@ export function PropertyCard({ property, showActions = true, className }: Proper
 
   return (
     <div className={cn(
-      "bg-white rounded-lg overflow-hidden shadow-sm border border-cyrela-gray-lighter",
+      "bg-white rounded-lg overflow-hidden shadow-sm border border-cyrela-gray-lighter hover:shadow-md transition-all duration-200",
       property.isHighlighted && "border-living-gold",
       className
     )}>
@@ -59,14 +59,14 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         
         <div className="absolute top-0 left-0 right-0 p-3 flex justify-between">
           <span className={cn(
-            "px-2 py-1 text-xs font-medium rounded",
+            "px-2 py-1 text-xs font-medium rounded font-inter",
             getStatusColor(property.status)
           )}>
             {getStatusLabel(property.status)}
           </span>
           
           {property.isHighlighted && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-living-gold text-white">
+            <span className="px-2 py-1 text-xs font-medium rounded bg-living-gold text-white font-inter">
               Destaque
             </span>
           )}
@@ -75,8 +75,8 @@ export function PropertyCard({ property, showActions = true, className }: Proper
       
       <div className="p-4">
         <div>
-          <h3 className="font-semibold text-lg line-clamp-1">{property.title}</h3>
-          <div className="flex items-center mt-1 text-cyrela-gray-dark text-sm">
+          <h3 className="font-semibold text-lg line-clamp-1 font-poppins">{property.title}</h3>
+          <div className="flex items-center mt-1 text-cyrela-gray-dark text-sm font-inter">
             <MapPin size={16} className="mr-1" />
             <span className="line-clamp-1">
               {property.neighborhood}, {property.city}
@@ -86,21 +86,21 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         
         <div className="mt-3">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-cyrela-gray-dark">Valor</span>
-            <span className="text-xs text-cyrela-gray-dark">Tipo</span>
+            <span className="text-xs text-cyrela-gray-dark font-inter">Valor</span>
+            <span className="text-xs text-cyrela-gray-dark font-inter">Tipo</span>
           </div>
           <div className="flex justify-between items-center mt-1">
-            <span className="text-lg font-bold text-cyrela-blue">
+            <span className="text-lg font-bold text-primary font-poppins">
               {formatCurrency(property.price)}
             </span>
-            <div className="flex items-center">
+            <div className="flex items-center font-inter">
               <Building size={16} className="mr-1 text-cyrela-gray-dark" />
               <span className="text-sm">{property.type}</span>
             </div>
           </div>
         </div>
         
-        <div className="mt-3 flex justify-between text-sm">
+        <div className="mt-3 flex justify-between text-sm font-inter">
           <div className="flex items-center">
             <Bed size={16} className="mr-1 text-cyrela-gray-dark" />
             <span>{property.bedrooms} {property.bedrooms === 1 ? 'quarto' : 'quartos'}</span>
@@ -124,12 +124,12 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         
         {showActions && (
           <div className="mt-4 pt-3 border-t border-cyrela-gray-lighter flex justify-between">
-            <Button variant="outline" size="sm" className="bg-white">
+            <Button variant="outline" size="sm" className="bg-white border-primary text-primary hover:bg-cyrela-gray-lighter font-inter">
               <Share size={16} className="mr-2" />
               Compartilhar
             </Button>
             
-            <Button className="bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white" size="sm">
+            <Button className="bg-primary hover:bg-primary hover:opacity-90 text-white font-inter" size="sm">
               Ver detalhes
             </Button>
           </div>

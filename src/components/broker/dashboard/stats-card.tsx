@@ -24,18 +24,18 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg p-5 shadow-sm border border-cyrela-gray-lighter flex flex-col",
+      "cyrela-card flex flex-col animate-fade-in",
       className
     )}>
       <div className="flex justify-between items-start mb-3">
         <div className="overflow-hidden">
-          <h3 className="text-sm font-medium text-cyrela-gray-dark truncate">{title}</h3>
+          <h3 className="text-sm font-medium text-cyrela-gray-dark truncate font-poppins">{title}</h3>
           <div className="mt-1 flex items-end">
-            <p className="text-2xl font-semibold text-cyrela-blue">{value}</p>
+            <p className="text-2xl font-semibold text-primary font-poppins">{value}</p>
             
             {trend && (
               <div className={cn(
-                "ml-2 flex items-center text-xs font-medium",
+                "ml-2 flex items-center text-xs font-medium font-inter",
                 trend === "up" && "text-green-600",
                 trend === "down" && "text-red-600",
                 trend === "neutral" && "text-cyrela-gray-dark"
@@ -54,7 +54,7 @@ export function StatsCard({
       </div>
       
       {(description || target) && (
-        <div className="mt-auto text-xs text-cyrela-gray-dark">
+        <div className="mt-auto text-xs text-cyrela-gray-dark font-inter">
           {description && <p className="truncate mb-2">{description}</p>}
           
           {target && (
@@ -65,7 +65,7 @@ export function StatsCard({
               </div>
               <div className="w-full bg-cyrela-gray-lighter rounded-full h-1.5">
                 <div 
-                  className="bg-cyrela-blue h-1.5 rounded-full" 
+                  className="bg-primary h-1.5 rounded-full" 
                   style={{ 
                     width: `${Math.min(Number(value) / Number(target) * 100, 100)}%` 
                   }}
