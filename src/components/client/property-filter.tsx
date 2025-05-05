@@ -179,11 +179,11 @@ export function PropertyFilter({
       </div>
       
       <div className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyrela-gray-dark" size={16} />
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-cyrela-gray-dark z-10" size={18} />
           <Input
             placeholder="Buscar por nome ou bairro"
-            className="pl-9 cyrela-input text-sm"
+            className="pl-10 py-2 text-sm w-full border-cyrela-gray-lighter focus-visible:ring-cyrela-blue"
           />
         </div>
         
