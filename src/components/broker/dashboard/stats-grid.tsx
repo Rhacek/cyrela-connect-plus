@@ -10,7 +10,7 @@ interface StatsGridProps {
 
 export function StatsGrid({ performance, target }: StatsGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-full">
       <StatsCard
         title="Compartilhamentos"
         value={performance.shares}
@@ -18,7 +18,7 @@ export function StatsGrid({ performance, target }: StatsGridProps) {
         trendValue="15% ↑"
         target={target.shareTarget}
         icon={<Share size={18} className="text-cyrela-blue" />}
-        className="h-full"
+        className="w-full h-full"
       />
       
       <StatsCard
@@ -28,7 +28,7 @@ export function StatsGrid({ performance, target }: StatsGridProps) {
         trendValue="8% ↑"
         target={target.leadTarget}
         icon={<Users size={18} className="text-cyrela-blue" />}
-        className="h-full"
+        className="w-full h-full"
       />
       
       <StatsCard
@@ -38,7 +38,7 @@ export function StatsGrid({ performance, target }: StatsGridProps) {
         trendValue="0% ="
         target={target.scheduleTarget}
         icon={<Calendar size={18} className="text-cyrela-blue" />}
-        className="h-full"
+        className="w-full h-full"
       />
       
       <StatsCard
@@ -48,7 +48,7 @@ export function StatsGrid({ performance, target }: StatsGridProps) {
         trendValue="33% ↑"
         target={target.visitTarget}
         icon={<Home size={18} className="text-cyrela-blue" />}
-        className="h-full"
+        className="w-full h-full"
       />
     </div>
   );
