@@ -29,9 +29,9 @@ export function StatsCard({
     )}>
       <div className="flex justify-between items-start mb-2 sm:mb-3">
         <div className="overflow-hidden">
-          <h3 className="text-xs sm:text-sm font-medium text-cyrela-gray-dark truncate font-poppins">{title}</h3>
+          <h3 className="text-xs sm:text-sm font-medium text-cyrela-gray-dark break-words font-poppins">{title}</h3>
           <div className="mt-1 flex items-end">
-            <p className="text-lg sm:text-2xl font-semibold text-primary font-poppins truncate">{value}</p>
+            <p className="text-lg sm:text-2xl font-semibold text-primary font-poppins">{value}</p>
             
             {trend && (
               <div className={cn(
@@ -47,7 +47,7 @@ export function StatsCard({
         </div>
         
         {icon && (
-          <div className="p-1.5 sm:p-2 bg-cyrela-gray-lighter rounded-md shrink-0">
+          <div className="p-1.5 sm:p-2 bg-cyrela-gray-lighter rounded-md shrink-0 ml-2">
             {icon}
           </div>
         )}
@@ -55,12 +55,12 @@ export function StatsCard({
       
       {(description || target) && (
         <div className="mt-auto text-xs text-cyrela-gray-dark font-inter space-y-1 sm:space-y-2">
-          {description && <p className="truncate">{description}</p>}
+          {description && <p className="break-words">{description}</p>}
           
           {target && (
             <div>
               <div className="flex justify-between mb-1">
-                <span className="truncate pr-2 text-xs">Progresso</span>
+                <span className="pr-2 text-xs">Progresso</span>
                 <span className="shrink-0 text-xs">{value}/{target}</span>
               </div>
               <div className="w-full bg-cyrela-gray-lighter rounded-full h-1.5">
