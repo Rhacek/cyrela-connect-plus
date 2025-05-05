@@ -86,18 +86,13 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         </div>
         
         <div className="mb-3">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center">
             <span className="text-xs text-cyrela-gray-dark font-inter">Valor</span>
-            <span className="text-xs text-cyrela-gray-dark font-inter">Tipo</span>
           </div>
-          <div className="flex justify-between items-center mt-1">
+          <div className="flex items-center mt-1">
             <span className="text-lg font-bold text-primary font-poppins">
               {formatCurrency(property.price)}
             </span>
-            <div className="flex items-center font-inter">
-              <Building size={16} className="mr-1 text-cyrela-gray-dark shrink-0" />
-              <span className="text-sm">{property.type}</span>
-            </div>
           </div>
         </div>
         
