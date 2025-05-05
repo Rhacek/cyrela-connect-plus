@@ -1,5 +1,5 @@
 
-import { Share, Building, MapPin, Bed, Bath, Square, Car } from "lucide-react";
+import { Share, MapPin, Bed, Bath, Square, Car, Check, Construction, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Property, PropertyStatus } from "@/types";
 import { cn } from "@/lib/utils";
@@ -11,29 +11,29 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property, showActions = true, className }: PropertyCardProps) {
-  const getStatusColor = (status: PropertyStatus) => {
-    switch (status) {
-      case PropertyStatus.AVAILABLE:
+  const getConstructionStageColor = (stage?: string) => {
+    switch (stage) {
+      case "Na planta":
+        return "bg-blue-100 text-blue-800";
+      case "Em construção":
+        return "bg-orange-100 text-orange-800";
+      case "Pronto para morar":
         return "bg-green-100 text-green-800";
-      case PropertyStatus.RESERVED:
-        return "bg-yellow-100 text-yellow-800";
-      case PropertyStatus.SOLD:
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getStatusLabel = (status: PropertyStatus) => {
-    switch (status) {
-      case PropertyStatus.AVAILABLE:
-        return "Disponível";
-      case PropertyStatus.RESERVED:
-        return "Reservado";
-      case PropertyStatus.SOLD:
-        return "Vendido";
+  const getConstructionStageIcon = (stage?: string) => {
+    switch (stage) {
+      case "Na planta":
+        return <Building size={14} className="mr-1" />;
+      case "Em construção":
+        return <Construction size={14} className="mr-1" />;
+      case "Pronto para morar":
+        return <Check size={14} className="mr-1" />;
       default:
-        return status;
+        return null;
     }
   };
 
@@ -60,10 +60,11 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         
         <div className="absolute top-0 left-0 right-0 p-3 flex justify-between">
           <span className={cn(
-            "px-2 py-1 text-xs font-medium rounded font-inter max-w-[120px] truncate",
-            getStatusColor(property.status)
+            "px-2 py-1 text-xs font-medium rounded font-inter max-w-[120px] truncate flex items-center",
+            getConstructionStageColor(property.constructionStage)
           )}>
-            {getStatusLabel(property.status)}
+            {getConstructionStageIcon(property.constructionStage)}
+            {property.constructionStage || "Não informado"}
           </span>
           
           {property.isHighlighted && (
