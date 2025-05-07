@@ -1,8 +1,7 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { NeighborhoodSelector } from "./location/NeighborhoodSelector";
 
 interface LocationStepProps {
   city: string;
@@ -21,15 +20,6 @@ export function LocationStep({
   onZoneChange, 
   onNeighborhoodsChange 
 }: LocationStepProps) {
-  const toggleNeighborhood = (neighborhood: string) => {
-    const newNeighborhoods = [...neighborhoods];
-    if (newNeighborhoods.includes(neighborhood)) {
-      onNeighborhoodsChange(newNeighborhoods.filter(n => n !== neighborhood));
-    } else if (newNeighborhoods.length < 3) {
-      onNeighborhoodsChange([...newNeighborhoods, neighborhood]);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -71,58 +61,10 @@ export function LocationStep({
       )}
       
       {zone === "zonasul" && (
-        <div className="space-y-2 animate-fade-in">
-          <Label>Selecione até 3 bairros</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                neighborhoods.includes("campobelo") && "bg-cyrela-blue text-white"
-              )}
-              onClick={() => toggleNeighborhood("campobelo")}
-              size="sm"
-            >
-              Campo Belo
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                neighborhoods.includes("moema") && "bg-cyrela-blue text-white"
-              )}
-              onClick={() => toggleNeighborhood("moema")}
-              size="sm"
-            >
-              Moema
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                neighborhoods.includes("ibirapuera") && "bg-cyrela-blue text-white"
-              )}
-              onClick={() => toggleNeighborhood("ibirapuera")}
-              size="sm"
-            >
-              Ibirapuera
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                neighborhoods.includes("morumbi") && "bg-cyrela-blue text-white"
-              )}
-              onClick={() => toggleNeighborhood("morumbi")}
-              size="sm"
-            >
-              Morumbi
-            </Button>
-          </div>
-        </div>
+        <NeighborhoodSelector 
+          neighborhoods={neighborhoods}
+          onNeighborhoodsChange={onNeighborhoodsChange}
+        />
       )}
     </div>
   );
