@@ -28,7 +28,7 @@ export function MobileActions({
   return (
     <>
       {/* Floating button to contact broker on mobile */}
-      <div className="fixed bottom-6 right-6 md:hidden z-30">
+      <div className="fixed bottom-6 right-6 z-30">
         <Button
           onClick={handleWhatsAppClick}
           className="rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white h-14 w-14 flex items-center justify-center"
