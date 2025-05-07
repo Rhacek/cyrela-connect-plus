@@ -56,7 +56,7 @@ export function NavigationButtons({
         {currentStep === totalSteps - 1 ? (
           <>
             {isLoading && <LoaderCircle className="h-4 w-4 mr-2 animate-spin" />}
-            Finalizar
+            Ver Imóveis
           </>
         ) : (
           <>

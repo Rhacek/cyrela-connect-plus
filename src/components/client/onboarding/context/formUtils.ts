@@ -29,11 +29,6 @@ export const canNavigateToStep = (
   // Always allow navigating back
   if (stepIndex < currentStep) return true;
   
-  // For review step, require all previous steps to be completed
-  if (stepIndex === 5) {
-    return completedSteps.length >= 5;
-  }
-  
   // For other steps, check if previous steps are completed
   for (let i = 0; i < stepIndex; i++) {
     if (!completedSteps.includes(i)) return false;
@@ -47,12 +42,7 @@ export const canAdvanceToNextStep = (
   currentStep: number, 
   completedSteps: number[]
 ): boolean => {
-  if (currentStep === 5) {
-    // For the review step, all previous steps must be completed
-    return completedSteps.length >= 5;
-  }
-  
-  // For other steps, check if the current step is completed
+  // Check if the current step is completed
   return completedSteps.includes(currentStep);
 };
 

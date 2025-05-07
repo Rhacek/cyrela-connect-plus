@@ -21,9 +21,5 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Contato",
     description: "Complete seus dados para receber os resultados"
-  },
-  {
-    title: "Revisão",
-    description: "Revise suas escolhas antes de finalizar"
   }
 ];

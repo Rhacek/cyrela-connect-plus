@@ -9,7 +9,6 @@ import { StageStep } from "./steps/StageStep";
 import { LocationStep } from "./steps/LocationStep";
 import { DetailsStep } from "./steps/DetailsStep";
 import { ContactStep } from "./steps/ContactStep";
-import { ReviewStep } from "./steps/ReviewStep";
 import { useFormContext } from "./context/FormContext";
 
 export function FormController() {
@@ -73,10 +72,6 @@ export function FormController() {
             onEmailChange={(value) => handleInputChange("email", value)}
             onPhoneChange={(value) => handleInputChange("phone", value)}
           />
-        );
-      case 5:
-        return (
-          <ReviewStep formData={formData} />
         );
       default:
         return null;

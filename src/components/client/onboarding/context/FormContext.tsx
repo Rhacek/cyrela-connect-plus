@@ -46,7 +46,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleNext = () => {
-    const totalSteps = 6; // Total number of steps
+    const totalSteps = 5; // Updated total number of steps (removed review step)
     
     if (currentStep < totalSteps - 1) {
       setIsLoading(true);
@@ -55,7 +55,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }, 400);
     } else {
-      // Submit the form
+      // Submit the form and redirect to results
       setIsLoading(true);
       setTimeout(() => {
         console.log("Form submitted:", formData);
