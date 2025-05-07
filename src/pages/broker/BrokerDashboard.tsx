@@ -84,7 +84,8 @@ const BrokerDashboard = () => {
     // Redirect or open modal logic would go here
   };
   
-  const SidebarContent = () => {
+  // Renamed from SidebarContent to BrokerSidebarContent to avoid conflict
+  const BrokerSidebarContent = () => {
     const { state, toggleSidebar } = useSidebar();
     const isCollapsed = state === "collapsed";
     
@@ -113,61 +114,63 @@ const BrokerDashboard = () => {
   
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
-        <Sidebar>
-          <SidebarContent />
-        </Sidebar>
-        
-        <SidebarInset>
-          <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
-            <DashboardHeader 
-              title="Dashboard" 
-              description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
-              buttonLabel="Cadastrar lead"
-              onButtonClick={handleAddLead}
-            />
-            
-            <StatsGrid 
-              performance={mockPerformance} 
-              target={mockTarget} 
-              className="w-full mb-4 sm:mb-6"
-            />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 flex-1 w-full">
-              <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
-                <RecentLeadsSection 
-                  leads={mockLeads} 
-                  className="flex-1 w-full" 
-                />
-                
-                {isMobile ? (
-                  <ProgressCard 
-                    target={mockTarget} 
-                    performance={mockPerformance} 
-                    className="w-full"
+      {({ state, toggleSidebar }) => (
+        <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
+          <Sidebar>
+            <BrokerSidebarContent />
+          </Sidebar>
+          
+          <SidebarInset>
+            <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+              <DashboardHeader 
+                title="Dashboard" 
+                description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
+                buttonLabel="Cadastrar lead"
+                onButtonClick={handleAddLead}
+              />
+              
+              <StatsGrid 
+                performance={mockPerformance} 
+                target={mockTarget} 
+                className="w-full mb-4 sm:mb-6"
+              />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 flex-1 w-full">
+                <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
+                  <RecentLeadsSection 
+                    leads={mockLeads} 
+                    className="flex-1 w-full" 
                   />
-                ) : (
-                  <QuickAccess className="flex-1 w-full" />
+                  
+                  {isMobile ? (
+                    <ProgressCard 
+                      target={mockTarget} 
+                      performance={mockPerformance} 
+                      className="w-full"
+                    />
+                  ) : (
+                    <QuickAccess className="flex-1 w-full" />
+                  )}
+                </div>
+                
+                {!isMobile && (
+                  <div className="h-full">
+                    <ProgressCard 
+                      target={mockTarget} 
+                      performance={mockPerformance} 
+                      className="h-full w-full"
+                    />
+                  </div>
+                )}
+                
+                {isMobile && (
+                  <QuickAccess className="w-full" />
                 )}
               </div>
-              
-              {!isMobile && (
-                <div className="h-full">
-                  <ProgressCard 
-                    target={mockTarget} 
-                    performance={mockPerformance} 
-                    className="h-full w-full"
-                  />
-                </div>
-              )}
-              
-              {isMobile && (
-                <QuickAccess className="w-full" />
-              )}
             </div>
-          </div>
-        </SidebarInset>
-      </div>
+          </SidebarInset>
+        </div>
+      )}
     </SidebarProvider>
   );
 };

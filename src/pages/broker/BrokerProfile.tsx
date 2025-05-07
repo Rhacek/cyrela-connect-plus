@@ -66,7 +66,8 @@ const BrokerProfile = () => {
     document.querySelector('form')?.dispatchEvent(submitEvent);
   };
   
-  const SidebarContent = () => {
+  // Renamed from SidebarContent to BrokerSidebarContent to avoid conflict
+  const BrokerSidebarContent = () => {
     const { state, toggleSidebar } = useSidebar();
     const isCollapsed = state === "collapsed";
     
@@ -95,64 +96,66 @@ const BrokerProfile = () => {
   
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
-        <Sidebar>
-          <SidebarContent />
-        </Sidebar>
-        
-        <SidebarInset>
-          <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
-            <ProfileHeader 
-              title="Meu Perfil" 
-              description="Gerencie suas informações pessoais e profissionais"
-              isEditing={isEditing}
-              onEdit={handleEditStart}
-              onSave={handleSave}
-              onCancel={handleCancel}
-            />
-            
-            <div className="grid grid-cols-1 gap-6 w-full">
-              <div className="cyrela-card p-6 flex flex-col items-center sm:flex-row sm:items-start gap-6">
-                <ProfileImageUpload 
-                  currentImage={undefined} 
-                  isEditing={isEditing}
-                  onImageChange={handleImageChange}
-                  className="sm:w-40 sm:flex-shrink-0"
-                />
-                
-                <div className="w-full">
-                  <h2 className="text-xl font-semibold text-cyrela-blue mb-2 text-center sm:text-left">
-                    {profileData.name}
-                  </h2>
-                  
-                  <p className="text-cyrela-gray-dark text-center sm:text-left">
-                    Corretor de Imóveis • CRECI {profileData.registryNumber}
-                  </p>
-                  
-                  {!isEditing && !isMobile && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-cyrela-gray-dark font-medium">Email</p>
-                        <p className="text-sm">{profileData.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-cyrela-gray-dark font-medium">Telefone</p>
-                        <p className="text-sm">{profileData.phone}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <ProfileForm 
-                initialData={profileData}
+      {({ state, toggleSidebar }) => (
+        <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
+          <Sidebar>
+            <BrokerSidebarContent />
+          </Sidebar>
+          
+          <SidebarInset>
+            <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+              <ProfileHeader 
+                title="Meu Perfil" 
+                description="Gerencie suas informações pessoais e profissionais"
                 isEditing={isEditing}
-                onSubmit={handleProfileFormSubmit}
+                onEdit={handleEditStart}
+                onSave={handleSave}
+                onCancel={handleCancel}
               />
+              
+              <div className="grid grid-cols-1 gap-6 w-full">
+                <div className="cyrela-card p-6 flex flex-col items-center sm:flex-row sm:items-start gap-6">
+                  <ProfileImageUpload 
+                    currentImage={undefined} 
+                    isEditing={isEditing}
+                    onImageChange={handleImageChange}
+                    className="sm:w-40 sm:flex-shrink-0"
+                  />
+                  
+                  <div className="w-full">
+                    <h2 className="text-xl font-semibold text-cyrela-blue mb-2 text-center sm:text-left">
+                      {profileData.name}
+                    </h2>
+                    
+                    <p className="text-cyrela-gray-dark text-center sm:text-left">
+                      Corretor de Imóveis • CRECI {profileData.registryNumber}
+                    </p>
+                    
+                    {!isEditing && !isMobile && (
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-cyrela-gray-dark font-medium">Email</p>
+                          <p className="text-sm">{profileData.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-cyrela-gray-dark font-medium">Telefone</p>
+                          <p className="text-sm">{profileData.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <ProfileForm 
+                  initialData={profileData}
+                  isEditing={isEditing}
+                  onSubmit={handleProfileFormSubmit}
+                />
+              </div>
             </div>
-          </div>
-        </SidebarInset>
-      </div>
+          </SidebarInset>
+        </div>
+      )}
     </SidebarProvider>
   );
 };

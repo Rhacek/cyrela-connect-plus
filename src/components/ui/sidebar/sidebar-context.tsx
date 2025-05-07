@@ -34,11 +34,16 @@ export function useSidebar() {
   return context
 }
 
-interface SidebarProviderProps extends React.ComponentProps<"div"> {
+// Define the children prop separately to make TypeScript happy
+type SidebarProviderChildrenProp = 
+  | React.ReactNode 
+  | ((context: SidebarContext) => React.ReactNode)
+
+interface SidebarProviderProps extends Omit<React.ComponentPropsWithoutRef<"div">, "children"> {
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  children: React.ReactNode | ((context: SidebarContext) => React.ReactNode)
+  children: SidebarProviderChildrenProp
 }
 
 export const SidebarProvider = React.forwardRef<
