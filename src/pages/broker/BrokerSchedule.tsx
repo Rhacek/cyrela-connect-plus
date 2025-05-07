@@ -2,21 +2,15 @@
 import { useState } from "react";
 import { 
   Sidebar, 
-  SidebarContent, 
   SidebarProvider, 
-  SidebarHeader,
-  SidebarFooter,
   SidebarInset,
-  useSidebar
 } from "@/components/ui/sidebar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
-import { SidebarFooter as BrokerSidebarFooter } from "@/components/broker/sidebar/sidebar-footer";
-import { SidebarLogo } from "@/components/broker/sidebar/sidebar-logo";
 import { Appointment } from "@/components/broker/schedule/appointment-item";
 import { CalendarCard } from "@/components/broker/schedule/calendar-card";
 import { AppointmentsCard } from "@/components/broker/schedule/appointments-card";
+import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
 
 export default function BrokerSchedule() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -60,34 +54,6 @@ export default function BrokerSchedule() {
   const formattedSelectedDate = date 
     ? format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
     : "Selecione uma data";
-
-  // Broker sidebar content
-  const BrokerSidebarContent = () => {
-    const { state, toggleSidebar } = useSidebar();
-    const isCollapsed = state === "collapsed";
-    
-    return (
-      <>
-        <SidebarHeader>
-          <SidebarLogo 
-            isCollapsed={isCollapsed} 
-            handleToggleCollapse={toggleSidebar} 
-          />
-        </SidebarHeader>
-        
-        <SidebarContent>
-          <SidebarNavigation isCollapsed={isCollapsed} />
-        </SidebarContent>
-        
-        <SidebarFooter>
-          <BrokerSidebarFooter 
-            isCollapsed={isCollapsed} 
-            handleToggleCollapse={toggleSidebar} 
-          />
-        </SidebarFooter>
-      </>
-    );
-  };
 
   return (
     <SidebarProvider>
