@@ -1,16 +1,20 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Search } from "lucide-react";
+
 const WelcomePage = () => {
   const navigate = useNavigate();
-  return <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-cyrela-gray-dark to-black">
+  
+  return (
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-cyrela-gray-dark to-black">
       {/* Background image with overlay */}
       <div className="absolute inset-0 z-0 opacity-40" style={{
-      backgroundImage: "url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
-      backgroundSize: "cover",
-      backgroundPosition: "center"
-    }} />
+        backgroundImage: "url('https://images.unsplash.com/photo-1487958449943-2429e8be8625?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }} />
       
       {/* Dark gradient overlay for better text readability */}
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-black to-transparent opacity-70" />
@@ -40,7 +44,8 @@ const WelcomePage = () => {
               São Paulo, alto padrão, novos ou em construção
             </p>
             
-            <Button className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" onClick={() => navigate("/client/onboarding")}>
+            <Button className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" 
+                   onClick={() => navigate("/client/broker")}>
               <Search className="mr-2 h-5 w-5" />
               Buscar imóveis
             </Button>
@@ -52,6 +57,8 @@ const WelcomePage = () => {
           © 2025 Cyrela+. Todos os direitos reservados.
         </footer>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default WelcomePage;

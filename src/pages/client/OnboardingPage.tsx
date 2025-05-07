@@ -16,7 +16,7 @@ const OnboardingPage = () => {
           <Button
             variant="ghost"
             className="text-cyrela-gray-dark hover:text-cyrela-red"
-            onClick={() => navigate("/client/welcome")}
+            onClick={() => navigate("/client/broker")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
