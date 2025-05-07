@@ -9,7 +9,7 @@ interface PropertyListingsProps {
 
 export function PropertyListings({ properties }: PropertyListingsProps) {
   return (
-    <div className="lg:col-span-3">
+    <div>
       <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="text-xl font-semibold text-cyrela-gray-dark">
           {properties.length} imóveis encontrados
@@ -25,7 +25,7 @@ export function PropertyListings({ properties }: PropertyListingsProps) {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map(property => (
           <PropertyCard 
             key={property.id} 

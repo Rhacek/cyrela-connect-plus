@@ -12,80 +12,21 @@ import {
 import { PropertyFilterProps, FilterCategory } from "./filter-types";
 import { SearchInput } from "./search-input";
 import { PriceRangeFilter } from "./price-range-filter";
-import { ConstructionStageFilter } from "./construction-stage-filter";
 import { LocationFilter } from "./location-filter";
-import { FeaturesFilter } from "./features-filter";
 
 export function PropertyFilter({ 
   className, 
   onApplyFilters, 
-  onReset 
+  onReset,
+  selectedFilters,
+  onFilterChange
 }: PropertyFilterProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [priceRange, setPriceRange] = useState([500000, 2000000]);
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [selectedFilters, setSelectedFilters] = useState<Record<FilterCategory, string[]>>({
-    constructionStage: [],
-    city: [],
-    zone: [],
-    neighborhood: [],
-    bedrooms: [],
-  });
-  
-  const handleFilterClick = (category: FilterCategory, id: string) => {
-    setSelectedFilters(prev => {
-      const current = [...(prev[category] || [])];
-      
-      if (category === "zone") {
-        // If selecting a zone, clear neighborhoods
-        if (current.includes(id)) {
-          return {
-            ...prev, 
-            [category]: current.filter(item => item !== id),
-            neighborhood: [],
-          };
-        } else {
-          // Only allow one zone selection
-          setSelectedZone(id);
-          return {
-            ...prev, 
-            [category]: [id],
-            neighborhood: [],
-          };
-        }
-      } else if (category === "neighborhood") {
-        // For neighborhoods, toggle selection
-        if (current.includes(id)) {
-          return {...prev, [category]: current.filter(item => item !== id)};
-        } else {
-          // Only allow up to 3 neighborhoods
-          if (current.length < 3) {
-            return {...prev, [category]: [...current, id]};
-          }
-          return prev;
-        }
-      } else {
-        // For other categories, toggle selection
-        if (current.includes(id)) {
-          return {...prev, [category]: current.filter(item => item !== id)};
-        } else {
-          return {...prev, [category]: [...current, id]};
-        }
-      }
-    });
-  };
   
   const handleReset = () => {
     setSearchQuery("");
     setPriceRange([500000, 2000000]);
-    setSelectedZone(null);
-    setSelectedFilters({
-      constructionStage: [],
-      city: [],
-      zone: [],
-      neighborhood: [],
-      bedrooms: [],
-    });
     
     if (onReset) {
       onReset();
@@ -97,7 +38,6 @@ export function PropertyFilter({
       const filters = {
         searchQuery,
         priceRange,
-        ...selectedFilters,
       };
       onApplyFilters(filters);
     }
@@ -106,7 +46,7 @@ export function PropertyFilter({
   return (
     <div className={cn("bg-white border border-cyrela-gray-lighter rounded-lg shadow-sm overflow-hidden", className)}>
       <div className="p-4 border-b border-cyrela-gray-lighter flex justify-between items-center">
-        <h3 className="font-medium truncate">Filtros</h3>
+        <h3 className="font-medium truncate">Filtros avançados</h3>
         <Button 
           variant="ghost"
           size="sm"
@@ -135,17 +75,7 @@ export function PropertyFilter({
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="stage" className="border-b border-cyrela-gray-lighter">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Estágio da obra</AccordionTrigger>
-            <AccordionContent>
-              <ConstructionStageFilter 
-                selectedFilters={selectedFilters.constructionStage}
-                onFilterClick={(id) => handleFilterClick("constructionStage", id)}
-              />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="location" className="border-b border-cyrela-gray-lighter">
+          <AccordionItem value="location" className="border-b-0">
             <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Localização</AccordionTrigger>
             <AccordionContent>
               <LocationFilter 
@@ -154,18 +84,8 @@ export function PropertyFilter({
                   zone: selectedFilters.zone,
                   neighborhood: selectedFilters.neighborhood
                 }}
-                selectedZone={selectedZone}
-                onFilterClick={(category, id) => handleFilterClick(category as FilterCategory, id)}
-              />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="features" className="border-b-0">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Características</AccordionTrigger>
-            <AccordionContent>
-              <FeaturesFilter 
-                selectedFilters={selectedFilters.bedrooms}
-                onFilterClick={(id) => handleFilterClick("bedrooms", id)}
+                selectedZone={selectedFilters.zone[0] || null}
+                onFilterClick={(category, id) => onFilterChange(category as FilterCategory, id)}
               />
             </AccordionContent>
           </AccordionItem>

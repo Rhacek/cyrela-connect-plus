@@ -1,16 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, X, Filter, SortDesc } from "lucide-react";
-interface PropertySearchBarProps {
-  isMobileFilterOpen: boolean;
-  setIsMobileFilterOpen: (isOpen: boolean) => void;
-}
-export function PropertySearchBar({
-  isMobileFilterOpen,
-  setIsMobileFilterOpen
-}: PropertySearchBarProps) {
+import { Search, SortDesc } from "lucide-react";
+
+export function PropertySearchBar() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -26,7 +22,9 @@ export function PropertySearchBar({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-  return <div className={`bg-cyrela-blue text-white sticky top-[69px] z-10 transition-transform duration-300 ease-in-out ${isVisible ? 'transform translate-y-0' : 'transform -translate-y-full'}`}>
+  
+  return (
+    <div className={`bg-cyrela-blue text-white sticky top-[69px] z-10 transition-transform duration-300 ease-in-out ${isVisible ? 'transform translate-y-0' : 'transform -translate-y-full'}`}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="relative w-full md:w-auto md:flex-1 max-w-2xl">
@@ -35,16 +33,6 @@ export function PropertySearchBar({
           </div>
           
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button variant="outline" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)} className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-400">
-              {isMobileFilterOpen ? <>
-                  <X size={16} className="mr-2 shrink-0" />
-                  <span className="font-medium">Fechar filtros</span>
-                </> : <>
-                  <Filter size={16} className="mr-2 shrink-0" />
-                  <span className="font-medium text-slate-400">Filtros</span>
-                </>}
-            </Button>
-            
             <Button className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-400">
               <SortDesc size={16} className="mr-2 shrink-0" />
               <span className="font-medium text-slate-400">Ordenar</span>
@@ -52,5 +40,6 @@ export function PropertySearchBar({
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

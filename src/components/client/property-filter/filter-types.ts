@@ -8,6 +8,8 @@ export interface PropertyFilterProps {
   className?: string;
   onApplyFilters?: (filters: any) => void;
   onReset?: () => void;
+  selectedFilters: Record<FilterCategory, string[]>;
+  onFilterChange: (category: FilterCategory, id: string) => void;
 }
 
 export type FilterCategory = 
