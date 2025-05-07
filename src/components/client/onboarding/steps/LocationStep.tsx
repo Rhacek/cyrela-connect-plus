@@ -2,6 +2,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { NeighborhoodSelector } from "./location/NeighborhoodSelector";
+import { zoneNeighborhoods } from "@/components/client/property-filter/filter-data";
 
 interface LocationStepProps {
   city: string;
@@ -60,10 +61,11 @@ export function LocationStep({
         </div>
       )}
       
-      {zone === "zonasul" && (
+      {zone && zoneNeighborhoods[zone] && (
         <NeighborhoodSelector 
           neighborhoods={neighborhoods}
           onNeighborhoodsChange={onNeighborhoodsChange}
+          availableNeighborhoods={zoneNeighborhoods[zone].map(n => ({ id: n.id, name: n.label }))}
         />
       )}
     </div>

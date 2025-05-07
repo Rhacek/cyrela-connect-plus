@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface NeighborhoodSelectorProps {
   neighborhoods: string[];
   onNeighborhoodsChange: (neighborhoods: string[]) => void;
-  availableNeighborhoods?: {
+  availableNeighborhoods: {
     id: string;
     name: string;
   }[];
@@ -15,12 +15,7 @@ interface NeighborhoodSelectorProps {
 export function NeighborhoodSelector({
   neighborhoods,
   onNeighborhoodsChange,
-  availableNeighborhoods = [
-    { id: "campobelo", name: "Campo Belo" },
-    { id: "moema", name: "Moema" },
-    { id: "ibirapuera", name: "Ibirapuera" },
-    { id: "morumbi", name: "Morumbi" }
-  ]
+  availableNeighborhoods
 }: NeighborhoodSelectorProps) {
   const toggleNeighborhood = (neighborhood: string) => {
     const newNeighborhoods = [...neighborhoods];
