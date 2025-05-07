@@ -43,9 +43,10 @@ export function NavigationButtons({
       
       <Button
         type="button"
+        variant="outline"
         onClick={onNext}
         className={cn(
-          "flex-1 ml-2 bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-black",
+          "flex-1 ml-2",
           {
             "pointer-events-none opacity-50": !canAdvance || isLoading
           }
