@@ -29,6 +29,7 @@ export function FilterButton({
         variant === "default" 
           ? "justify-start text-left text-sm h-auto py-1.5 overflow-hidden" 
           : "justify-center p-1 text-sm h-8",
+        !selected && "text-cyrela-gray-dark hover:text-cyrela-gray-dark",
         selected && "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white",
         className
       )}
