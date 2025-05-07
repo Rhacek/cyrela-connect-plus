@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 interface PropertyCardProps {
   property: Property;
@@ -57,11 +58,13 @@ export function PropertyCard({ property, showActions = true, className }: Proper
       className
     )}>
       <div className="relative">
-        <img
-          src={property.images[0]?.url || "/placeholder.svg"}
-          alt={property.title}
-          className="w-full h-48 sm:h-56 object-cover"
-        />
+        <Link to={`/client/property/${property.id}`}>
+          <img
+            src={property.images[0]?.url || "/placeholder.svg"}
+            alt={property.title}
+            className="w-full h-48 sm:h-56 object-cover"
+          />
+        </Link>
         
         {/* Construction Stage Badge in top-left */}
         <div className="absolute top-0 left-0 p-2 sm:p-3 flex flex-col gap-1.5">
@@ -93,7 +96,9 @@ export function PropertyCard({ property, showActions = true, className }: Proper
       
       <div className="p-4 flex flex-col flex-grow">
         <div className="mb-3">
-          <h3 className="font-semibold text-base sm:text-lg line-clamp-1 font-poppins">{property.title}</h3>
+          <Link to={`/client/property/${property.id}`} className="hover:underline">
+            <h3 className="font-semibold text-base sm:text-lg line-clamp-1 font-poppins">{property.title}</h3>
+          </Link>
           <div className="flex items-center mt-1 text-cyrela-gray-dark text-xs sm:text-sm font-inter">
             <MapPin size={14} className="mr-1 shrink-0" />
             <span className="line-clamp-1">
@@ -143,9 +148,12 @@ export function PropertyCard({ property, showActions = true, className }: Proper
           <div className="mt-auto">
             <Button 
               className="w-full bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-sm py-2 h-10 flex items-center justify-center" 
+              asChild
             >
-              Agendar visita
-              <ArrowRight size={16} className="ml-1" />
+              <Link to={`/client/property/${property.id}`}>
+                Ver imóvel
+                <ArrowRight size={16} className="ml-1" />
+              </Link>
             </Button>
           </div>
         )}

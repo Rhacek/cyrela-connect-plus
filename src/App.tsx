@@ -18,6 +18,7 @@ import WelcomePage from "./pages/client/WelcomePage";
 import BrokerIntroPage from "./pages/client/BrokerIntroPage";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
+import PropertyDetailPage from "./pages/client/PropertyDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/client/broker" element={<BrokerIntroPage />} />
           <Route path="/client/onboarding" element={<OnboardingPage />} />
           <Route path="/client/results" element={<PropertyListingPage />} />
+          <Route path="/client/property/:id" element={<PropertyDetailPage />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
