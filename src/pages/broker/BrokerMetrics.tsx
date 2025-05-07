@@ -5,6 +5,7 @@ import {
   SidebarInset, 
   SidebarProvider,
 } from "@/components/ui/sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
 import { MetricsHeader } from "@/components/broker/metrics/metrics-header";
 import { MetricsFilter } from "@/components/broker/metrics/metrics-filter";
@@ -37,32 +38,34 @@ export default function BrokerMetrics() {
   return (
     <SidebarProvider>
       {({ state }) => (
-        <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
+        <div className="flex h-screen w-full bg-cyrela-gray-lightest">
           <Sidebar>
             <BrokerSidebarContent />
           </Sidebar>
           
           <SidebarInset>
-            <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
-              <MetricsHeader />
-              
-              <MetricsFilter 
-                timePeriods={TIME_PERIODS}
-                selectedPeriod={timePeriod}
-                onPeriodChange={handleTimePeriodChange}
-              />
-              
-              <MetricsOverview 
-                performance={performance}
-                target={target}
-              />
-              
-              <MetricsCharts 
-                performance={performance}
-                target={target}
-                period={timePeriod}
-              />
-            </div>
+            <ScrollArea className="h-full w-full">
+              <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+                <MetricsHeader />
+                
+                <MetricsFilter 
+                  timePeriods={TIME_PERIODS}
+                  selectedPeriod={timePeriod}
+                  onPeriodChange={handleTimePeriodChange}
+                />
+                
+                <MetricsOverview 
+                  performance={performance}
+                  target={target}
+                />
+                
+                <MetricsCharts 
+                  performance={performance}
+                  target={target}
+                  period={timePeriod}
+                />
+              </div>
+            </ScrollArea>
           </SidebarInset>
         </div>
       )}
