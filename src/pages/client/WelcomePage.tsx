@@ -65,7 +65,7 @@ const WelcomePage = () => {
         
         {/* Footer */}
         <footer className="p-6 text-center text-cyrela-gray-lightest/60 text-sm">
-          © {new Date().getFullYear()} Cyrela. Todos os direitos reservados.
+          © 2025 Cyrela+. Todos os direitos reservados.
         </footer>
       </div>
     </div>
