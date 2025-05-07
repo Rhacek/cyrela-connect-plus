@@ -1,5 +1,5 @@
 
-import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Property, PropertyStatus } from "@/types";
 import { cn } from "@/lib/utils";
@@ -15,26 +15,18 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, showActions = true, className }: PropertyCardProps) {
   const getConstructionStageColor = (stage?: string) => {
-    switch (stage) {
-      case "Na planta":
-        return "bg-blue-100 text-blue-800";
-      case "Em construção":
-        return "bg-orange-100 text-orange-800";
-      case "Pronto para morar":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+    // Use white background with black text for all stages
+    return "bg-white text-black";
   };
 
   const getConstructionStageIcon = (stage?: string) => {
     switch (stage) {
       case "Na planta":
-        return <Building size={14} className="mr-1" />;
+        return <Building size={14} className="mr-1 text-black" />;
       case "Em construção":
-        return <Construction size={14} className="mr-1" />;
+        return <Construction size={14} className="mr-1 text-black" />;
       case "Pronto para morar":
-        return <Check size={14} className="mr-1" />;
+        return <Check size={14} className="mr-1 text-black" />;
       default:
         return null;
     }
@@ -72,16 +64,25 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         />
         
         <div className="absolute top-0 left-0 p-2 sm:p-3 flex flex-col gap-1.5">
+          {/* Dark translucent background for badges */}
+          <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-40 rounded-lg z-0"></div>
+          
+          {/* Construction Stage Badge */}
           <Badge className={cn(
-            "px-2 py-1 text-xs font-medium rounded-full flex items-center",
+            "px-2.5 py-1 text-xs font-medium rounded-md flex items-center z-10 relative",
             getConstructionStageColor(property.constructionStage)
           )}>
             {getConstructionStageIcon(property.constructionStage)}
             {property.constructionStage || "Não informado"}
           </Badge>
           
+          {/* Highlight Badge */}
           {property.isHighlighted && (
-            <Badge variant="outline" className="bg-living-gold text-white border-living-gold px-2 py-1 text-xs font-medium rounded-full">
+            <Badge 
+              variant="outline" 
+              className="bg-white text-black border-transparent px-2.5 py-1 text-xs font-medium rounded-md flex items-center z-10 relative"
+            >
+              <Tag size={14} className="mr-1 text-black" />
               Destaque
             </Badge>
           )}
