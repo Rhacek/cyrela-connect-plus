@@ -1,5 +1,13 @@
+
 import { useState } from "react";
-import { BrokerSidebar } from "@/components/broker/dashboard/broker-sidebar";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarProvider, 
+  SidebarHeader,
+  SidebarFooter,
+  SidebarInset
+} from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
 import { StatsGrid } from "@/components/broker/dashboard/stats-grid";
 import { RecentLeadsSection } from "@/components/broker/dashboard/recent-leads-section";
@@ -7,9 +15,11 @@ import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { LeadStatus } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
+import { SidebarFooter as BrokerSidebarFooter } from "@/components/broker/sidebar/sidebar-footer";
+import { SidebarLogo } from "@/components/broker/sidebar/sidebar-logo";
 
 const BrokerDashboard = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   
   // Mock data
@@ -74,59 +84,73 @@ const BrokerDashboard = () => {
   };
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
-      <BrokerSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      
-      <main className={`flex-1 overflow-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-0 lg:ml-64'}`}>
-        <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
-          <DashboardHeader 
-            title="Dashboard" 
-            description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
-            buttonLabel="Cadastrar lead"
-            onButtonClick={handleAddLead}
-          />
+    <SidebarProvider>
+      <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
+        <Sidebar>
+          <SidebarHeader>
+            <SidebarLogo />
+          </SidebarHeader>
           
-          <StatsGrid 
-            performance={mockPerformance} 
-            target={mockTarget} 
-            className="w-full mb-4 sm:mb-6"
-          />
+          <SidebarContent>
+            <SidebarNavigation />
+          </SidebarContent>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 flex-1 w-full">
-            <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
-              <RecentLeadsSection 
-                leads={mockLeads} 
-                className="flex-1 w-full" 
-              />
-              
-              {isMobile ? (
-                <ProgressCard 
-                  target={mockTarget} 
-                  performance={mockPerformance} 
-                  className="w-full"
+          <SidebarFooter>
+            <BrokerSidebarFooter />
+          </SidebarFooter>
+        </Sidebar>
+        
+        <SidebarInset>
+          <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+            <DashboardHeader 
+              title="Dashboard" 
+              description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
+              buttonLabel="Cadastrar lead"
+              onButtonClick={handleAddLead}
+            />
+            
+            <StatsGrid 
+              performance={mockPerformance} 
+              target={mockTarget} 
+              className="w-full mb-4 sm:mb-6"
+            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 flex-1 w-full">
+              <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
+                <RecentLeadsSection 
+                  leads={mockLeads} 
+                  className="flex-1 w-full" 
                 />
-              ) : (
-                <QuickAccess className="flex-1 w-full" />
+                
+                {isMobile ? (
+                  <ProgressCard 
+                    target={mockTarget} 
+                    performance={mockPerformance} 
+                    className="w-full"
+                  />
+                ) : (
+                  <QuickAccess className="flex-1 w-full" />
+                )}
+              </div>
+              
+              {!isMobile && (
+                <div className="h-full">
+                  <ProgressCard 
+                    target={mockTarget} 
+                    performance={mockPerformance} 
+                    className="h-full w-full"
+                  />
+                </div>
+              )}
+              
+              {isMobile && (
+                <QuickAccess className="w-full" />
               )}
             </div>
-            
-            {!isMobile && (
-              <div className="h-full">
-                <ProgressCard 
-                  target={mockTarget} 
-                  performance={mockPerformance} 
-                  className="h-full w-full"
-                />
-              </div>
-            )}
-            
-            {isMobile && (
-              <QuickAccess className="w-full" />
-            )}
           </div>
-        </div>
-      </main>
-    </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 };
 
