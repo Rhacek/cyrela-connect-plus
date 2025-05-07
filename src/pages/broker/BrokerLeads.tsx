@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LeadsHeader } from "@/components/broker/leads/leads-header";
 import { LeadsFilter } from "@/components/broker/leads/leads-filter";
-import { LeadsList } from "@/components/broker/leads/leads-list";
+import { LeadsTable } from "@/components/broker/leads/leads-table";
 import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
 import { SidebarFooter as BrokerSidebarFooter } from "@/components/broker/sidebar/sidebar-footer";
 import { SidebarLogo } from "@/components/broker/sidebar/sidebar-logo";
@@ -93,7 +93,7 @@ export default function BrokerLeads() {
                 onStatusChange={handleStatusFilter}
               />
               
-              <LeadsList leads={filteredLeads} />
+              <LeadsTable leads={filteredLeads} />
             </div>
           </SidebarInset>
         </div>
