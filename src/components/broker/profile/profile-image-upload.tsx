@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { User } from "lucide-react";
+import { User, PencilLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProfileImageUploadProps {
@@ -48,7 +48,7 @@ export function ProfileImageUpload({
             htmlFor="profile-image-upload" 
             className="absolute bottom-0 right-0 bg-cyrela-blue text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-opacity-90 transition-all"
           >
-            <Edit size={16} />
+            <PencilLine size={16} />
             <input 
               type="file" 
               id="profile-image-upload" 
