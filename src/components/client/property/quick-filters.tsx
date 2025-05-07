@@ -74,7 +74,7 @@ export function QuickFilters({
           </Button>
         )}
         
-        <ScrollArea className="w-full" orientation="horizontal">
+        <ScrollArea className="w-full">
           <div 
             ref={scrollContainerRef}
             className="flex gap-2 overflow-x-auto pb-1 pl-1 pr-1 whitespace-nowrap scroll-smooth scrollbar-hide"
@@ -89,38 +89,38 @@ export function QuickFilters({
               Filtros rápidos:
             </div>
             
-            <div className="flex-none">
-              <div className="text-xs text-cyrela-gray-dark mb-1">Estágio</div>
-              <div className="flex gap-2">
-                {constructionStages.map((stage) => (
-                  <FilterButton
-                    key={stage.id}
-                    id={stage.id}
-                    label={stage.label}
-                    selected={selectedFilters.constructionStage.includes(stage.id)}
-                    onClick={() => onFilterChange("constructionStage", stage.id)}
-                    variant="compact"
-                    className="whitespace-nowrap min-w-max"
-                  />
-                ))}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
+              <div className="col-span-full mb-1">
+                <div className="text-xs text-cyrela-gray-dark">Estágio</div>
               </div>
+              {constructionStages.map((stage) => (
+                <FilterButton
+                  key={stage.id}
+                  id={stage.id}
+                  label={stage.label}
+                  selected={selectedFilters.constructionStage.includes(stage.id)}
+                  onClick={() => onFilterChange("constructionStage", stage.id)}
+                  variant="compact"
+                  className="w-full whitespace-nowrap"
+                />
+              ))}
             </div>
             
-            <div className="flex-none pl-2 border-l border-cyrela-gray-lighter">
-              <div className="text-xs text-cyrela-gray-dark mb-1">Dormitórios</div>
-              <div className="flex gap-2">
-                {bedrooms.map((bedroom) => (
-                  <FilterButton
-                    key={bedroom.id}
-                    id={bedroom.id}
-                    label={bedroom.label}
-                    selected={selectedFilters.bedrooms.includes(bedroom.id)}
-                    onClick={() => onFilterChange("bedrooms", bedroom.id)}
-                    variant="compact"
-                    className="min-w-12"
-                  />
-                ))}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2 pl-2 border-l border-cyrela-gray-lighter">
+              <div className="col-span-full mb-1">
+                <div className="text-xs text-cyrela-gray-dark">Dormitórios</div>
               </div>
+              {bedrooms.map((bedroom) => (
+                <FilterButton
+                  key={bedroom.id}
+                  id={bedroom.id}
+                  label={bedroom.label}
+                  selected={selectedFilters.bedrooms.includes(bedroom.id)}
+                  onClick={() => onFilterChange("bedrooms", bedroom.id)}
+                  variant="compact"
+                  className="w-full"
+                />
+              ))}
             </div>
           </div>
         </ScrollArea>

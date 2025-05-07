@@ -31,7 +31,7 @@ export function FilterButton({
           : "text-cyrela-gray-dark hover:text-cyrela-gray-dark",
         variant === "default" 
           ? "justify-start text-left text-sm h-auto py-1.5 overflow-hidden" 
-          : "justify-center p-1 text-sm h-8",
+          : "justify-center text-sm h-8",
         className
       )}
       onClick={onClick}
