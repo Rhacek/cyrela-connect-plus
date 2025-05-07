@@ -82,8 +82,14 @@ const PropertyListingPage = () => {
       {/* Header */}
       <PropertyHeader />
       
-      {/* Search bar */}
-      <PropertySearchBar />
+      {/* Search bar transformed into location filter */}
+      <PropertySearchBar 
+        selectedFilters={{
+          city: selectedFilters.city,
+          zone: selectedFilters.zone
+        }}
+        onFilterChange={handleFilterChange}
+      />
       
       <div className="flex-1 container mx-auto px-4 py-4">
         {/* Quick filters */}
