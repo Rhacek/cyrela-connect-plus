@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
 
@@ -19,7 +18,7 @@ const Index = () => {
           
           <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
             <Button
-              className="py-6 px-8 text-lg cyrela-button-primary animate-fade-in"
+              className="h-auto py-6 px-8 text-lg cyrela-button-primary animate-fade-in"
               onClick={() => window.location.href = "/auth"}
             >
               Acessar plataforma
