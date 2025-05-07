@@ -1,7 +1,12 @@
+
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
-import { Phone, Share, MessageSquare } from "lucide-react";
+import { Phone, Share, MessageSquare, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 export function PropertyHeader() {
+  const navigate = useNavigate();
+
   return <header className="bg-white border-b border-cyrela-gray-lighter sticky top-0 z-20">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex-shrink-0">
@@ -9,13 +14,26 @@ export function PropertyHeader() {
         </div>
         
         <div className="flex items-center gap-2 md:gap-4">
-          <Button variant="outline" size="sm" className="hidden md:flex items-center text-cyrela-gray-dark" onClick={() => window.location.href = "/client/broker"}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hidden md:flex items-center text-cyrela-gray-dark" 
+            onClick={() => window.location.href = "/client/broker"}
+          >
             <Phone size={16} className="mr-2 shrink-0" />
             <span className="hidden lg:inline">Falar com o corretor</span>
             <span className="lg:hidden">Corretor</span>
           </Button>
           
-          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center text-cyrela-gray-dark" 
+            onClick={() => navigate("/client/onboarding")}
+          >
+            <ArrowLeft size={16} className="mr-2 shrink-0" />
+            <span className="hidden lg:inline">Voltar</span>
+          </Button>
           
           <Button className="md:hidden flex items-center bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white rounded-full p-2" size="icon">
             <Share size={16} />
