@@ -45,9 +45,9 @@ export function PropertySearchBar({
                 </>}
             </Button>
             
-            <Button className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-300">
+            <Button className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-400">
               <SortDesc size={16} className="mr-2 shrink-0" />
-              <span className="font-medium text-slate-300">Ordenar</span>
+              <span className="font-medium text-slate-400">Ordenar</span>
             </Button>
           </div>
         </div>
