@@ -12,6 +12,7 @@ import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerProperties from "./pages/broker/BrokerProperties";
 import BrokerSchedule from "./pages/broker/BrokerSchedule";
 import BrokerLeads from "./pages/broker/BrokerLeads";
+import BrokerMetrics from "./pages/broker/BrokerMetrics";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/broker/properties" element={<BrokerProperties />} />
           <Route path="/broker/schedule" element={<BrokerSchedule />} />
           <Route path="/broker/leads" element={<BrokerLeads />} />
+          <Route path="/broker/metrics" element={<BrokerMetrics />} />
           
           {/* Client routes */}
           <Route path="/client/onboarding" element={<OnboardingPage />} />
