@@ -10,7 +10,7 @@ export const isStepCompleted = (step: number, formData: OnboardingFormData): boo
       return !!formData.stage;
     case 2:
       return !!formData.city && !!formData.zone && 
-             (formData.zone !== "zonasul" || formData.neighborhoods.length > 0);
+             (formData.zone !== "zonasul" || formData.neighborhoods.length >= 3);
     case 3:
       return !!formData.bedrooms && !!formData.budget;
     case 4:
@@ -66,7 +66,7 @@ export const shouldAutoAdvance = (field: string, value: any, formData: Onboardin
     return true;
   }
   
-  if (field === "neighborhoods" && value.length > 0) {
+  if (field === "neighborhoods" && value.length >= 3) {
     return true;
   }
 
