@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
 import { Sidebar } from "@/components/ui/sidebar";
 import { ShareHeader } from "@/components/broker/share/share-header";
@@ -66,32 +67,34 @@ export default function BrokerShare() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar>
-        <BrokerSidebarContent />
-      </Sidebar>
-      
-      <div className="flex-1 overflow-auto">
-        <div className="container py-6 md:py-8 max-w-7xl mx-auto">
-          <ShareHeader onCreateLink={() => setIsCreateDialogOpen(true)} />
-          
-          <ShareStatsGrid 
-            totalShares={stats.totalShares}
-            totalClicks={stats.totalClicks}
-            activeLinks={stats.activeLinks}
-            averageClicksPerShare={stats.averageClicksPerShare}
-            mostSharedProperty={stats.mostSharedProperty}
-          />
-          
-          <ShareLinkTable links={sharedLinks} />
-          
-          <CreateShareLinkDialog 
-            isOpen={isCreateDialogOpen}
-            onClose={() => setIsCreateDialogOpen(false)}
-            onCreateLink={handleCreateLink}
-          />
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <Sidebar>
+          <BrokerSidebarContent />
+        </Sidebar>
+        
+        <div className="flex-1 overflow-auto">
+          <div className="container py-6 md:py-8 max-w-7xl mx-auto">
+            <ShareHeader onCreateLink={() => setIsCreateDialogOpen(true)} />
+            
+            <ShareStatsGrid 
+              totalShares={stats.totalShares}
+              totalClicks={stats.totalClicks}
+              activeLinks={stats.activeLinks}
+              averageClicksPerShare={stats.averageClicksPerShare}
+              mostSharedProperty={stats.mostSharedProperty}
+            />
+            
+            <ShareLinkTable links={sharedLinks} />
+            
+            <CreateShareLinkDialog 
+              isOpen={isCreateDialogOpen}
+              onClose={() => setIsCreateDialogOpen(false)}
+              onCreateLink={handleCreateLink}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
