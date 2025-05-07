@@ -7,9 +7,11 @@ export function PropertyHeader() {
   return (
     <header className="bg-white border-b border-cyrela-gray-lighter sticky top-0 z-20">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <AppLogo />
+        <div className="flex-shrink-0">
+          <AppLogo />
+        </div>
         
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
+        <div className="flex items-center gap-2 md:gap-4">
           <Button
             variant="outline"
             size="sm"
