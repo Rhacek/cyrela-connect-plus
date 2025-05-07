@@ -1,9 +1,9 @@
 
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
 import { ONBOARDING_STEPS } from "./steps";
 import { StepNavigation } from "./StepNavigation";
 import { NavigationButtons } from "./NavigationButtons";
+import { StepContainer } from "./StepContainer";
 import { ObjectiveStep } from "./steps/ObjectiveStep";
 import { StageStep } from "./steps/StageStep";
 import { LocationStep } from "./steps/LocationStep";
@@ -27,6 +27,62 @@ export function FormController() {
     handleBack
   } = useFormContext();
 
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <ObjectiveStep 
+            value={formData.objective}
+            onChange={(value) => handleInputChange("objective", value)}
+          />
+        );
+      case 1:
+        return (
+          <StageStep 
+            value={formData.stage}
+            onChange={(value) => handleInputChange("stage", value)}
+          />
+        );
+      case 2:
+        return (
+          <LocationStep 
+            city={formData.city}
+            zone={formData.zone}
+            neighborhoods={formData.neighborhoods}
+            onCityChange={(value) => handleInputChange("city", value)}
+            onZoneChange={(value) => handleInputChange("zone", value)}
+            onNeighborhoodsChange={(value) => handleInputChange("neighborhoods", value)}
+          />
+        );
+      case 3:
+        return (
+          <DetailsStep 
+            bedrooms={formData.bedrooms}
+            budget={formData.budget}
+            onBedroomsChange={(value) => handleInputChange("bedrooms", value)}
+            onBudgetChange={(value) => handleInputChange("budget", value)}
+          />
+        );
+      case 4:
+        return (
+          <ContactStep 
+            name={formData.name}
+            email={formData.email}
+            phone={formData.phone}
+            onNameChange={(value) => handleInputChange("name", value)}
+            onEmailChange={(value) => handleInputChange("email", value)}
+            onPhoneChange={(value) => handleInputChange("phone", value)}
+          />
+        );
+      case 5:
+        return (
+          <ReviewStep formData={formData} />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <div className="mb-6">
@@ -47,65 +103,9 @@ export function FormController() {
         isLoading={isLoading}
       />
       
-      {/* Loading indicator */}
-      {isLoading && (
-        <div className="my-4 animate-fade-in">
-          <Progress value={loadingProgress} className="h-1" />
-        </div>
-      )}
-      
-      {/* Step content with animation */}
-      <div className={cn("transition-all duration-300", 
-        isLoading ? "opacity-50 pointer-events-none" : "animate-fade-in")}>
-        {currentStep === 0 && (
-          <ObjectiveStep 
-            value={formData.objective}
-            onChange={(value) => handleInputChange("objective", value)}
-          />
-        )}
-        
-        {currentStep === 1 && (
-          <StageStep 
-            value={formData.stage}
-            onChange={(value) => handleInputChange("stage", value)}
-          />
-        )}
-        
-        {currentStep === 2 && (
-          <LocationStep 
-            city={formData.city}
-            zone={formData.zone}
-            neighborhoods={formData.neighborhoods}
-            onCityChange={(value) => handleInputChange("city", value)}
-            onZoneChange={(value) => handleInputChange("zone", value)}
-            onNeighborhoodsChange={(value) => handleInputChange("neighborhoods", value)}
-          />
-        )}
-        
-        {currentStep === 3 && (
-          <DetailsStep 
-            bedrooms={formData.bedrooms}
-            budget={formData.budget}
-            onBedroomsChange={(value) => handleInputChange("bedrooms", value)}
-            onBudgetChange={(value) => handleInputChange("budget", value)}
-          />
-        )}
-        
-        {currentStep === 4 && (
-          <ContactStep 
-            name={formData.name}
-            email={formData.email}
-            phone={formData.phone}
-            onNameChange={(value) => handleInputChange("name", value)}
-            onEmailChange={(value) => handleInputChange("email", value)}
-            onPhoneChange={(value) => handleInputChange("phone", value)}
-          />
-        )}
-        
-        {currentStep === 5 && (
-          <ReviewStep formData={formData} />
-        )}
-      </div>
+      <StepContainer isLoading={isLoading} loadingProgress={loadingProgress}>
+        {renderCurrentStep()}
+      </StepContainer>
       
       <NavigationButtons 
         currentStep={currentStep}
