@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import BrokerDashboard from "./pages/broker/BrokerDashboard";
+import BrokerProfile from "./pages/broker/BrokerProfile";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 
@@ -25,6 +26,7 @@ const App = () => (
           
           {/* Broker routes */}
           <Route path="/broker/dashboard" element={<BrokerDashboard />} />
+          <Route path="/broker/profile" element={<BrokerProfile />} />
           
           {/* Client routes */}
           <Route path="/client/onboarding" element={<OnboardingPage />} />
