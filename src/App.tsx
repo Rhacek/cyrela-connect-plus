@@ -10,6 +10,7 @@ import AuthPage from "./pages/AuthPage";
 import BrokerDashboard from "./pages/broker/BrokerDashboard";
 import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerProperties from "./pages/broker/BrokerProperties";
+import BrokerSchedule from "./pages/broker/BrokerSchedule";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/broker/dashboard" element={<BrokerDashboard />} />
           <Route path="/broker/profile" element={<BrokerProfile />} />
           <Route path="/broker/properties" element={<BrokerProperties />} />
+          <Route path="/broker/schedule" element={<BrokerSchedule />} />
           
           {/* Client routes */}
           <Route path="/client/onboarding" element={<OnboardingPage />} />
