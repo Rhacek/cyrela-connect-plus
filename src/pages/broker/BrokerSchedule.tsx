@@ -121,12 +121,12 @@ export default function BrokerSchedule() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-1 flex items-center justify-center p-0">
-                      <div className="w-full max-w-md mx-auto py-2">
+                      <div className="w-full flex justify-center items-center">
                         <Calendar
                           mode="single"
                           selected={date}
                           onSelect={setDate}
-                          className="border-none shadow-none mx-auto"
+                          className="mx-auto border-none shadow-none"
                           showOutsideDays
                         />
                       </div>
