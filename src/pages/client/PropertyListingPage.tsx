@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { PropertyHeader } from "@/components/client/property/property-header";
@@ -8,6 +9,9 @@ import { QuickFilters } from "@/components/client/property/quick-filters";
 import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
 import { UnifiedFilterCard } from "@/components/client/property/unified-filter-card";
+
+// Mock broker phone number - in a real app, this would come from a context or API
+const BROKER_PHONE = "(11) 98765-4321";
 
 const PropertyListingPage = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -128,11 +132,12 @@ const PropertyListingPage = () => {
         </div>
       </div>
       
-      {/* Mobile actions (floating button and overlay) */}
+      {/* Mobile actions with WhatsApp button */}
       <MobileActions 
         isMobileFilterOpen={isMobileFilterOpen}
         onOverlayClick={() => setIsMobileFilterOpen(false)}
         onFilterClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+        brokerPhone={BROKER_PHONE}
       />
     </div>
   );
