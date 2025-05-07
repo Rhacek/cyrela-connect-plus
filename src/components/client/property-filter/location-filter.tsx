@@ -1,6 +1,7 @@
-
 import { FilterButton } from "./filter-button";
 import { cities, zones, zoneNeighborhoods } from "./filter-data";
+import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 interface LocationFilterProps {
   selectedFilters: {
@@ -17,6 +18,27 @@ export function LocationFilter({
   selectedZone, 
   onFilterClick 
 }: LocationFilterProps) {
+  const handleNeighborhoodClick = (id: string) => {
+    // Check if neighborhood is already selected, in which case we'll remove it
+    if (selectedFilters.neighborhood.includes(id)) {
+      onFilterClick("neighborhood", id);
+      return;
+    }
+    
+    // Don't allow more than 3 neighborhoods
+    if (selectedFilters.neighborhood.length >= 3) {
+      toast({
+        title: "Limite atingido",
+        description: "Você só pode selecionar até 3 bairros",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Otherwise add the neighborhood
+    onFilterClick("neighborhood", id);
+  };
+
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-medium mb-2">Cidade</h4>
@@ -57,9 +79,12 @@ export function LocationFilter({
                 id={neighborhood.id}
                 label={neighborhood.label}
                 selected={selectedFilters.neighborhood.includes(neighborhood.id)}
-                onClick={() => onFilterClick("neighborhood", neighborhood.id)}
+                onClick={() => handleNeighborhoodClick(neighborhood.id)}
               />
             ))}
+          </div>
+          <div className="mt-1 text-xs text-cyrela-gray-dark">
+            {selectedFilters.neighborhood.length}/3 bairros selecionados
           </div>
         </>
       )}
