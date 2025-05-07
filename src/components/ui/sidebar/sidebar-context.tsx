@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -33,13 +34,16 @@ export function useSidebar() {
   return context
 }
 
+interface SidebarProviderProps extends React.ComponentProps<"div"> {
+  defaultOpen?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode | ((context: SidebarContext) => React.ReactNode)
+}
+
 export const SidebarProvider = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    defaultOpen?: boolean
-    open?: boolean
-    onOpenChange?: (open: boolean) => void
-  }
+  SidebarProviderProps
 >(
   (
     {
@@ -133,7 +137,7 @@ export const SidebarProvider = React.forwardRef<
             ref={ref}
             {...props}
           >
-            {children}
+            {typeof children === "function" ? children(contextValue) : children}
           </div>
         </TooltipProvider>
       </SidebarContext.Provider>

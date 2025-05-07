@@ -7,7 +7,8 @@ import {
   SidebarProvider, 
   SidebarHeader,
   SidebarFooter,
-  SidebarInset
+  SidebarInset,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { ProfileHeader } from "@/components/broker/profile/profile-header";
 import { ProfileImageUpload } from "@/components/broker/profile/profile-image-upload";
@@ -65,21 +66,38 @@ const BrokerProfile = () => {
     document.querySelector('form')?.dispatchEvent(submitEvent);
   };
   
+  const SidebarContent = () => {
+    const { state, toggleSidebar } = useSidebar();
+    const isCollapsed = state === "collapsed";
+    
+    return (
+      <>
+        <SidebarHeader>
+          <SidebarLogo 
+            isCollapsed={isCollapsed} 
+            handleToggleCollapse={toggleSidebar} 
+          />
+        </SidebarHeader>
+        
+        <SidebarContent>
+          <SidebarNavigation isCollapsed={isCollapsed} />
+        </SidebarContent>
+        
+        <SidebarFooter>
+          <BrokerSidebarFooter 
+            isCollapsed={isCollapsed} 
+            handleToggleCollapse={toggleSidebar} 
+          />
+        </SidebarFooter>
+      </>
+    );
+  };
+  
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
         <Sidebar>
-          <SidebarHeader>
-            <SidebarLogo />
-          </SidebarHeader>
-          
-          <SidebarContent>
-            <SidebarNavigation />
-          </SidebarContent>
-          
-          <SidebarFooter>
-            <BrokerSidebarFooter />
-          </SidebarFooter>
+          <SidebarContent />
         </Sidebar>
         
         <SidebarInset>

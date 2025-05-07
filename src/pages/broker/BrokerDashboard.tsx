@@ -6,7 +6,8 @@ import {
   SidebarProvider, 
   SidebarHeader,
   SidebarFooter,
-  SidebarInset
+  SidebarInset,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
 import { StatsGrid } from "@/components/broker/dashboard/stats-grid";
@@ -83,21 +84,38 @@ const BrokerDashboard = () => {
     // Redirect or open modal logic would go here
   };
   
+  const SidebarContent = () => {
+    const { state, toggleSidebar } = useSidebar();
+    const isCollapsed = state === "collapsed";
+    
+    return (
+      <>
+        <SidebarHeader>
+          <SidebarLogo 
+            isCollapsed={isCollapsed} 
+            handleToggleCollapse={toggleSidebar} 
+          />
+        </SidebarHeader>
+        
+        <SidebarContent>
+          <SidebarNavigation isCollapsed={isCollapsed} />
+        </SidebarContent>
+        
+        <SidebarFooter>
+          <BrokerSidebarFooter 
+            isCollapsed={isCollapsed} 
+            handleToggleCollapse={toggleSidebar} 
+          />
+        </SidebarFooter>
+      </>
+    );
+  };
+  
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden bg-cyrela-gray-lightest">
         <Sidebar>
-          <SidebarHeader>
-            <SidebarLogo />
-          </SidebarHeader>
-          
-          <SidebarContent>
-            <SidebarNavigation />
-          </SidebarContent>
-          
-          <SidebarFooter>
-            <BrokerSidebarFooter />
-          </SidebarFooter>
+          <SidebarContent />
         </Sidebar>
         
         <SidebarInset>
