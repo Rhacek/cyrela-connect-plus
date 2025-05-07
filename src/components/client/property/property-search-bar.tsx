@@ -35,7 +35,7 @@ export function PropertySearchBar({
           </div>
           
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button variant="outline" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)} className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-300">
+            <Button variant="outline" onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)} className="flex-1 md:flex-none bg-white text-cyrela-blue border-white hover:bg-cyrela-gray-lighter font-medium text-slate-400">
               {isMobileFilterOpen ? <>
                   <X size={16} className="mr-2 shrink-0" />
                   <span className="font-medium">Fechar filtros</span>
