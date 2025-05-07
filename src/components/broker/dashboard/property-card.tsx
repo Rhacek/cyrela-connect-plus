@@ -62,7 +62,6 @@ export function PropertyCard({ property, showActions = true, className }: Proper
   return (
     <Card className={cn(
       "overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full",
-      property.isHighlighted && "border-living-gold border-2",
       className
     )}>
       <div className="relative">
