@@ -25,8 +25,8 @@ export function PropertyListings({ properties }: PropertyListingsProps) {
         </div>
       </div>
       
-      {/* Adjusted grid layout for all screen sizes */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
+      {/* Grid layout with optimized spacing and column count */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
         {properties.map(property => (
           <PropertyCard 
             key={property.id} 

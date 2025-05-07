@@ -13,6 +13,8 @@ import { PropertyFilterProps, FilterCategory } from "./filter-types";
 import { SearchInput } from "./search-input";
 import { PriceRangeFilter } from "./price-range-filter";
 import { LocationFilter } from "./location-filter";
+import { ConstructionStageFilter } from "./construction-stage-filter";
+import { FeaturesFilter } from "./features-filter";
 
 export function PropertyFilter({ 
   className, 
@@ -38,6 +40,7 @@ export function PropertyFilter({
       const filters = {
         searchQuery,
         priceRange,
+        ...selectedFilters
       };
       onApplyFilters(filters);
     }
@@ -75,7 +78,7 @@ export function PropertyFilter({
             </AccordionContent>
           </AccordionItem>
           
-          <AccordionItem value="location" className="border-b-0">
+          <AccordionItem value="location" className="border-b border-cyrela-gray-lighter">
             <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Localização</AccordionTrigger>
             <AccordionContent>
               <LocationFilter 
@@ -86,6 +89,26 @@ export function PropertyFilter({
                 }}
                 selectedZone={selectedFilters.zone[0] || null}
                 onFilterClick={(category, id) => onFilterChange(category as FilterCategory, id)}
+              />
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="constructionStage" className="border-b border-cyrela-gray-lighter">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Estágio de construção</AccordionTrigger>
+            <AccordionContent>
+              <ConstructionStageFilter 
+                selectedFilters={selectedFilters.constructionStage}
+                onFilterClick={(id) => onFilterChange("constructionStage", id)}
+              />
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="features" className="border-b-0">
+            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Características</AccordionTrigger>
+            <AccordionContent>
+              <FeaturesFilter 
+                selectedFilters={selectedFilters.bedrooms}
+                onFilterClick={(id) => onFilterChange("bedrooms", id)}
               />
             </AccordionContent>
           </AccordionItem>
