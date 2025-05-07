@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { PropertyHeader } from "@/components/client/property/property-header";
@@ -8,6 +7,7 @@ import { MobileActions } from "@/components/client/property/mobile-actions";
 import { QuickFilters } from "@/components/client/property/quick-filters";
 import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
+import { UnifiedFilterCard } from "@/components/client/property/unified-filter-card";
 
 const PropertyListingPage = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -82,60 +82,48 @@ const PropertyListingPage = () => {
       {/* Header */}
       <PropertyHeader />
       
-      {/* Search bar transformed into location filter */}
-      <PropertySearchBar 
-        selectedFilters={{
-          city: selectedFilters.city,
-          zone: selectedFilters.zone
-        }}
-        onFilterChange={handleFilterChange}
-      />
-      
       <div className="flex-1 container mx-auto px-2 sm:px-3 md:px-4 py-2 md:py-4 max-w-full">
-        {/* Quick filters */}
-        <QuickFilters 
-          selectedFilters={{
-            constructionStage: selectedFilters.constructionStage,
-            bedrooms: selectedFilters.bedrooms
-          }}
-          onFilterChange={handleFilterChange}
-        />
+        {/* Properties Found - Moved to top */}
+        <PropertyListings properties={mockProperties} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 mt-3">
-          {/* Sidebar filters */}
-          <div className={`
-            ${isMobileFilterOpen ? 'fixed' : 'hidden'} 
-            lg:block lg:relative top-[133px] lg:top-0 left-0 w-full h-[calc(100vh-133px)] lg:h-auto lg:w-auto
-            z-50 bg-cyrela-gray-lightest lg:bg-transparent
-            overflow-y-auto lg:overflow-visible p-4 lg:p-0
-            lg:col-span-3
-          `}>
-            <div className="sticky top-4">
-              <div className="flex justify-between items-center lg:hidden mb-4">
-                <h2 className="text-lg font-semibold">Filtros</h2>
-                <button
-                  className="text-cyrela-gray-dark hover:text-cyrela-blue"
-                  onClick={() => setIsMobileFilterOpen(false)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              <PropertyFilter 
-                selectedFilters={selectedFilters}
-                onFilterChange={handleFilterChange}
-                onApplyFilters={handleApplyFilters}
-                onReset={handleResetFilters}
-                className="max-h-[calc(100vh-180px)] lg:max-h-full overflow-auto"
-              />
+        {/* Unified Filter Card - New Search Section */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold text-cyrela-gray-dark mb-3">
+            Fazer Nova Busca
+          </h2>
+          <UnifiedFilterCard
+            selectedFilters={selectedFilters}
+            onFilterChange={handleFilterChange}
+          />
+        </div>
+        
+        {/* Sidebar filters - Only visible in mobile when filter is open */}
+        <div className={`
+          ${isMobileFilterOpen ? 'fixed' : 'hidden'} 
+          lg:hidden lg:relative top-[133px] lg:top-0 left-0 w-full h-[calc(100vh-133px)] lg:h-auto lg:w-auto
+          z-50 bg-cyrela-gray-lightest lg:bg-transparent
+          overflow-y-auto lg:overflow-visible p-4 lg:p-0
+        `}>
+          <div className="sticky top-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Filtros</h2>
+              <button
+                className="text-cyrela-gray-dark hover:text-cyrela-blue"
+                onClick={() => setIsMobileFilterOpen(false)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
             </div>
-          </div>
-          
-          {/* Property listings - adjusted to take full width */}
-          <div className="lg:col-span-9 w-full">
-            <PropertyListings properties={mockProperties} />
+            <PropertyFilter 
+              selectedFilters={selectedFilters}
+              onFilterChange={handleFilterChange}
+              onApplyFilters={handleApplyFilters}
+              onReset={handleResetFilters}
+              className="max-h-[calc(100vh-180px)] overflow-auto"
+            />
           </div>
         </div>
       </div>
