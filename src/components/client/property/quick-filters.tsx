@@ -89,8 +89,8 @@ export function QuickFilters({
               Filtros rápidos:
             </div>
             
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
-              <div className="col-span-full mb-1">
+            <div className="flex-1 grid grid-cols-4 gap-2">
+              <div className="col-span-4 mb-1">
                 <div className="text-xs text-cyrela-gray-dark">Estágio</div>
               </div>
               {constructionStages.map((stage) => (
@@ -106,8 +106,8 @@ export function QuickFilters({
               ))}
             </div>
             
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2 pl-2 border-l border-cyrela-gray-lighter">
-              <div className="col-span-full mb-1">
+            <div className="flex-1 grid grid-cols-4 gap-2 pl-2 border-l border-cyrela-gray-lighter">
+              <div className="col-span-4 mb-1">
                 <div className="text-xs text-cyrela-gray-dark">Dormitórios</div>
               </div>
               {bedrooms.map((bedroom) => (
