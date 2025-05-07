@@ -1,8 +1,11 @@
 
-import { Share, MapPin, Bed, Bath, Square, Car, Check, Construction, Building } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Property, PropertyStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface PropertyCardProps {
   property: Property;
@@ -45,108 +48,106 @@ export function PropertyCard({ property, showActions = true, className }: Proper
     });
   };
 
+  // Simulating delivery date (in a real app this would come from the API)
+  const getDeliveryDate = () => {
+    if (property.constructionStage === "Pronto para morar") {
+      return "Pronto";
+    } else if (property.constructionStage === "Em construção") {
+      return "Dez 2025";
+    } else {
+      return "Jun 2027";
+    }
+  };
+
   return (
-    <div className={cn(
-      "bg-white rounded-lg overflow-hidden shadow-sm border border-cyrela-gray-lighter hover:shadow-md transition-all duration-200 flex flex-col h-full",
-      property.isHighlighted && "border-living-gold",
+    <Card className={cn(
+      "overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full",
+      property.isHighlighted && "border-living-gold border-2",
       className
     )}>
       <div className="relative">
         <img
           src={property.images[0]?.url || "/placeholder.svg"}
           alt={property.title}
-          className="w-full h-32 sm:h-48 object-cover"
+          className="w-full h-48 sm:h-56 object-cover"
         />
         
-        <div className="absolute top-0 left-0 right-0 p-2 sm:p-3 flex justify-between">
-          <span className={cn(
-            "px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded font-inter max-w-[100px] sm:max-w-[120px] truncate flex items-center",
+        <div className="absolute top-0 left-0 p-2 sm:p-3 flex flex-col gap-1.5">
+          <Badge className={cn(
+            "px-2 py-1 text-xs font-medium rounded-full flex items-center",
             getConstructionStageColor(property.constructionStage)
           )}>
             {getConstructionStageIcon(property.constructionStage)}
             {property.constructionStage || "Não informado"}
-          </span>
+          </Badge>
           
           {property.isHighlighted && (
-            <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded bg-living-gold text-white font-inter">
+            <Badge variant="outline" className="bg-living-gold text-white border-living-gold px-2 py-1 text-xs font-medium rounded-full">
               Destaque
-            </span>
+            </Badge>
           )}
         </div>
       </div>
       
-      <div className="p-3 sm:p-4 flex flex-col flex-grow">
-        <div className="mb-2 sm:mb-3">
-          <h3 className="font-semibold text-sm sm:text-base line-clamp-1 font-poppins">{property.title}</h3>
-          <div className="flex items-center mt-0.5 sm:mt-1 text-cyrela-gray-dark text-xs sm:text-sm font-inter">
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="mb-3">
+          <h3 className="font-semibold text-base sm:text-lg line-clamp-1 font-poppins">{property.title}</h3>
+          <div className="flex items-center mt-1 text-cyrela-gray-dark text-xs sm:text-sm font-inter">
             <MapPin size={14} className="mr-1 shrink-0" />
             <span className="line-clamp-1">
               {property.neighborhood}, {property.city}
             </span>
           </div>
+          <div className="text-xs text-cyrela-gray-medium mt-1">
+            Entrega: {getDeliveryDate()}
+          </div>
         </div>
         
-        <div className="mb-2 sm:mb-3">
+        <div className="flex items-center justify-between text-xs text-cyrela-gray-dark mb-3">
           <div className="flex items-center">
-            <span className="text-xs text-cyrela-gray-dark font-inter">Valor</span>
+            <div className="flex items-center mr-3">
+              <Square size={14} className="mr-1" />
+              <span>{property.area}m²</span>
+            </div>
+            
+            <Separator orientation="vertical" className="h-4 mx-2 bg-cyrela-gray-lighter" />
+            
+            <div className="flex items-center mr-3">
+              <Bed size={14} className="mr-1" />
+              <span>{property.bedrooms}</span>
+            </div>
+            
+            <Separator orientation="vertical" className="h-4 mx-2 bg-cyrela-gray-lighter" />
+            
+            <div className="flex items-center">
+              <Bath size={14} className="mr-1" />
+              <span>{property.bathrooms}</span>
+            </div>
           </div>
-          <div className="flex items-center mt-0.5 sm:mt-1">
-            <span className="text-base sm:text-lg font-bold text-primary font-poppins">
+        </div>
+        
+        <Separator className="bg-cyrela-gray-lighter mb-3" />
+        
+        <div className="mb-4">
+          <span className="text-xs text-cyrela-gray-medium">A partir de:</span>
+          <div className="flex items-center mt-0.5">
+            <span className="text-lg sm:text-xl font-bold text-primary font-poppins">
               {formatCurrency(property.price)}
             </span>
           </div>
         </div>
         
-        <div className="grid grid-cols-4 gap-1 sm:gap-2 text-xs font-inter mt-auto mb-2 sm:mb-3">
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center">
-              <Bed size={14} className="text-cyrela-gray-dark" />
-            </div>
-            <span className="mt-0.5 sm:mt-1">{property.bedrooms}</span>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center">
-              <Bath size={14} className="text-cyrela-gray-dark" />
-            </div>
-            <span className="mt-0.5 sm:mt-1">{property.bathrooms}</span>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center">
-              <Square size={14} className="text-cyrela-gray-dark" />
-            </div>
-            <span className="mt-0.5 sm:mt-1">{property.area}m²</span>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <div className="flex items-center justify-center">
-              <Car size={14} className="text-cyrela-gray-dark" />
-            </div>
-            <span className="mt-0.5 sm:mt-1">{property.parkingSpaces}</span>
-          </div>
-        </div>
-        
         {showActions && (
-          <div className="pt-2 sm:pt-3 border-t border-cyrela-gray-lighter flex justify-between mt-auto">
+          <div className="mt-auto">
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-white border-primary text-primary hover:bg-cyrela-gray-lighter font-inter text-xs px-1.5 sm:px-2 py-0.5 h-auto"
+              className="w-full bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-sm py-2 h-10 flex items-center justify-center" 
             >
-              <Share size={12} className="mr-1 shrink-0" />
-              <span className="truncate">Compartilhar</span>
-            </Button>
-            
-            <Button 
-              className="bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-xs px-1.5 sm:px-2 py-0.5 h-auto" 
-              size="sm"
-            >
-              Ver detalhes
+              Agendar visita
+              <ArrowRight size={16} className="ml-1" />
             </Button>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
