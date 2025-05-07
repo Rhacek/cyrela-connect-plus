@@ -9,7 +9,7 @@ export function PropertyHeader() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <AppLogo />
         
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <Button
             variant="outline"
             size="sm"
