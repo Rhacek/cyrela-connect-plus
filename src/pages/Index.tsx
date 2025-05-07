@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
 
@@ -127,7 +128,7 @@ const Index = () => {
           
           <Button
             className="py-6 px-8 text-lg cyrela-button-primary animate-fade-in"
-            onClick={() => window.location.href = "/auth"}
+            onClick={() => window.location.href = "/client/welcome"}
           >
             Começar agora
           </Button>
