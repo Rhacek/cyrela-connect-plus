@@ -14,6 +14,7 @@ import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar
 
 export default function BrokerSchedule() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([
     {
       id: "1",
@@ -41,13 +42,20 @@ export default function BrokerSchedule() {
     }
   ]);
 
-  // Filter appointments for the selected date
+  // Filter appointments for the selected date and type
   const filteredAppointments = appointments.filter(
-    appointment => 
-      date && 
-      appointment.date.getDate() === date.getDate() &&
-      appointment.date.getMonth() === date.getMonth() &&
-      appointment.date.getFullYear() === date.getFullYear()
+    appointment => {
+      // Date filter
+      const dateMatches = date && 
+        appointment.date.getDate() === date.getDate() &&
+        appointment.date.getMonth() === date.getMonth() &&
+        appointment.date.getFullYear() === date.getFullYear();
+      
+      // Type filter
+      const typeMatches = typeFilter.length === 0 || typeFilter.includes(appointment.type);
+      
+      return dateMatches && typeMatches;
+    }
   );
 
   // Format the selected date for display
@@ -76,6 +84,8 @@ export default function BrokerSchedule() {
                   <AppointmentsCard 
                     formattedSelectedDate={formattedSelectedDate}
                     filteredAppointments={filteredAppointments}
+                    typeFilter={typeFilter}
+                    setTypeFilter={setTypeFilter}
                   />
                 </div>
               </div>

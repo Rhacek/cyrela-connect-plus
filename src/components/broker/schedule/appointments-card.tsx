@@ -4,21 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AppointmentsList } from "./appointments-list";
 import { Appointment } from "./appointment-item";
+import { AppointmentTypeFilter } from "./appointment-type-filter";
 
 interface AppointmentsCardProps {
   formattedSelectedDate: string;
   filteredAppointments: Appointment[];
+  typeFilter: string[];
+  setTypeFilter: (types: string[]) => void;
 }
 
-export function AppointmentsCard({ formattedSelectedDate, filteredAppointments }: AppointmentsCardProps) {
+export function AppointmentsCard({ 
+  formattedSelectedDate, 
+  filteredAppointments,
+  typeFilter,
+  setTypeFilter
+}: AppointmentsCardProps) {
   return (
     <Card className="h-full border-cyrela-gray-lighter shadow-md">
       <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-cyrela-gray-lighter">
-        <CardTitle className="text-lg">
-          <span className="capitalize">
-            {formattedSelectedDate}
-          </span>
-        </CardTitle>
+        <div className="space-y-1">
+          <CardTitle className="text-lg">
+            <span className="capitalize">
+              {formattedSelectedDate}
+            </span>
+          </CardTitle>
+          <AppointmentTypeFilter 
+            selectedTypes={typeFilter} 
+            onFilterChange={setTypeFilter} 
+          />
+        </div>
         <Button size="sm" className="shadow-sm">
           <Plus className="h-4 w-4 mr-1" />
           Novo
