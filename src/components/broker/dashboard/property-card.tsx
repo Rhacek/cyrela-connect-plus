@@ -81,9 +81,9 @@ export function PropertyCard({ property, showActions = true, className }: Proper
         {/* Star icon for highlighted properties in top-right */}
         {property.isHighlighted && (
           <div className="absolute top-2 right-2 z-20">
-            <div className="bg-black bg-opacity-40 rounded-full p-1.5 flex items-center justify-center w-8 h-8">
+            <div className="flex items-center justify-center bg-black bg-opacity-40 rounded-full w-8 h-8">
               <Star 
-                size={20} 
+                size={18} 
                 className="text-white fill-white animate-pulse"
               />
             </div>
