@@ -8,45 +8,38 @@ import {
   BarChart, 
   Share
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function CollapsedNavLinks() {
+interface CollapsedNavLinksProps {
+  currentPath: string;
+}
+
+export function CollapsedNavLinks({ currentPath }: CollapsedNavLinksProps) {
+  const routes = [
+    { path: "/broker/dashboard", icon: Home },
+    { path: "/broker/profile", icon: User },
+    { path: "/broker/properties", icon: Building },
+    { path: "/broker/leads", icon: Users },
+    { path: "/broker/schedule", icon: Calendar },
+    { path: "/broker/metrics", icon: BarChart },
+    { path: "/broker/share", icon: Share }
+  ];
+
   return (
     <>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/dashboard" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <Home size={24} className="text-primary" />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/profile" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <User size={24} />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/properties" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <Building size={24} />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/leads" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <Users size={24} />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/schedule" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <Calendar size={24} />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/metrics" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <BarChart size={24} />
-        </a>
-      </div>
-      <div className="flex justify-center mb-6">
-        <a href="/broker/share" className="p-3 hover:bg-cyrela-gray-lighter rounded-full">
-          <Share size={24} />
-        </a>
-      </div>
+      {routes.map((route) => (
+        <div key={route.path} className="flex justify-center mb-6">
+          <a 
+            href={route.path} 
+            className={cn(
+              "p-3 hover:bg-cyrela-gray-lighter rounded-full",
+              currentPath === route.path ? "bg-primary text-white hover:bg-primary hover:bg-opacity-90" : ""
+            )}
+          >
+            <route.icon size={24} className={currentPath === route.path ? "text-white" : currentPath === "/broker/dashboard" && route.path === "/broker/dashboard" ? "text-primary" : ""} />
+          </a>
+        </div>
+      ))}
     </>
   );
 }
