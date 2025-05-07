@@ -26,7 +26,9 @@ const WelcomePage = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
         <header className="p-6 flex justify-between items-center">
-          <AppLogo variant="full" className="text-white" />
+          <div className="flex items-center pl-2">
+            <AppLogo variant="full" className="text-white" size="lg" />
+          </div>
           <Button 
             variant="outline" 
             className="border-white/20 text-white bg-transparent hover:bg-white/10"
