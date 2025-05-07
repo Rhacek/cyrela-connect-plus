@@ -13,6 +13,7 @@ import BrokerProperties from "./pages/broker/BrokerProperties";
 import BrokerSchedule from "./pages/broker/BrokerSchedule";
 import BrokerLeads from "./pages/broker/BrokerLeads";
 import BrokerMetrics from "./pages/broker/BrokerMetrics";
+import BrokerShare from "./pages/broker/BrokerShare";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/broker/schedule" element={<BrokerSchedule />} />
           <Route path="/broker/leads" element={<BrokerLeads />} />
           <Route path="/broker/metrics" element={<BrokerMetrics />} />
+          <Route path="/broker/share" element={<BrokerShare />} />
           
           {/* Client routes */}
           <Route path="/client/onboarding" element={<OnboardingPage />} />
