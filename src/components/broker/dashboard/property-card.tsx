@@ -1,5 +1,5 @@
 
-import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight, Tag } from "lucide-react";
+import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Property, PropertyStatus } from "@/types";
 import { cn } from "@/lib/utils";
@@ -63,6 +63,7 @@ export function PropertyCard({ property, showActions = true, className }: Proper
           className="w-full h-48 sm:h-56 object-cover"
         />
         
+        {/* Construction Stage Badge in top-left */}
         <div className="absolute top-0 left-0 p-2 sm:p-3 flex flex-col gap-1.5">
           {/* Dark translucent background for badges */}
           <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-40 rounded-lg z-0"></div>
@@ -75,18 +76,19 @@ export function PropertyCard({ property, showActions = true, className }: Proper
             {getConstructionStageIcon(property.constructionStage)}
             {property.constructionStage || "Não informado"}
           </Badge>
-          
-          {/* Highlight Badge */}
-          {property.isHighlighted && (
-            <Badge 
-              variant="outline" 
-              className="bg-white text-black border-transparent px-2.5 py-1 text-xs font-medium rounded-md flex items-center z-10 relative"
-            >
-              <Tag size={14} className="mr-1 text-black" />
-              Destaque
-            </Badge>
-          )}
         </div>
+        
+        {/* Star icon for highlighted properties in top-right */}
+        {property.isHighlighted && (
+          <div className="absolute top-2 right-2 z-20">
+            <div className="bg-black bg-opacity-40 rounded-full p-1.5">
+              <Star 
+                size={20} 
+                className="text-white fill-white animate-pulse"
+              />
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="p-4 flex flex-col flex-grow">
