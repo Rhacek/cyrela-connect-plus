@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -12,10 +12,12 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { CalendarClock, Clock, Plus } from "lucide-react";
+import { CalendarClock, Clock, Plus, CalendarDays } from "lucide-react";
 import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
 import { SidebarFooter as BrokerSidebarFooter } from "@/components/broker/sidebar/sidebar-footer";
 import { SidebarLogo } from "@/components/broker/sidebar/sidebar-logo";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type Appointment = {
   id: string;
@@ -64,6 +66,11 @@ export default function BrokerSchedule() {
       appointment.date.getFullYear() === date.getFullYear()
   );
 
+  // Format the selected date for display
+  const formattedSelectedDate = date 
+    ? format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
+    : "Selecione uma data";
+
   // Renamed from SidebarContent to BrokerSidebarContent to avoid conflict
   const BrokerSidebarContent = () => {
     const { state, toggleSidebar } = useSidebar();
@@ -104,54 +111,66 @@ export default function BrokerSchedule() {
             <div className="flex flex-col h-full w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
               <h1 className="text-2xl font-bold mb-6">Minha Agenda</h1>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1">
-                  <Card>
-                    <CardHeader className="pb-3">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-5 lg:col-span-4">
+                  <Card className="shadow-md border-cyrela-gray-lighter h-full flex flex-col">
+                    <CardHeader className="pb-2 border-b border-cyrela-gray-lighter">
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <CalendarClock className="h-5 w-5 text-primary" />
+                        <CalendarDays className="h-5 w-5 text-primary" />
                         Calendário
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        className="rounded-md border"
-                      />
+                    <CardContent className="flex-1 flex items-center justify-center p-0">
+                      <div className="w-full max-w-md mx-auto py-2">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          className="border-none shadow-none mx-auto"
+                          showOutsideDays
+                        />
+                      </div>
                     </CardContent>
+                    <CardFooter className="bg-cyrela-gray-lightest/50 py-3 px-4 border-t border-cyrela-gray-lighter flex justify-between items-center">
+                      <div className="text-sm font-medium text-cyrela-gray-dark">
+                        {date && (
+                          <span className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            {format(date, "dd/MM/yyyy")}
+                          </span>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs bg-white"
+                        onClick={() => setDate(new Date())}
+                      >
+                        Hoje
+                      </Button>
+                    </CardFooter>
                   </Card>
                 </div>
                 
-                <div className="md:col-span-2">
-                  <Card className="h-full">
-                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <div className="md:col-span-7 lg:col-span-8">
+                  <Card className="h-full border-cyrela-gray-lighter shadow-md">
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-cyrela-gray-lighter">
                       <CardTitle className="text-lg">
-                        {date ? (
-                          <span>
-                            {date.toLocaleDateString('pt-BR', {
-                              weekday: 'long',
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        ) : (
-                          "Compromissos"
-                        )}
+                        <span className="capitalize">
+                          {formattedSelectedDate}
+                        </span>
                       </CardTitle>
-                      <Button size="sm">
+                      <Button size="sm" className="shadow-sm">
                         <Plus className="h-4 w-4 mr-1" />
                         Novo
                       </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4">
                       {filteredAppointments.length === 0 ? (
                         <div className="text-center py-8 text-cyrela-gray-dark">
                           <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
                           <p>Nenhum compromisso agendado para esta data</p>
-                          <Button variant="outline" className="mt-4">
+                          <Button variant="outline" className="mt-4 shadow-sm hover:shadow">
                             <Plus className="h-4 w-4 mr-1" />
                             Adicionar compromisso
                           </Button>
@@ -163,7 +182,7 @@ export default function BrokerSchedule() {
                             .map((appointment) => (
                               <div 
                                 key={appointment.id} 
-                                className="flex items-start p-4 rounded-lg border border-cyrela-gray-lighter hover:border-primary transition-colors"
+                                className="flex items-start p-4 rounded-lg border border-cyrela-gray-lighter hover:border-primary hover:shadow-sm transition-all bg-white"
                               >
                                 <div className="mr-4 flex-shrink-0 flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center">
                                   <Clock className="h-5 w-5 text-primary" />
