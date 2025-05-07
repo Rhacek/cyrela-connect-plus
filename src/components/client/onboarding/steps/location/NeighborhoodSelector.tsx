@@ -36,7 +36,7 @@ export function NeighborhoodSelector({
             type="button"
             variant="outline"
             className={cn(
-              neighborhoods.includes(neighborhood.id) && "bg-cyrela-blue text-white"
+              neighborhoods.includes(neighborhood.id) && "bg-cyrela-blue text-black"
             )}
             onClick={() => toggleNeighborhood(neighborhood.id)}
             size="sm"
