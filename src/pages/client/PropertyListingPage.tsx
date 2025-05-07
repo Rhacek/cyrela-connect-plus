@@ -91,7 +91,7 @@ const PropertyListingPage = () => {
         onFilterChange={handleFilterChange}
       />
       
-      <div className="flex-1 container mx-auto px-4 py-4">
+      <div className="flex-1 container mx-auto px-2 sm:px-3 md:px-4 py-2 md:py-4 max-w-full">
         {/* Quick filters */}
         <QuickFilters 
           selectedFilters={{
@@ -101,7 +101,7 @@ const PropertyListingPage = () => {
           onFilterChange={handleFilterChange}
         />
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4 mt-3">
           {/* Sidebar filters */}
           <div className={`
             ${isMobileFilterOpen ? 'fixed' : 'hidden'} 
@@ -133,8 +133,8 @@ const PropertyListingPage = () => {
             </div>
           </div>
           
-          {/* Property listings */}
-          <div className="lg:col-span-9">
+          {/* Property listings - adjusted to take full width */}
+          <div className="lg:col-span-9 w-full">
             <PropertyListings properties={mockProperties} />
           </div>
         </div>

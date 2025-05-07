@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { FilterOption, FilterCategory, PropertyFilterProps } from "./property-filter/filter-types";
+
 interface FilterOption {
   id: string;
   label: string;
@@ -13,6 +15,8 @@ interface PropertyFilterProps {
   className?: string;
   onApplyFilters?: (filters: any) => void;
   onReset?: () => void;
+  selectedFilters?: Record<string, string[]>;
+  onFilterChange?: (category: FilterCategory, id: string) => void;
 }
 const constructionStages: FilterOption[] = [{
   id: "ready",
@@ -96,87 +100,84 @@ const bedrooms: FilterOption[] = [{
 export function PropertyFilter({
   className,
   onApplyFilters,
-  onReset
+  onReset,
+  selectedFilters,
+  onFilterChange
 }: PropertyFilterProps) {
   const [priceRange, setPriceRange] = useState([500000, 2000000]);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({
-    constructionStage: [],
-    city: [],
-    zone: [],
-    neighborhood: [],
-    bedrooms: []
-  });
-  const handleFilterClick = (category: string, id: string) => {
-    setSelectedFilters(prev => {
-      const current = [...(prev[category] || [])];
-      if (category === "zone") {
-        // If selecting a zone, clear neighborhoods
-        if (current.includes(id)) {
-          return {
-            ...prev,
-            [category]: current.filter(item => item !== id),
-            neighborhood: []
-          };
+  
+  const handleFilterClick = (category: FilterCategory, id: string) => {
+    if (onFilterChange) {
+      onFilterChange(category, id);
+    } else {
+      // Legacy handling for backward compatibility
+      setSelectedFilters(prev => {
+        const current = [...(prev[category] || [])];
+        if (category === "zone") {
+          // If selecting a zone, clear neighborhoods
+          if (current.includes(id)) {
+            return {
+              ...prev,
+              [category]: current.filter(item => item !== id),
+              neighborhood: []
+            };
+          } else {
+            // Only allow one zone selection
+            setSelectedZone(id);
+            return {
+              ...prev,
+              [category]: [id],
+              neighborhood: []
+            };
+          }
+        } else if (category === "neighborhood") {
+          // For neighborhoods, toggle selection
+          if (current.includes(id)) {
+            return {
+              ...prev,
+              [category]: current.filter(item => item !== id)
+            };
+          } else {
+            // Only allow up to 3 neighborhoods
+            if (current.length < 3) {
+              return {
+                ...prev,
+                [category]: [...current, id]
+              };
+            }
+            return prev;
+          }
         } else {
-          // Only allow one zone selection
-          setSelectedZone(id);
-          return {
-            ...prev,
-            [category]: [id],
-            neighborhood: []
-          };
-        }
-      } else if (category === "neighborhood") {
-        // For neighborhoods, toggle selection
-        if (current.includes(id)) {
-          return {
-            ...prev,
-            [category]: current.filter(item => item !== id)
-          };
-        } else {
-          // Only allow up to 3 neighborhoods
-          if (current.length < 3) {
+          // For other categories, toggle selection
+          if (current.includes(id)) {
+            return {
+              ...prev,
+              [category]: current.filter(item => item !== id)
+            };
+          } else {
             return {
               ...prev,
               [category]: [...current, id]
             };
           }
-          return prev;
         }
-      } else {
-        // For other categories, toggle selection
-        if (current.includes(id)) {
-          return {
-            ...prev,
-            [category]: current.filter(item => item !== id)
-          };
-        } else {
-          return {
-            ...prev,
-            [category]: [...current, id]
-          };
-        }
-      }
-    });
+      });
+    }
   };
+  
   const isFilterSelected = (category: string, id: string) => {
-    return selectedFilters[category]?.includes(id) || false;
+    return selectedFilters[category as FilterCategory]?.includes(id) || false;
   };
+  
   const handleReset = () => {
     setPriceRange([500000, 2000000]);
     setSelectedZone(null);
-    setSelectedFilters({
-      constructionStage: [],
-      city: [],
-      zone: [],
-      neighborhood: [],
-      bedrooms: []
-    });
     if (onReset) {
       onReset();
     }
   };
+  
   const handleApplyFilters = () => {
     if (onApplyFilters) {
       const filters = {
@@ -186,6 +187,7 @@ export function PropertyFilter({
       onApplyFilters(filters);
     }
   };
+  
   const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', {
       style: 'currency',
@@ -193,11 +195,8 @@ export function PropertyFilter({
       maximumFractionDigits: 0
     });
   };
+  
   return <div className={cn("bg-white border border-cyrela-gray-lighter rounded-lg shadow-sm overflow-hidden", className)}>
-      
-      
-      
-      
-      
-    </div>;
+    {/* Filter content would go here */}
+  </div>;
 }
