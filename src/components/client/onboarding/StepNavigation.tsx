@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, LoaderCircle } from "lucide-react";
 import { OnboardingStep } from "./types";
 
 interface StepNavigationProps {
@@ -9,6 +9,7 @@ interface StepNavigationProps {
   completedSteps: number[];
   canNavigateToStep: (stepIndex: number) => boolean;
   navigateToStep: (stepIndex: number) => void;
+  isLoading?: boolean;
 }
 
 export function StepNavigation({
@@ -16,18 +17,19 @@ export function StepNavigation({
   currentStep,
   completedSteps,
   canNavigateToStep,
-  navigateToStep
+  navigateToStep,
+  isLoading = false
 }: StepNavigationProps) {
   return (
     <div className="flex justify-between mb-8 items-center">
       {steps.map((_, index) => (
         <div 
           key={index}
-          onClick={() => navigateToStep(index)}
+          onClick={() => !isLoading && navigateToStep(index)}
           className={cn(
             "flex flex-col items-center cursor-pointer relative",
             {
-              "cursor-not-allowed opacity-60": !canNavigateToStep(index) && index !== currentStep,
+              "cursor-not-allowed opacity-60": (!canNavigateToStep(index) && index !== currentStep) || isLoading,
               "z-10": index === currentStep
             }
           )}
@@ -42,9 +44,13 @@ export function StepNavigation({
               }
             )}
           >
-            {completedSteps.includes(index) ? 
-              <Check className="h-4 w-4" /> : 
-              (index + 1)}
+            {isLoading && index === currentStep ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : completedSteps.includes(index) ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              (index + 1)
+            )}
           </div>
           
           {/* Line connecting steps */}
@@ -52,7 +58,7 @@ export function StepNavigation({
             <div className="absolute h-1 w-full top-4 left-1/2 -z-10">
               <div 
                 className={cn(
-                  "h-1 bg-cyrela-gray-lighter absolute top-0 left-0 w-full",
+                  "h-1 bg-cyrela-gray-lighter absolute top-0 left-0 w-full transition-colors duration-300",
                   {
                     "bg-cyrela-blue": completedSteps.includes(index) && completedSteps.includes(index + 1)
                   }

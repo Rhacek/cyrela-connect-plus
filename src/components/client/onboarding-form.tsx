@@ -12,10 +12,13 @@ import { LocationStep } from "./onboarding/steps/LocationStep";
 import { DetailsStep } from "./onboarding/steps/DetailsStep";
 import { ContactStep } from "./onboarding/steps/ContactStep";
 import { ReviewStep } from "./onboarding/steps/ReviewStep";
+import { Progress } from "@/components/ui/progress";
 
 export function OnboardingForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [formData, setFormData] = useState<OnboardingFormData>({
     objective: "",
     stage: "",
@@ -54,59 +57,97 @@ export function OnboardingForm() {
     }
   }, [formData, currentStep, completedSteps]);
 
+  // Loading progress effect
+  useEffect(() => {
+    if (isLoading) {
+      const interval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 25;
+        });
+      }, 75);
+
+      return () => clearInterval(interval);
+    } else {
+      setLoadingProgress(0);
+    }
+  }, [isLoading]);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Auto advance for radio buttons and selects
     if (field === "objective" || field === "stage") {
-      // Wait a moment for visual feedback before advancing
+      // Show loading indicator before advancing
+      setIsLoading(true);
       setTimeout(() => {
         setCurrentStep(prev => prev + 1);
-      }, 300);
+        setIsLoading(false);
+      }, 400);
     }
     
     // For other selects, auto advance if all required fields are filled
     if (field === "city" || field === "zone") {
       if (field === "zone" && value !== "zonasul") {
         // If zone is selected and it's not "zonasul", auto advance
+        setIsLoading(true);
         setTimeout(() => {
           setCurrentStep(prev => prev + 1);
-        }, 300);
+          setIsLoading(false);
+        }, 400);
       }
     }
     
     if (field === "neighborhoods") {
       // Auto advance if at least one neighborhood is selected
       if (value.length > 0) {
+        setIsLoading(true);
         setTimeout(() => {
           setCurrentStep(prev => prev + 1);
-        }, 300);
+          setIsLoading(false);
+        }, 400);
       }
     }
 
     // For bedrooms and budget, auto advance if both are filled
     if ((field === "bedrooms" && formData.budget) || 
         (field === "budget" && formData.bedrooms)) {
+      setIsLoading(true);
       setTimeout(() => {
         setCurrentStep(prev => prev + 1);
-      }, 300);
+        setIsLoading(false);
+      }, 400);
     }
   };
 
   const handleNext = () => {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1);
+      setIsLoading(true);
+      setTimeout(() => {
+        setCurrentStep(prev => prev + 1);
+        setIsLoading(false);
+      }, 400);
     } else {
       // Submit the form
-      console.log("Form submitted:", formData);
-      // Redirect to results
-      window.location.href = "/client/results";
+      setIsLoading(true);
+      setTimeout(() => {
+        console.log("Form submitted:", formData);
+        // Redirect to results
+        window.location.href = "/client/results";
+      }, 600);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+      setIsLoading(true);
+      setTimeout(() => {
+        setCurrentStep(prev => prev - 1);
+        setIsLoading(false);
+      }, 400);
     }
   };
 
@@ -130,7 +171,11 @@ export function OnboardingForm() {
 
   const navigateToStep = (stepIndex: number) => {
     if (canNavigateToStep(stepIndex)) {
-      setCurrentStep(stepIndex);
+      setIsLoading(true);
+      setTimeout(() => {
+        setCurrentStep(stepIndex);
+        setIsLoading(false);
+      }, 400);
     }
   };
 
@@ -164,10 +209,19 @@ export function OnboardingForm() {
           completedSteps={completedSteps}
           canNavigateToStep={canNavigateToStep}
           navigateToStep={navigateToStep}
+          isLoading={isLoading}
         />
         
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="my-4 animate-fade-in">
+            <Progress value={loadingProgress} className="h-1" />
+          </div>
+        )}
+        
         {/* Step content with animation */}
-        <div className="animate-fade-in">
+        <div className={cn("transition-all duration-300", 
+          isLoading ? "opacity-50 pointer-events-none" : "animate-fade-in")}>
           {currentStep === 0 && (
             <ObjectiveStep 
               value={formData.objective}
@@ -224,6 +278,7 @@ export function OnboardingForm() {
           canAdvance={canAdvanceToNextStep()}
           onNext={handleNext}
           onBack={handleBack}
+          isLoading={isLoading}
         />
       </div>
     </div>

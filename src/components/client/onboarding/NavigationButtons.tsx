@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 
 interface NavigationButtonsProps {
   currentStep: number;
@@ -9,6 +9,7 @@ interface NavigationButtonsProps {
   canAdvance: boolean;
   onNext: () => void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
 export function NavigationButtons({
@@ -16,7 +17,8 @@ export function NavigationButtons({
   totalSteps,
   canAdvance,
   onNext,
-  onBack
+  onBack,
+  isLoading = false
 }: NavigationButtonsProps) {
   return (
     <div className="mt-8 flex justify-between">
@@ -26,8 +28,13 @@ export function NavigationButtons({
           variant="outline"
           onClick={onBack}
           className="flex-1 mr-2"
+          disabled={isLoading}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          {isLoading ? (
+            <LoaderCircle className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <ArrowLeft className="h-4 w-4 mr-2" />
+          )}
           Voltar
         </Button>
       ) : (
@@ -40,12 +47,26 @@ export function NavigationButtons({
         className={cn(
           "flex-1 ml-2 bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white",
           {
-            "pointer-events-none opacity-50": !canAdvance
+            "pointer-events-none opacity-50": !canAdvance || isLoading
           }
         )}
+        disabled={!canAdvance || isLoading}
       >
-        {currentStep === totalSteps - 1 ? "Finalizar" : "Próximo"}
-        {currentStep !== totalSteps - 1 && <ArrowRight className="h-4 w-4 ml-2" />}
+        {currentStep === totalSteps - 1 ? (
+          <>
+            {isLoading && <LoaderCircle className="h-4 w-4 mr-2 animate-spin" />}
+            Finalizar
+          </>
+        ) : (
+          <>
+            Próximo
+            {isLoading ? (
+              <LoaderCircle className="h-4 w-4 ml-2 animate-spin" />
+            ) : (
+              <ArrowRight className="h-4 w-4 ml-2" />
+            )}
+          </>
+        )}
       </Button>
     </div>
   );
