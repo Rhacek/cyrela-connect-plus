@@ -1,6 +1,8 @@
 
 import { Property, PropertyStatus } from "@/types";
 
+export { PropertyStatus } from "@/types";
+
 export const mockProperties: Property[] = [
   {
     id: "1",
@@ -144,4 +146,74 @@ export const mockProperties: Property[] = [
       }
     ]
   },
+  {
+    id: "5",
+    title: "Cyrela Landscape Perdizes",
+    description: "Vista panorâmica da cidade",
+    type: "Apartamento",
+    status: PropertyStatus.RESERVED,
+    price: 1950000,
+    area: 125,
+    bedrooms: 3,
+    bathrooms: 2,
+    suites: 1,
+    parkingSpaces: 2,
+    address: "Rua Diana, 500",
+    neighborhood: "Perdizes",
+    city: "São Paulo",
+    state: "SP",
+    zipCode: "05019-000",
+    constructionStage: "Em construção",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdById: "1",
+    isActive: true,
+    isHighlighted: false,
+    viewCount: 78,
+    shareCount: 15,
+    images: [
+      {
+        id: "5",
+        propertyId: "5",
+        url: "https://cdn.pixabay.com/photo/2016/11/29/03/53/architecture-1867187_1280.jpg",
+        isMain: true,
+        order: 1
+      }
+    ]
+  },
+  {
+    id: "6",
+    title: "Living Urban Vila Madalena",
+    description: "Próximo a bares e restaurantes",
+    type: "Apartamento",
+    status: PropertyStatus.SOLD,
+    price: 1100000,
+    area: 85,
+    bedrooms: 2,
+    bathrooms: 1,
+    suites: 1,
+    parkingSpaces: 1,
+    address: "Rua Girassol, 350",
+    neighborhood: "Vila Madalena",
+    city: "São Paulo",
+    state: "SP",
+    zipCode: "05433-000",
+    constructionStage: "Pronto para morar",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdById: "1",
+    isActive: true,
+    isHighlighted: false,
+    viewCount: 102,
+    shareCount: 22,
+    images: [
+      {
+        id: "6",
+        propertyId: "6",
+        url: "https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181960_1280.jpg",
+        isMain: true,
+        order: 1
+      }
+    ]
+  }
 ];
