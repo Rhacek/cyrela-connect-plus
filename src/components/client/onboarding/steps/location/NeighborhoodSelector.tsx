@@ -35,7 +35,7 @@ export function NeighborhoodSelector({
 
   return (
     <div className="space-y-2 animate-fade-in">
-      <Label>Selecione até 3 bairros</Label>
+      <Label>Selecione pelo menos 1 bairro (máximo 3)</Label>
       <div className="grid grid-cols-2 gap-2">
         {availableNeighborhoods.map((neighborhood) => (
           <Button
