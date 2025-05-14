@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
@@ -20,10 +19,8 @@ export default function BrokerShare() {
     const propertyInfo = sharedLinks.find(link => link.propertyId === propertyId)?.property;
     
     if (!propertyInfo) {
-      toast({
-        title: "Erro ao criar link",
-        description: "Não foi possível encontrar o imóvel selecionado",
-        variant: "destructive",
+      toast.error("Erro ao criar link", {
+        description: "Não foi possível encontrar o imóvel selecionado"
       });
       return;
     }
@@ -60,9 +57,8 @@ export default function BrokerShare() {
     };
     setStats(updatedStats);
     
-    toast({
-      title: "Link criado com sucesso!",
-      description: "O link foi criado e já está disponível para compartilhamento",
+    toast.success("Link criado com sucesso!", {
+      description: "O link foi criado e já está disponível para compartilhamento"
     });
   };
 

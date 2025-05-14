@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,9 +23,8 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
 
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url);
-    toast({
-      title: "Link copiado!",
-      description: "Link copiado para a área de transferência",
+    toast.success("Link copiado!", {
+      description: "Link copiado para a área de transferência"
     });
   };
 

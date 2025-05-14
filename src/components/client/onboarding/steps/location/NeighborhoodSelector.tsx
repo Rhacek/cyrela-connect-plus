@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface NeighborhoodSelectorProps {
   neighborhoods: string[];
@@ -25,10 +24,8 @@ export function NeighborhoodSelector({
     } else if (newNeighborhoods.length < 3) {
       onNeighborhoodsChange([...newNeighborhoods, neighborhood]);
     } else {
-      toast({
-        title: "Limite atingido",
-        description: "Você só pode selecionar até 3 bairros",
-        variant: "destructive",
+      toast.error("Limite atingido", {
+        description: "Você só pode selecionar até 3 bairros"
       });
     }
   };

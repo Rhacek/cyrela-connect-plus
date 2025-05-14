@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Property } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarClock, Heart, MessageSquare, Share } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 interface PropertyActionsProps {
@@ -21,19 +20,17 @@ export function PropertyActions({ property }: PropertyActionsProps) {
 
   const handleContactBroker = () => {
     // For now just show a toast, later we can implement a contact form
-    toast({
-      title: "Contato iniciado",
-      description: "Um corretor entrará em contato com você em breve.",
+    toast.success("Contato iniciado", {
+      description: "Um corretor entrará em contato com você em breve."
     });
   };
 
   const handleToggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    toast({
-      title: isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
+    toast.success(isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos", {
       description: isFavorite 
         ? "O imóvel foi removido da sua lista de favoritos" 
-        : "O imóvel foi adicionado à sua lista de favoritos",
+        : "O imóvel foi adicionado à sua lista de favoritos"
     });
   };
 
@@ -45,16 +42,14 @@ export function PropertyActions({ property }: PropertyActionsProps) {
         url: window.location.href,
       })
       .catch(() => {
-        toast({
-          title: "Link copiado",
-          description: "O link do imóvel foi copiado para a área de transferência",
+        toast.success("Link copiado", {
+          description: "O link do imóvel foi copiado para a área de transferência"
         });
         navigator.clipboard.writeText(window.location.href);
       });
     } else {
-      toast({
-        title: "Link copiado",
-        description: "O link do imóvel foi copiado para a área de transferência",
+      toast.success("Link copiado", {
+        description: "O link do imóvel foi copiado para a área de transferência"
       });
       navigator.clipboard.writeText(window.location.href);
     }

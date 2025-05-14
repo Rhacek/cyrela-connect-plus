@@ -1,4 +1,3 @@
-
 import { FilterButton } from "./filter-button";
 import { cities, zones, zoneNeighborhoods } from "./filter-data";
 import { useState, useEffect } from "react";
@@ -28,10 +27,8 @@ export function LocationFilter({
     
     // Don't allow more than 3 neighborhoods
     if (selectedFilters.neighborhood.length >= 3) {
-      toast({
-        title: "Limite atingido",
-        description: "Você só pode selecionar até 3 bairros",
-        variant: "destructive",
+      toast.error("Limite atingido", {
+        description: "Você só pode selecionar até 3 bairros"
       });
       return;
     }

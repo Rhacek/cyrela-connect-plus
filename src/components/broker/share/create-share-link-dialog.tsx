@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,10 +38,8 @@ export function CreateShareLinkDialog({
     e.preventDefault();
     
     if (!selectedPropertyId) {
-      toast({
-        title: "Selecione um imóvel",
-        description: "É necessário selecionar um imóvel para gerar o link",
-        variant: "destructive",
+      toast.error("Selecione um imóvel", {
+        description: "É necessário selecionar um imóvel para gerar o link"
       });
       return;
     }
