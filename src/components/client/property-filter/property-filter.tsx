@@ -29,37 +29,49 @@ export function PropertyFilter({
   className
 }: PropertyFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Get the selected zone
   const selectedZone = selectedFilters.zone.length > 0 ? selectedFilters.zone[0] : null;
 
   const handleApplyFilters = () => {
-    onApplyFilters(selectedFilters);
+    onApplyFilters({...selectedFilters, search: searchValue});
     toast.success("Filtros aplicados com sucesso!");
     setIsOpen(false);
   };
 
   const handleClearFilters = () => {
     onReset();
+    setSearchValue("");
     toast.info("Filtros limpos com sucesso!");
   };
 
   const filterContent = (
     <div className="flex flex-col gap-6">
       <LocationFilter
-        selectedFilters={selectedFilters}
+        selectedFilters={{
+          city: selectedFilters.city,
+          zone: selectedFilters.zone,
+          neighborhood: selectedFilters.neighborhood
+        }}
         selectedZone={selectedZone}
         onFilterClick={onFilterChange}
       />
       
-      <PriceRangeFilter />
+      <PriceRangeFilter 
+        priceRange={[300000, 2000000]} 
+        onPriceRangeChange={(range) => console.log("Price range changed", range)}
+      />
       
-      <FeaturesFilter />
+      <FeaturesFilter 
+        selectedFilters={selectedFilters.bedrooms}
+        onFilterClick={(id) => onFilterChange("bedrooms", id)}
+      />
       
       <ConstructionStageFilter
-        stage={selectedFilters.constructionStage}
-        onChange={(value) => onFilterChange("constructionStage", value)}
+        selectedFilters={selectedFilters.constructionStage}
+        onFilterClick={(id) => onFilterChange("constructionStage", id)}
       />
       
       <div className="flex gap-3 mt-4">
@@ -87,6 +99,8 @@ export function PropertyFilter({
       <div className={`mb-6 ${className || ''}`}>
         <div className="flex gap-3">
           <SearchInput
+            value={searchValue}
+            onChange={setSearchValue}
             onSearch={handleApplyFilters}
             className="flex-1"
           />
@@ -122,6 +136,8 @@ export function PropertyFilter({
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="md:col-span-5">
           <SearchInput
+            value={searchValue}
+            onChange={setSearchValue}
             onSearch={handleApplyFilters}
           />
         </div>

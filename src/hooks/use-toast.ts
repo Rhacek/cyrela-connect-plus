@@ -1,6 +1,6 @@
 
 import { toast as sonnerToast } from "sonner";
-import { type ToasterProps } from "sonner";
+import type { ToasterProps } from "sonner";
 
 export type ToastProps = {
   title?: string;
@@ -29,10 +29,9 @@ const toast = {
       loading: string;
       success: string | ((data: T) => string);
       error: string | ((error: unknown) => string);
-    },
-    props?: Omit<ToastProps, "title">
+    }
   ) => {
-    return sonnerToast.promise(promise, options, props);
+    return sonnerToast.promise(promise, options);
   },
 };
 
