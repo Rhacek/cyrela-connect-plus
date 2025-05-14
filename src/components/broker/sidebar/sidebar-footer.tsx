@@ -32,7 +32,7 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
           <SidebarLink 
             icon={<Settings size={18} />} 
             label="Configurações" 
-            href="/settings" 
+            to="/settings" 
           />
         )}
       </div>
@@ -55,3 +55,6 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
     </div>
   );
 }
+
+// Also export a footer content component for compatibility
+export const SidebarFooterContent = SidebarFooter;

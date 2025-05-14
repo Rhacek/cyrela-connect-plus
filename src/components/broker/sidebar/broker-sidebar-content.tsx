@@ -1,33 +1,43 @@
 
-import { CollapseNavLinks } from "./collapsed-nav-links";
-import { ExpandedNavLinks } from "./expanded-nav-links";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { SidebarLogo } from "./sidebar-logo";
+import { CollapsedNavLinks } from "./collapsed-nav-links";
+import { ExpandedNavLinks } from "./expanded-nav-links";
 import { SidebarFooterContent } from "./sidebar-footer";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export const BrokerSidebarContent = () => {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const isExpanded = state === "expanded";
+  const isCollapsed = !isExpanded;
 
   return (
     <>
       <SidebarHeader className="py-4">
         <div className="flex items-center px-4">
-          <SidebarLogo />
+          <SidebarLogo 
+            isCollapsed={isCollapsed} 
+            handleToggleCollapse={toggleSidebar} 
+          />
           <SidebarTrigger className="ml-auto" />
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {isExpanded ? <ExpandedNavLinks /> : <CollapseNavLinks />}
+        {isExpanded ? 
+          <ExpandedNavLinks /> : 
+          <CollapsedNavLinks />
+        }
       </SidebarContent>
       <SidebarFooter>
-        <SidebarFooterContent />
+        <SidebarFooterContent 
+          isCollapsed={isCollapsed} 
+          handleToggleCollapse={toggleSidebar} 
+        />
       </SidebarFooter>
     </>
   );

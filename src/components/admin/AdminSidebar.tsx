@@ -12,7 +12,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/ui/app-logo";
-import { Bell, Cog, Home, User, User, Check, File } from "lucide-react";
+import { Bell, Cog, Home, Users, Check, File } from "lucide-react";
 
 export const AdminSidebar = () => {
   const { state } = useSidebar();
@@ -56,7 +56,7 @@ export const AdminSidebar = () => {
                 <NavLink to="/admin/brokers" className={({ isActive }) => 
                   isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
                 }>
-                  <User className="h-4 w-4" />
+                  <Users className="h-4 w-4" />
                   {isExpanded && <span>Corretores</span>}
                 </NavLink>
               </SidebarMenuButton>
