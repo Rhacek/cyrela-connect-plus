@@ -32,6 +32,20 @@ export const BasicInfoTab = ({ form }: BasicInfoTabProps) => {
 
         <FormField
           control={form.control}
+          name="developmentName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome do Empreendimento</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Ex: Residencial Villa Verde" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>

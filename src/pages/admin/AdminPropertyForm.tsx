@@ -34,6 +34,7 @@ const AdminPropertyForm = () => {
       if (property) {
         form.reset({
           title: property.title,
+          developmentName: property.developmentName || "",
           description: property.description,
           type: property.type,
           status: property.status,

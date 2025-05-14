@@ -4,6 +4,7 @@ import { PropertyStatus } from "@/mocks/property-data";
 
 export const propertyFormSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
+  developmentName: z.string().min(1, "O nome do empreendimento é obrigatório"),
   description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
   type: z.string().min(1, "Selecione um tipo de imóvel"),
   status: z.enum([PropertyStatus.AVAILABLE, PropertyStatus.RESERVED, PropertyStatus.SOLD]),
@@ -28,6 +29,7 @@ export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
 
 export const defaultPropertyValues: PropertyFormValues = {
   title: "",
+  developmentName: "",
   description: "",
   type: "Apartamento",
   status: PropertyStatus.AVAILABLE,

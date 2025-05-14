@@ -7,6 +7,7 @@ export const mockProperties: Property[] = [
   {
     id: "1",
     title: "Cyrela Iconyc Santos",
+    developmentName: "Iconyc Santos",
     description: "Apartamento de luxo na Beira-Mar",
     type: "Apartamento",
     status: PropertyStatus.AVAILABLE,
@@ -46,6 +47,7 @@ export const mockProperties: Property[] = [
   {
     id: "2",
     title: "Living Exclusive Morumbi",
+    developmentName: "Living Exclusive",
     description: "Apartamento com vista para o parque",
     type: "Apartamento",
     status: PropertyStatus.AVAILABLE,

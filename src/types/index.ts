@@ -53,11 +53,12 @@ export interface User {
 export interface Property {
   id: string;
   title: string;
+  developmentName?: string; // Added development name field
   description: string;
   type: string;
   status: PropertyStatus;
   price: number;
-  promotionalPrice?: number; // Added promotional price field
+  promotionalPrice?: number;
   area: number;
   bedrooms: number;
   bathrooms: number;
@@ -74,7 +75,7 @@ export interface Property {
   constructionYear?: number;
   constructionStage?: string;
   amenities?: any;
-  youtubeUrl?: string; // Added YouTube video URL field
+  youtubeUrl?: string;
   
   // Broker fields
   commission?: number;
