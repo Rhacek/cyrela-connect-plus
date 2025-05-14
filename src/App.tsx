@@ -20,6 +20,16 @@ import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 import PropertyDetailPage from "./pages/client/PropertyDetailPage";
 
+// Admin Pages
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProperties from "./pages/admin/AdminProperties";
+import AdminPropertyForm from "./pages/admin/AdminPropertyForm";
+import AdminBrokers from "./pages/admin/AdminBrokers";
+import AdminBrokerForm from "./pages/admin/AdminBrokerForm";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminSettings from "./pages/admin/AdminSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -47,6 +57,19 @@ const App = () => (
           <Route path="/client/onboarding" element={<OnboardingPage />} />
           <Route path="/client/results" element={<PropertyListingPage />} />
           <Route path="/client/property/:id" element={<PropertyDetailPage />} />
+          
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="properties" element={<AdminProperties />} />
+            <Route path="properties/new" element={<AdminPropertyForm />} />
+            <Route path="properties/:id/edit" element={<AdminPropertyForm />} />
+            <Route path="brokers" element={<AdminBrokers />} />
+            <Route path="brokers/new" element={<AdminBrokerForm />} />
+            <Route path="brokers/:id/edit" element={<AdminBrokerForm />} />
+            <Route path="leads" element={<AdminLeads />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
