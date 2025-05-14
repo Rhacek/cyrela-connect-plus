@@ -17,20 +17,12 @@ const Index = () => {
             Conecte-se com seus clientes de forma personalizada e aumente suas vendas com o Cyrela Connect+, a plataforma exclusiva para corretores do Grupo Cyrela.
           </p>
           
-          <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
+          <div className="flex justify-center mb-12">
             <Button
               className="h-auto py-6 px-8 text-lg cyrela-button-primary animate-fade-in"
               onClick={() => window.location.href = "/auth"}
             >
               Acessar plataforma
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="py-6 px-8 text-lg border-cyrela-red text-cyrela-red hover:bg-cyrela-gray-lighter animate-fade-in"
-              onClick={() => window.location.href = "/auth?register=true"}
-            >
-              Cadastrar-se
             </Button>
           </div>
         </div>
