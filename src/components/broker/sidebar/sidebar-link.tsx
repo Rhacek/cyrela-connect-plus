@@ -6,13 +6,13 @@ import { cn } from "@/lib/utils";
 interface SidebarLinkProps {
   icon?: ReactNode;
   label?: string;
-  href: string;
+  href?: string; // Make href optional
   to: string;
   children?: ReactNode;
   isActive?: boolean;
 }
 
-export function SidebarLink({ icon, label, to, children, isActive }: SidebarLinkProps) {
+export function SidebarLink({ icon, label, to, href, children, isActive }: SidebarLinkProps) {
   return (
     <NavLink
       to={to}
