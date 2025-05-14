@@ -11,8 +11,8 @@ const AdminDashboard = () => {
         <p className="text-muted-foreground mt-2">Bem-vindo ao painel de controle.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Total de Imóveis</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Corretores Ativos</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Leads Pendentes</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Conversões</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -65,14 +65,14 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Imóveis Recentes</CardTitle>
             <CardDescription>Últimos imóveis adicionados ao sistema</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {mockProperties.slice(0, 3).map((property) => (
                 <div key={property.id} className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
@@ -84,13 +84,13 @@ const AdminDashboard = () => {
                       />
                     )}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium">{property.title}</h4>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-grow">
+                    <h4 className="text-sm font-medium truncate">{property.title}</h4>
+                    <p className="text-xs text-muted-foreground truncate">
                       {property.neighborhood}, {property.city}
                     </p>
                   </div>
-                  <div className="ml-auto text-sm font-medium">
+                  <div className="text-sm font-medium whitespace-nowrap">
                     {new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
                       currency: 'BRL'
@@ -102,18 +102,18 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Atividades Recentes</CardTitle>
             <CardDescription>Ações executadas no sistema</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
                   <Users size={14} />
                 </div>
-                <div>
+                <div className="flex-grow">
                   <p className="text-sm">Novo corretor cadastrado</p>
                   <p className="text-xs text-muted-foreground">Há 2 horas</p>
                 </div>
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
                 <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
                   <Building size={14} />
                 </div>
-                <div>
+                <div className="flex-grow">
                   <p className="text-sm">Imóvel atualizado: Living Exclusive Morumbi</p>
                   <p className="text-xs text-muted-foreground">Há 3 horas</p>
                 </div>
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
                 <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
                   <MessageSquare size={14} />
                 </div>
-                <div>
+                <div className="flex-grow">
                   <p className="text-sm">5 novos leads recebidos</p>
                   <p className="text-xs text-muted-foreground">Há 4 horas</p>
                 </div>
