@@ -57,6 +57,7 @@ export interface Property {
   type: string;
   status: PropertyStatus;
   price: number;
+  promotionalPrice?: number; // Added promotional price field
   area: number;
   bedrooms: number;
   bathrooms: number;
@@ -73,6 +74,7 @@ export interface Property {
   constructionYear?: number;
   constructionStage?: string;
   amenities?: any;
+  youtubeUrl?: string; // Added YouTube video URL field
   
   // Broker fields
   commission?: number;

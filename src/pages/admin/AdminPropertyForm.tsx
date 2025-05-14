@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +34,7 @@ const formSchema = z.object({
   type: z.string().min(1, "Selecione um tipo de imóvel"),
   status: z.enum([PropertyStatus.AVAILABLE, PropertyStatus.RESERVED, PropertyStatus.SOLD]),
   price: z.coerce.number().positive("O preço deve ser um valor positivo"),
+  promotionalPrice: z.coerce.number().nonnegative("O preço promocional deve ser um valor não negativo").optional(),
   area: z.coerce.number().positive("A área deve ser um valor positivo"),
   bedrooms: z.coerce.number().int().nonnegative("O número de quartos não pode ser negativo"),
   bathrooms: z.coerce.number().int().nonnegative("O número de banheiros não pode ser negativo"),
@@ -46,6 +46,7 @@ const formSchema = z.object({
   state: z.string().min(1, "O estado é obrigatório"),
   zipCode: z.string().min(1, "O CEP é obrigatório"),
   constructionStage: z.string().optional(),
+  youtubeUrl: z.string().url("Insira uma URL válida").or(z.string().length(0)).optional(),
   isHighlighted: z.boolean().default(false),
 });
 
@@ -63,6 +64,7 @@ const AdminPropertyForm = () => {
       type: "Apartamento",
       status: PropertyStatus.AVAILABLE,
       price: 0,
+      promotionalPrice: undefined,
       area: 0,
       bedrooms: 0,
       bathrooms: 0,
@@ -74,6 +76,7 @@ const AdminPropertyForm = () => {
       state: "",
       zipCode: "",
       constructionStage: "",
+      youtubeUrl: "",
       isHighlighted: false,
     },
   });
@@ -88,6 +91,7 @@ const AdminPropertyForm = () => {
           type: property.type,
           status: property.status,
           price: property.price,
+          promotionalPrice: property.promotionalPrice,
           area: property.area,
           bedrooms: property.bedrooms,
           bathrooms: property.bathrooms,
@@ -99,6 +103,7 @@ const AdminPropertyForm = () => {
           state: property.state,
           zipCode: property.zipCode,
           constructionStage: property.constructionStage || "",
+          youtubeUrl: property.youtubeUrl || "",
           isHighlighted: property.isHighlighted,
         });
       }
@@ -244,6 +249,34 @@ const AdminPropertyForm = () => {
 
                     <FormField
                       control={form.control}
+                      name="promotionalPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preço Promocional (R$)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              {...field} 
+                              value={field.value || ''}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? undefined : Number(e.target.value);
+                                field.onChange(value);
+                              }}
+                              placeholder="Opcional"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Deixe em branco se não houver preço promocional
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
                       name="area"
                       render={({ field }) => (
                         <FormItem>
@@ -255,9 +288,7 @@ const AdminPropertyForm = () => {
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="constructionStage"
@@ -433,6 +464,26 @@ const AdminPropertyForm = () => {
                   <p className="text-sm text-muted-foreground">
                     Adicione fotos do imóvel. A primeira imagem será utilizada como capa.
                   </p>
+                  
+                  <FormField
+                    control={form.control}
+                    name="youtubeUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL do Vídeo (YouTube)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Ex: https://www.youtube.com/watch?v=abc123" 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Adicione o link do vídeo do YouTube para promover o imóvel
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <PropertyImageUpload 
                     initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []}
