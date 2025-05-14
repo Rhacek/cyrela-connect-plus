@@ -1,128 +1,135 @@
 
 import { useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { PropertyFilterProps, FilterCategory } from "./filter-types";
 import { SearchInput } from "./search-input";
-import { PriceRangeFilter } from "./price-range-filter";
 import { LocationFilter } from "./location-filter";
-import { ConstructionStageFilter } from "./construction-stage-filter";
+import { PriceRangeFilter } from "./price-range-filter";
 import { FeaturesFilter } from "./features-filter";
+import { ConstructionStageFilter } from "./construction-stage-filter";
+import { FilterButton } from "./filter-button";
+import { toast } from "@/hooks/use-toast";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { FilterX, Filter, Search } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { 
+  PropertyFilterState, 
+  defaultFilterState, 
+  FilterChangeHandler 
+} from "./filter-types";
 
-export function PropertyFilter({ 
-  className, 
-  onApplyFilters, 
-  onReset,
-  selectedFilters,
-  onFilterChange
-}: PropertyFilterProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [priceRange, setPriceRange] = useState([500000, 2000000]);
-  
-  const handleReset = () => {
-    setSearchQuery("");
-    setPriceRange([500000, 2000000]);
-    
-    if (onReset) {
-      onReset();
-    }
+export const PropertyFilter = () => {
+  const [filterState, setFilterState] = useState<PropertyFilterState>(defaultFilterState);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleFilterChange: FilterChangeHandler = (filterKey, value) => {
+    setFilterState(prev => ({
+      ...prev,
+      [filterKey]: value
+    }));
   };
-  
+
+  const handleClearFilters = () => {
+    setFilterState(defaultFilterState);
+    toast.info("Filtros limpos com sucesso!");
+  };
+
   const handleApplyFilters = () => {
-    if (onApplyFilters) {
-      const filters = {
-        searchQuery,
-        priceRange,
-        ...selectedFilters
-      };
-      onApplyFilters(filters);
-    }
+    console.log("Applying filters:", filterState);
+    toast.success("Filtros aplicados com sucesso!");
+    setIsOpen(false);
+    
+    // In a real app, this would trigger an API call
   };
-  
-  return (
-    <div className={cn("bg-white border border-cyrela-gray-lighter rounded-lg shadow-sm overflow-hidden", className)}>
-      <div className="p-4 border-b border-cyrela-gray-lighter flex justify-between items-center">
-        <h3 className="font-medium truncate">Filtros avançados</h3>
+
+  const filterContent = (
+    <div className="flex flex-col gap-6">
+      <LocationFilter 
+        selectedLocations={filterState.locations} 
+        onChange={(value) => handleFilterChange("locations", value)} 
+      />
+      
+      <PriceRangeFilter 
+        priceRange={filterState.priceRange} 
+        onChange={(value) => handleFilterChange("priceRange", value)}
+      />
+      
+      <FeaturesFilter 
+        features={filterState.features} 
+        onChange={(value) => handleFilterChange("features", value)}
+      />
+      
+      <ConstructionStageFilter 
+        stage={filterState.constructionStage} 
+        onChange={(value) => handleFilterChange("constructionStage", value)}
+      />
+      
+      <div className="flex gap-3 mt-4">
         <Button 
-          variant="ghost"
-          size="sm"
-          onClick={handleReset}
-          className="text-cyrela-gray-dark hover:text-cyrela-blue shrink-0 ml-2"
+          variant="outline" 
+          className="flex-1" 
+          onClick={handleClearFilters}
         >
-          <X size={16} className="mr-1" />
+          <FilterX className="mr-2 h-4 w-4" />
           Limpar
         </Button>
-      </div>
-      
-      <div className="p-4">
-        <SearchInput 
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
-        
-        <Accordion type="single" collapsible className="mt-4 w-full">
-          <AccordionItem value="price" className="border-b border-cyrela-gray-lighter">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Faixa de preço</AccordionTrigger>
-            <AccordionContent>
-              <PriceRangeFilter 
-                priceRange={priceRange}
-                onPriceRangeChange={setPriceRange}
-              />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="location" className="border-b border-cyrela-gray-lighter">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Localização</AccordionTrigger>
-            <AccordionContent>
-              <LocationFilter 
-                selectedFilters={{
-                  city: selectedFilters.city,
-                  zone: selectedFilters.zone,
-                  neighborhood: selectedFilters.neighborhood
-                }}
-                selectedZone={selectedFilters.zone[0] || null}
-                onFilterClick={(category, id) => onFilterChange(category as FilterCategory, id)}
-              />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="constructionStage" className="border-b border-cyrela-gray-lighter">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Estágio de construção</AccordionTrigger>
-            <AccordionContent>
-              <ConstructionStageFilter 
-                selectedFilters={selectedFilters.constructionStage}
-                onFilterClick={(id) => onFilterChange("constructionStage", id)}
-              />
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="features" className="border-b-0">
-            <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">Características</AccordionTrigger>
-            <AccordionContent>
-              <FeaturesFilter 
-                selectedFilters={selectedFilters.bedrooms}
-                onFilterClick={(id) => onFilterChange("bedrooms", id)}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
-      
-      <div className="p-4 border-t border-cyrela-gray-lighter">
-        <Button
-          className="w-full bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white"
+        <Button 
+          className="flex-1" 
           onClick={handleApplyFilters}
         >
-          Aplicar filtros
+          <Search className="mr-2 h-4 w-4" />
+          Buscar
         </Button>
       </div>
     </div>
   );
-}
+
+  if (isMobile) {
+    return (
+      <div className="mb-6">
+        <div className="flex gap-3">
+          <SearchInput 
+            value={filterState.search} 
+            onChange={(value) => handleFilterChange("search", value)}
+            onSearch={handleApplyFilters}
+            className="flex-1"
+          />
+          
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <FilterButton count={Object.keys(filterState).filter(key => key !== "search" && filterState[key as keyof PropertyFilterState]).length} />
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh]">
+              <SheetHeader className="mb-6">
+                <SheetTitle>Filtros</SheetTitle>
+              </SheetHeader>
+              {filterContent}
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-card border rounded-lg p-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="md:col-span-5">
+          <SearchInput 
+            value={filterState.search} 
+            onChange={(value) => handleFilterChange("search", value)}
+            onSearch={handleApplyFilters}
+          />
+        </div>
+        
+        {filterContent}
+      </div>
+    </div>
+  );
+};

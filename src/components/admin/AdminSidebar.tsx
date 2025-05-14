@@ -4,9 +4,7 @@ import {
   Home, 
   Building, 
   Users, 
-  MessageSquare, 
   Settings,
-  PieChart
 } from "lucide-react";
 
 export const AdminSidebar = () => {
@@ -37,11 +35,6 @@ export const AdminSidebar = () => {
         <NavLink to="/admin/brokers" className={navLinkClass}>
           <Users size={18} />
           <span>Corretores</span>
-        </NavLink>
-        
-        <NavLink to="/admin/leads" className={navLinkClass}>
-          <MessageSquare size={18} />
-          <span>Leads</span>
         </NavLink>
         
         <NavLink to="/admin/settings" className={navLinkClass}>

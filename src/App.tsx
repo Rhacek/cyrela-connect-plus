@@ -27,7 +27,6 @@ import AdminProperties from "./pages/admin/AdminProperties";
 import AdminPropertyForm from "./pages/admin/AdminPropertyForm";
 import AdminBrokers from "./pages/admin/AdminBrokers";
 import AdminBrokerForm from "./pages/admin/AdminBrokerForm";
-import AdminLeads from "./pages/admin/AdminLeads";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
@@ -67,7 +66,6 @@ const App = () => (
             <Route path="brokers" element={<AdminBrokers />} />
             <Route path="brokers/new" element={<AdminBrokerForm />} />
             <Route path="brokers/:id/edit" element={<AdminBrokerForm />} />
-            <Route path="leads" element={<AdminLeads />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
           
