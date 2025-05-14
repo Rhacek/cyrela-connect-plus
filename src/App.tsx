@@ -14,11 +14,13 @@ import BrokerSchedule from "./pages/broker/BrokerSchedule";
 import BrokerLeads from "./pages/broker/BrokerLeads";
 import BrokerMetrics from "./pages/broker/BrokerMetrics";
 import BrokerShare from "./pages/broker/BrokerShare";
+import BrokerPlans from "./pages/broker/BrokerPlans";
 import WelcomePage from "./pages/client/WelcomePage";
 import BrokerIntroPage from "./pages/client/BrokerIntroPage";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 import PropertyDetailPage from "./pages/client/PropertyDetailPage";
+import PlansPage from "./pages/client/PlansPage";
 
 // Admin Pages
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -28,6 +30,7 @@ import AdminPropertyForm from "./pages/admin/AdminPropertyForm";
 import AdminBrokers from "./pages/admin/AdminBrokers";
 import AdminBrokerForm from "./pages/admin/AdminBrokerForm";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPlans from "./pages/admin/AdminPlans";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,7 @@ const App = () => (
           <Route path="/broker/leads" element={<BrokerLeads />} />
           <Route path="/broker/metrics" element={<BrokerMetrics />} />
           <Route path="/broker/share" element={<BrokerShare />} />
+          <Route path="/broker/plans" element={<BrokerPlans />} />
           
           {/* Client routes */}
           <Route path="/client/welcome" element={<WelcomePage />} />
@@ -56,6 +60,7 @@ const App = () => (
           <Route path="/client/onboarding" element={<OnboardingPage />} />
           <Route path="/client/results" element={<PropertyListingPage />} />
           <Route path="/client/property/:id" element={<PropertyDetailPage />} />
+          <Route path="/client/plans" element={<PlansPage />} />
           
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -67,6 +72,7 @@ const App = () => (
             <Route path="brokers/new" element={<AdminBrokerForm />} />
             <Route path="brokers/:id/edit" element={<AdminBrokerForm />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="plans" element={<AdminPlans />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

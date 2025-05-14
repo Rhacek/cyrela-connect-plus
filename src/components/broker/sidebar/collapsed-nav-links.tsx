@@ -1,45 +1,74 @@
 
-import { 
-  Home, 
-  User, 
-  Building, 
-  Users, 
-  Calendar, 
-  BarChart, 
-  Share
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarLink } from "./sidebar-link";
+import { Home, Calendar, User, Mail, Check, Search, Bell } from "lucide-react";
 
-interface CollapsedNavLinksProps {
-  currentPath: string;
-}
-
-export function CollapsedNavLinks({ currentPath }: CollapsedNavLinksProps) {
-  const routes = [
-    { path: "/broker/dashboard", icon: Home },
-    { path: "/broker/profile", icon: User },
-    { path: "/broker/properties", icon: Building },
-    { path: "/broker/leads", icon: Users },
-    { path: "/broker/schedule", icon: Calendar },
-    { path: "/broker/metrics", icon: BarChart },
-    { path: "/broker/share", icon: Share }
-  ];
-
+export const CollapseNavLinks = () => {
   return (
-    <>
-      {routes.map((route) => (
-        <div key={route.path} className="flex justify-center mb-6">
-          <a 
-            href={route.path} 
-            className={cn(
-              "p-3 hover:bg-cyrela-gray-lighter rounded-full",
-              currentPath === route.path ? "bg-primary text-white hover:bg-primary hover:bg-opacity-90" : ""
-            )}
-          >
-            <route.icon size={24} className={currentPath === route.path ? "text-white" : currentPath === "/broker/dashboard" && route.path === "/broker/dashboard" ? "text-primary" : ""} />
-          </a>
-        </div>
-      ))}
-    </>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Dashboard">
+          <SidebarLink to="/broker/dashboard">
+            <Home className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Imóveis">
+          <SidebarLink to="/broker/properties">
+            <Home className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Leads">
+          <SidebarLink to="/broker/leads">
+            <User className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Agenda">
+          <SidebarLink to="/broker/schedule">
+            <Calendar className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Compartilhar">
+          <SidebarLink to="/broker/share">
+            <Mail className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Métricas">
+          <SidebarLink to="/broker/metrics">
+            <Bell className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Planos">
+          <SidebarLink to="/broker/plans">
+            <Check className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Meu Perfil">
+          <SidebarLink to="/broker/profile">
+            <User className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
-}
+};

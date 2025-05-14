@@ -1,41 +1,82 @@
 
-import { 
-  Home, 
-  User, 
-  Building, 
-  Users, 
-  Calendar, 
-  BarChart, 
-  Share
-} from "lucide-react";
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { SidebarLink } from "./sidebar-link";
+import { Home, Calendar, User, Mail, Check, Search, Bell } from "lucide-react";
 
-interface ExpandedNavLinksProps {
-  currentPath: string;
-}
-
-export function ExpandedNavLinks({ currentPath }: ExpandedNavLinksProps) {
-  const routes = [
-    { path: "/broker/dashboard", label: "Dashboard", icon: <Home /> },
-    { path: "/broker/profile", label: "Meu perfil", icon: <User /> },
-    { path: "/broker/properties", label: "Imóveis", icon: <Building /> },
-    { path: "/broker/leads", label: "Leads", icon: <Users /> },
-    { path: "/broker/schedule", label: "Agenda", icon: <Calendar /> },
-    { path: "/broker/metrics", label: "Desempenho", icon: <BarChart /> },
-    { path: "/broker/share", label: "Compartilhar", icon: <Share /> }
-  ];
-
+export const ExpandedNavLinks = () => {
   return (
-    <>
-      {routes.map((route) => (
-        <SidebarLink 
-          key={route.path}
-          icon={route.icon} 
-          label={route.label} 
-          href={route.path}
-          isActive={currentPath === route.path}
-        />
-      ))}
-    </>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/dashboard">
+            <Home className="h-4 w-4" />
+            <span>Dashboard</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/properties">
+            <Home className="h-4 w-4" />
+            <span>Imóveis</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/leads">
+            <User className="h-4 w-4" />
+            <span>Leads</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/schedule">
+            <Calendar className="h-4 w-4" />
+            <span>Agenda</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/share">
+            <Mail className="h-4 w-4" />
+            <span>Compartilhar</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/metrics">
+            <Bell className="h-4 w-4" />
+            <span>Métricas</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/plans">
+            <Check className="h-4 w-4" />
+            <span>Planos</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink to="/broker/profile">
+            <User className="h-4 w-4" />
+            <span>Meu Perfil</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
-}
+};

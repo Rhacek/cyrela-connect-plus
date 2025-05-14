@@ -1,47 +1,91 @@
 
 import { NavLink } from "react-router-dom";
 import { 
-  Home, 
-  Building, 
-  Users, 
-  Settings,
-} from "lucide-react";
+  Sidebar, 
+  SidebarContent, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton,
+  SidebarTrigger,
+  SidebarProvider,
+  useSidebar
+} from "@/components/ui/sidebar";
+import { AppLogo } from "@/components/ui/app-logo";
+import { Bell, Cog, Home, User, User, Check, File } from "lucide-react";
 
 export const AdminSidebar = () => {
-  const navLinkClass = ({ isActive }: { isActive: boolean }) => 
-    `flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-      isActive 
-        ? "bg-primary/10 text-primary" 
-        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-    }`;
+  const { state } = useSidebar();
+  const isExpanded = state === "expanded";
 
   return (
-    <aside className="w-64 border-r bg-card p-4 hidden md:block">
-      <div className="flex items-center gap-2 mb-8 px-4">
-        <span className="font-bold text-xl text-primary">Cyrela Admin</span>
-      </div>
-      
-      <nav className="space-y-1">
-        <NavLink to="/admin" end className={navLinkClass}>
-          <Home size={18} />
-          <span>Dashboard</span>
-        </NavLink>
-        
-        <NavLink to="/admin/properties" className={navLinkClass}>
-          <Building size={18} />
-          <span>Imóveis</span>
-        </NavLink>
-        
-        <NavLink to="/admin/brokers" className={navLinkClass}>
-          <Users size={18} />
-          <span>Corretores</span>
-        </NavLink>
-        
-        <NavLink to="/admin/settings" className={navLinkClass}>
-          <Settings size={18} />
-          <span>Configurações</span>
-        </NavLink>
-      </nav>
-    </aside>
+    <SidebarProvider defaultOpen={true}>
+      <Sidebar>
+        <SidebarHeader className="py-4">
+          <div className="flex items-center px-4">
+            <AppLogo size="sm" />
+            <SidebarTrigger className="ml-auto" />
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin" end className={({ isActive }) => 
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                }>
+                  <Home className="h-4 w-4" />
+                  {isExpanded && <span>Dashboard</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin/properties" className={({ isActive }) => 
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                }>
+                  <Home className="h-4 w-4" />
+                  {isExpanded && <span>Imóveis</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin/brokers" className={({ isActive }) => 
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                }>
+                  <User className="h-4 w-4" />
+                  {isExpanded && <span>Corretores</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin/plans" className={({ isActive }) => 
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                }>
+                  <Check className="h-4 w-4" />
+                  {isExpanded && <span>Planos</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin/settings" className={({ isActive }) => 
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                }>
+                  <Cog className="h-4 w-4" />
+                  {isExpanded && <span>Configurações</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+    </SidebarProvider>
   );
 };
