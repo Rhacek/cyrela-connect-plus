@@ -20,7 +20,6 @@ import BrokerIntroPage from "./pages/client/BrokerIntroPage";
 import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 import PropertyDetailPage from "./pages/client/PropertyDetailPage";
-import PlansPage from "./pages/client/PlansPage";
 
 // Admin Pages
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -60,7 +59,6 @@ const App = () => (
           <Route path="/client/onboarding" element={<OnboardingPage />} />
           <Route path="/client/results" element={<PropertyListingPage />} />
           <Route path="/client/property/:id" element={<PropertyDetailPage />} />
-          <Route path="/client/plans" element={<PlansPage />} />
           
           {/* Admin routes */}
           <Route path="/admin" element={<AdminLayout />}>
