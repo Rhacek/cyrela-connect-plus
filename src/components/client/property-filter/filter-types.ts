@@ -24,3 +24,25 @@ export interface FilterState {
   selectedZone: string | null;
   selectedFilters: Record<FilterCategory, string[]>;
 }
+
+// Add missing PropertyFilterState interface
+export interface PropertyFilterState {
+  search: string;
+  locations: string[];
+  priceRange: number[];
+  features: string[];
+  constructionStage: string;
+  [key: string]: any;
+}
+
+// Default filter state
+export const defaultFilterState: PropertyFilterState = {
+  search: '',
+  locations: [],
+  priceRange: [300000, 2000000],
+  features: [],
+  constructionStage: ''
+};
+
+// Type for filter change handler
+export type FilterChangeHandler = (filterKey: keyof PropertyFilterState, value: any) => void;

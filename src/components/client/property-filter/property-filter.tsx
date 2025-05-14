@@ -51,23 +51,37 @@ export const PropertyFilter = () => {
   const filterContent = (
     <div className="flex flex-col gap-6">
       <LocationFilter 
-        selectedLocations={filterState.locations} 
-        onChange={(value) => handleFilterChange("locations", value)} 
+        selectedFilters={{
+          city: filterState.locations || [],
+          zone: filterState.locations || [],
+          neighborhood: filterState.locations || []
+        }}
+        selectedZone={null}
+        onFilterClick={(category, id) => handleFilterChange("locations", [...(filterState.locations || []), id])}
       />
       
       <PriceRangeFilter 
         priceRange={filterState.priceRange} 
-        onChange={(value) => handleFilterChange("priceRange", value)}
+        onPriceRangeChange={(value) => handleFilterChange("priceRange", value)}
       />
       
       <FeaturesFilter 
-        features={filterState.features} 
-        onChange={(value) => handleFilterChange("features", value)}
+        selectedFilters={filterState.features || []}
+        onFilterClick={(id) => {
+          const features = [...(filterState.features || [])];
+          const index = features.indexOf(id);
+          if (index >= 0) {
+            features.splice(index, 1);
+          } else {
+            features.push(id);
+          }
+          handleFilterChange("features", features);
+        }}
       />
       
       <ConstructionStageFilter 
-        stage={filterState.constructionStage} 
-        onChange={(value) => handleFilterChange("constructionStage", value)}
+        selectedFilters={filterState.constructionStage ? [filterState.constructionStage] : []}
+        onFilterClick={(id) => handleFilterChange("constructionStage", id)}
       />
       
       <div className="flex gap-3 mt-4">
@@ -97,13 +111,13 @@ export const PropertyFilter = () => {
           <SearchInput 
             value={filterState.search} 
             onChange={(value) => handleFilterChange("search", value)}
-            onSearch={handleApplyFilters}
-            className="flex-1"
           />
           
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <FilterButton count={Object.keys(filterState).filter(key => key !== "search" && filterState[key as keyof PropertyFilterState]).length} />
+              <Button variant="outline" size="icon">
+                <Filter size={18} />
+              </Button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-[80vh]">
               <SheetHeader className="mb-6">
@@ -124,7 +138,6 @@ export const PropertyFilter = () => {
           <SearchInput 
             value={filterState.search} 
             onChange={(value) => handleFilterChange("search", value)}
-            onSearch={handleApplyFilters}
           />
         </div>
         

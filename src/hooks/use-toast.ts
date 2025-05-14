@@ -1,16 +1,15 @@
 
-import { toast as sonnerToast, Toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
+import { type ToastProps as SonnerToastProps } from "sonner";
 
-type ToastProps = {
+export type ToastProps = SonnerToastProps & {
   title?: string;
   description?: string;
+  variant?: "default" | "destructive";
   action?: React.ReactNode;
-  cancel?: React.ReactNode;
-  important?: boolean;
-  duration?: number;
 };
 
-// Create a unified toast function that wraps the sonner toast
+// Create a unified toast function that handles both interfaces
 const toast = {
   success: (title: string, props?: Omit<ToastProps, "title">) => {
     return sonnerToast.success(title, props);

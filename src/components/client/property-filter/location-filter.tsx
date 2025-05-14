@@ -1,7 +1,8 @@
+
 import { FilterButton } from "./filter-button";
 import { cities, zones, zoneNeighborhoods } from "./filter-data";
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface LocationFilterProps {
   selectedFilters: {
