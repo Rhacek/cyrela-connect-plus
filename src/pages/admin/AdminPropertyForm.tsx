@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,23 +11,18 @@ import { BasicInfoTab } from "@/components/admin/property-form/BasicInfoTab";
 import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
 import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
-import { 
-  propertyFormSchema, 
-  PropertyFormValues, 
-  defaultPropertyValues 
-} from "@/components/admin/property-form/PropertyFormSchema";
-
+import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@/components/admin/property-form/PropertyFormSchema";
 const AdminPropertyForm = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
   const [currentTab, setCurrentTab] = useState("basic");
-  
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
-    defaultValues: defaultPropertyValues,
+    defaultValues: defaultPropertyValues
   });
-
   useEffect(() => {
     if (isEditing) {
       const property = mockProperties.find(p => p.id === id);
@@ -54,62 +48,40 @@ const AdminPropertyForm = () => {
           youtubeUrl: property.youtubeUrl || "",
           isHighlighted: property.isHighlighted,
           brokerNotes: property.brokerNotes || "",
-          commission: property.commission || 0,
+          commission: property.commission || 0
         });
       }
     }
   }, [id, isEditing, form]);
-
   const onSubmit = (values: PropertyFormValues) => {
     console.log(values);
-    toast.success(
-      isEditing 
-        ? "Imóvel atualizado com sucesso!" 
-        : "Imóvel cadastrado com sucesso!",
-      {
-        description: "As informações foram salvas no sistema.",
-      }
-    );
+    toast.success(isEditing ? "Imóvel atualizado com sucesso!" : "Imóvel cadastrado com sucesso!", {
+      description: "As informações foram salvas no sistema."
+    });
     navigate("/admin/properties");
   };
-
-  return (
-    <div className="space-y-6 w-full overflow-hidden">
+  return <div className="space-y-6 w-full overflow-hidden">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           {isEditing ? "Editar Imóvel" : "Novo Imóvel"}
         </h1>
         <p className="text-muted-foreground mt-2">
-          {isEditing 
-            ? "Atualize as informações do imóvel conforme necessário." 
-            : "Preencha as informações para cadastrar um novo imóvel."}
+          {isEditing ? "Atualize as informações do imóvel conforme necessário." : "Preencha as informações para cadastrar um novo imóvel."}
         </p>
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl p-1.5">
-          <TabsTrigger 
-            value="basic" 
-            className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10"
-          >
+        <TabsList className="grid grid-cols-4 w-full max-w-xl p-2">
+          <TabsTrigger value="basic" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
             Informações Básicas
           </TabsTrigger>
-          <TabsTrigger 
-            value="details" 
-            className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10"
-          >
+          <TabsTrigger value="details" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
             Detalhes
           </TabsTrigger>
-          <TabsTrigger 
-            value="media" 
-            className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10"
-          >
+          <TabsTrigger value="media" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
             Mídia
           </TabsTrigger>
-          <TabsTrigger 
-            value="broker" 
-            className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10"
-          >
+          <TabsTrigger value="broker" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
             Info. Corretor
           </TabsTrigger>
         </TabsList>
@@ -125,10 +97,7 @@ const AdminPropertyForm = () => {
             </TabsContent>
 
             <TabsContent value="media" className="w-full">
-              <MediaTab 
-                form={form} 
-                initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []}
-              />
+              <MediaTab form={form} initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []} />
             </TabsContent>
             
             <TabsContent value="broker" className="w-full">
@@ -136,11 +105,7 @@ const AdminPropertyForm = () => {
             </TabsContent>
 
             <div className="flex justify-end gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/admin/properties")}
-              >
+              <Button type="button" variant="outline" onClick={() => navigate("/admin/properties")}>
                 Cancelar
               </Button>
               <Button type="submit">
@@ -150,8 +115,6 @@ const AdminPropertyForm = () => {
           </form>
         </Form>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default AdminPropertyForm;
