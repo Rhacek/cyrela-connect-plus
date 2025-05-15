@@ -1,57 +1,64 @@
 
-import { useState } from "react";
-import { Bell, Menu, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 
-export const AdminHeader = () => {
-  const { state, toggle } = useSidebar();
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-
+export function AdminHeader() {
+  const sidebar = useSidebar();
+  
   return (
-    <header className="border-b bg-card py-3 px-6 flex items-center justify-between sticky top-0 z-10">
-      <div className="flex md:hidden">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggle}
-          aria-label="Toggle sidebar"
-        >
-          <Menu />
-        </Button>
-      </div>
-
-      <div className="flex-1 md:flex-initial" />
-
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell size={18} />
-        </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label="User menu">
-              <User size={18} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
-            <DropdownMenuItem>Configurações</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Sair</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <header className="sticky top-0 z-50 w-full bg-white border-b">
+      <div className="flex h-16 px-4 items-center justify-between">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" className="mr-2" onClick={() => sidebar.collapsed ? sidebar.expand() : sidebar.collapse()}>
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+          <Link to="/admin/dashboard" className="flex items-center text-xl font-semibold">
+            Admin Portal
+          </Link>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="Admin" />
+                  <AvatarFallback>AD</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">Admin</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    admin@example.com
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Link to="/admin/settings" className="w-full">Configurações</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/auth" className="w-full">Sair</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
-};
+}
