@@ -52,7 +52,7 @@ export const PropertyFilter = ({
 
   return (
     <div className={`w-full flex flex-col space-y-4 ${className}`}>
-      <form onSubmit={handleSearch} className="flex w-full space-x-2">
+      <form onSubmit={handleSearch} className="flex w-full gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -66,7 +66,7 @@ export const PropertyFilter = ({
         <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" type="button">
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              <SlidersHorizontal size={18} className="mr-2" />
               Filtros
             </Button>
           </SheetTrigger>
@@ -97,7 +97,7 @@ export const PropertyFilter = ({
                 <p className="text-muted-foreground">Filtros serão implementados conforme necessidade.</p>
               )}
             </div>
-            <SheetFooter className="pt-4 flex justify-between border-t">
+            <SheetFooter className="pt-4 flex justify-between border-t gap-4">
               {onReset && (
                 <Button variant="outline" onClick={onReset}>
                   Limpar

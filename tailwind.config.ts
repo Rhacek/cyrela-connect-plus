@@ -70,6 +70,7 @@ export default {
 				// Cyrela colors
         cyrela: {
           red: '#ea384c',
+          blue: 'hsl(var(--primary))', // Map to primary color for consistency
           gray: {
             dark: '#8A898C',
             medium: '#9F9EA1',

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { CheckCheck, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,14 +30,14 @@ export function FilterButton({
         size="icon"
         className={cn(
           "relative",
-          count > 0 ? "bg-cyrela-blue text-white hover:bg-cyrela-blue/90" : "",
+          count > 0 ? "bg-primary text-primary-foreground hover:bg-primary/90" : "",
           className
         )}
         onClick={onClick}
       >
         <Filter size={18} />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs w-4 h-4 rounded-full flex items-center justify-center">
             {count}
           </span>
         )}
@@ -49,20 +50,20 @@ export function FilterButton({
     <Button
       key={id}
       variant="outline"
-      size="sm"
+      size={variant === "compact" ? "sm" : "default"}
       className={cn(
         selected 
-          ? "bg-cyrela-blue text-white hover:bg-cyrela-blue hover:text-white" 
-          : "text-cyrela-gray-dark hover:text-cyrela-gray-dark",
+          ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+          : "text-foreground hover:bg-accent hover:text-accent-foreground",
         variant === "default" 
-          ? "justify-start text-left text-sm h-auto py-1.5 overflow-hidden" 
-          : "justify-center text-sm h-8",
+          ? "justify-start text-left h-auto py-1.5 overflow-hidden" 
+          : "justify-center h-8",
         className
       )}
       onClick={onClick}
     >
       {selected && variant === "default" && (
-        <CheckCheck size={16} className="mr-2 shrink-0" />
+        <CheckCheck size={18} className="mr-2 shrink-0" />
       )}
       <span className="truncate">{label}</span>
     </Button>

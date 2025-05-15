@@ -79,7 +79,7 @@ const AdminBrokers = () => {
         <p className="text-muted-foreground mt-2">Gerencie todos os corretores do sistema.</p>
       </div>
 
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -92,7 +92,7 @@ const AdminBrokers = () => {
         
         <Button asChild>
           <Link to="/admin/brokers/new">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus size={18} className="mr-2" />
             Novo Corretor
           </Link>
         </Button>
@@ -137,7 +137,7 @@ const AdminBrokers = () => {
                   </TableCell>
                   <TableCell>
                     {broker.status === "active" ? (
-                      <Badge className="bg-green-500">Ativo</Badge>
+                      <Badge className="bg-success">Ativo</Badge>
                     ) : (
                       <Badge variant="outline">Inativo</Badge>
                     )}
@@ -147,20 +147,20 @@ const AdminBrokers = () => {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <span className="sr-only">Abrir menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal size={18} />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/admin/brokers/${broker.id}/edit`}>
-                            <PenSquare className="mr-2 h-4 w-4" />
+                          <Link to={`/admin/brokers/${broker.id}/edit`} className="flex items-center">
+                            <PenSquare size={18} className="mr-2" />
                             <span>Editar</span>
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem className="text-destructive flex items-center">
+                          <Trash size={18} className="mr-2" />
                           <span>Excluir</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
