@@ -92,6 +92,9 @@ export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredP
             <LocationFilter 
               selected={locations} 
               onChange={setLocations} 
+              selectedFilters={{ city: [], zone: [], neighborhood: [] }}
+              selectedZone={null}
+              onFilterClick={() => {}}
             />
           </FilterButton>
           

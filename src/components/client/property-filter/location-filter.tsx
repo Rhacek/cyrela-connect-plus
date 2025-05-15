@@ -11,32 +11,71 @@ interface LocationFilterProps {
   };
   selectedZone: string | null;
   onFilterClick: (category: "city" | "zone" | "neighborhood", id: string) => void;
+  selected?: string[];
+  onChange?: (values: string[]) => void;
 }
 
 export function LocationFilter({ 
   selectedFilters, 
   selectedZone, 
-  onFilterClick 
+  onFilterClick,
+  selected,
+  onChange
 }: LocationFilterProps) {
+  // Support both APIs
   const handleNeighborhoodClick = (id: string) => {
-    // Check if neighborhood is already selected, in which case we'll remove it
-    if (selectedFilters.neighborhood.includes(id)) {
+    // Handle the old API
+    if (selectedFilters && onFilterClick) {
+      // Check if neighborhood is already selected, in which case we'll remove it
+      if (selectedFilters.neighborhood.includes(id)) {
+        onFilterClick("neighborhood", id);
+        return;
+      }
+      
+      // Don't allow more than 3 neighborhoods
+      if (selectedFilters.neighborhood.length >= 3) {
+        toast.error("Limite atingido", {
+          description: "Você só pode selecionar até 3 bairros"
+        });
+        return;
+      }
+      
+      // Otherwise add the neighborhood
       onFilterClick("neighborhood", id);
-      return;
     }
     
-    // Don't allow more than 3 neighborhoods
-    if (selectedFilters.neighborhood.length >= 3) {
-      toast.error("Limite atingido", {
-        description: "Você só pode selecionar até 3 bairros"
-      });
-      return;
+    // Handle the new API
+    if (selected && onChange) {
+      const updatedSelection = selected.includes(id)
+        ? selected.filter(item => item !== id)
+        : [...selected, id];
+      onChange(updatedSelection);
     }
-    
-    // Otherwise add the neighborhood
-    onFilterClick("neighborhood", id);
   };
 
+  // Use for compatibility with the property-filter component
+  if (selected && onChange) {
+    return (
+      <div className="space-y-3">
+        {cities.map((city) => (
+          <FilterButton
+            key={city.id}
+            id={city.id}
+            label={city.label}
+            selected={selected.includes(city.id)}
+            onClick={() => {
+              const updatedSelection = selected.includes(city.id)
+                ? selected.filter(item => item !== city.id)
+                : [...selected, city.id];
+              onChange(updatedSelection);
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Original implementation
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-medium mb-2">Cidade</h4>

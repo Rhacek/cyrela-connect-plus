@@ -1,22 +1,40 @@
 
 import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PriceRangeFilterProps {
   priceRange?: number[];
   onPriceRangeChange?: (value: number[]) => void;
+  value?: [number, number];
+  onChange?: (value: [number, number]) => void;
+  min?: number;
+  max?: number;
 }
 
 export function PriceRangeFilter({ 
   priceRange = [300000, 2000000], 
-  onPriceRangeChange 
+  onPriceRangeChange,
+  value,
+  onChange,
+  min = 300000,
+  max = 5000000
 }: PriceRangeFilterProps) {
-  const [internalRange, setInternalRange] = useState(priceRange);
+  // Use either value/onChange or priceRange/onPriceRangeChange
+  const [internalRange, setInternalRange] = useState(value || priceRange);
   
-  const handleValueChange = (value: number[]) => {
-    setInternalRange(value);
+  useEffect(() => {
+    if (value) {
+      setInternalRange(value);
+    }
+  }, [value]);
+  
+  const handleValueChange = (newValue: number[]) => {
+    setInternalRange(newValue as [number, number]);
+    if (onChange) {
+      onChange(newValue as [number, number]);
+    }
     if (onPriceRangeChange) {
-      onPriceRangeChange(value);
+      onPriceRangeChange(newValue);
     }
   };
 
@@ -36,8 +54,8 @@ export function PriceRangeFilter({
       </div>
       <Slider
         defaultValue={internalRange}
-        min={300000}
-        max={5000000}
+        min={min}
+        max={max}
         step={50000}
         onValueChange={handleValueChange}
         className="my-4"

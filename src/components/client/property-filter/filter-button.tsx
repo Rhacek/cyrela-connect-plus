@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { CheckCheck, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface FilterButtonProps {
   id?: string;
@@ -11,6 +12,8 @@ interface FilterButtonProps {
   className?: string;
   variant?: "default" | "compact";
   count?: number;
+  children?: ReactNode;
+  title?: string;
 }
 
 export function FilterButton({ 
@@ -20,7 +23,9 @@ export function FilterButton({
   onClick,
   className,
   variant = "default",
-  count
+  count,
+  children,
+  title
 }: FilterButtonProps) {
   // If count is provided, render a filter button with count
   if (count !== undefined) {
@@ -42,6 +47,16 @@ export function FilterButton({
           </span>
         )}
       </Button>
+    );
+  }
+
+  // If children is provided, render a filter container
+  if (children) {
+    return (
+      <div className="space-y-2">
+        {title && <h3 className="text-sm font-medium">{title}</h3>}
+        {children}
+      </div>
     );
   }
 

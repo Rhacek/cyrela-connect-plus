@@ -8,9 +8,10 @@ interface SearchInputProps {
   onChange: (value: string) => void;
   onSearch?: () => void;
   className?: string;
+  isLoading?: boolean;
 }
 
-export function SearchInput({ value, onChange, onSearch, className }: SearchInputProps) {
+export function SearchInput({ value, onChange, onSearch, className, isLoading }: SearchInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && onSearch) {
       onSearch();
@@ -26,6 +27,7 @@ export function SearchInput({ value, onChange, onSearch, className }: SearchInpu
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        disabled={isLoading}
       />
     </div>
   );

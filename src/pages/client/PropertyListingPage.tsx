@@ -15,6 +15,7 @@ const BROKER_PHONE = "(11) 98765-4321";
 
 const PropertyListingPage = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [filteredProperties, setFilteredProperties] = useState(mockProperties);
   const [selectedFilters, setSelectedFilters] = useState<Record<FilterCategory, string[]>>({
     constructionStage: [],
     city: [],
@@ -69,6 +70,10 @@ const PropertyListingPage = () => {
     console.log("Applied filters:", filters);
     // Here you would filter the properties based on the selected filters
   };
+
+  const handleFilteredPropertiesChange = (properties: any[]) => {
+    setFilteredProperties(properties);
+  };
   
   const handleResetFilters = () => {
     setSelectedFilters({
@@ -88,7 +93,7 @@ const PropertyListingPage = () => {
       
       <div className="flex-1 container mx-auto px-2 sm:px-3 md:px-4 py-2 md:py-4 max-w-full">
         {/* Properties Found - Moved to top */}
-        <PropertyListings properties={mockProperties} />
+        <PropertyListings properties={filteredProperties || mockProperties} />
         
         {/* Unified Filter Card - New Search Section */}
         <div className="mt-6">
@@ -122,11 +127,7 @@ const PropertyListingPage = () => {
               </button>
             </div>
             <PropertyFilter 
-              selectedFilters={selectedFilters}
-              onFilterChange={handleFilterChange}
-              onApplyFilters={handleApplyFilters}
-              onReset={handleResetFilters}
-              className="max-h-[calc(100vh-180px)] overflow-auto"
+              onFilterChange={handleFilteredPropertiesChange}
             />
           </div>
         </div>
