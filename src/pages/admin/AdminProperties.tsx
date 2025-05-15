@@ -36,8 +36,8 @@ const AdminProperties = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="w-full space-y-6">
+      <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Imóveis</h1>
           <p className="text-muted-foreground mt-2">Gerencie todos os imóveis do sistema.</p>
@@ -50,12 +50,12 @@ const AdminProperties = () => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex items-center gap-2 w-full">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar imóveis..."
-            className="pl-8"
+            className="pl-8 w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -64,7 +64,7 @@ const AdminProperties = () => {
         {/* Filtros adicionais poderiam ser adicionados aqui */}
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full">
         <Table>
           <TableHeader>
             <TableRow>
