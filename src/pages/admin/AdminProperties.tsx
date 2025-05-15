@@ -37,21 +37,13 @@ const AdminProperties = () => {
   );
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className="flex justify-between items-center w-full mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Imóveis</h1>
-          <p className="text-muted-foreground mt-2">Gerencie todos os imóveis do sistema.</p>
-        </div>
-        <Button asChild>
-          <Link to="/admin/properties/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Imóvel
-          </Link>
-        </Button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Imóveis</h1>
+        <p className="text-muted-foreground mt-2">Gerencie todos os imóveis do sistema.</p>
       </div>
 
-      <div className="flex items-center gap-2 w-full mb-6">
+      <div className="flex items-center gap-2 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -62,7 +54,12 @@ const AdminProperties = () => {
           />
         </div>
         
-        {/* Filtros adicionais poderiam ser adicionados aqui */}
+        <Button asChild>
+          <Link to="/admin/properties/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Imóvel
+          </Link>
+        </Button>
       </div>
 
       <div className="rounded-md border w-full overflow-hidden">

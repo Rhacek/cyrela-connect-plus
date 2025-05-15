@@ -39,11 +39,14 @@ const AdminPlans = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Gerenciamento de Planos</h1>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Planos</h1>
+        <p className="text-muted-foreground mt-2">
+          Gerencie os planos disponíveis para os usuários da plataforma
+        </p>
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Planos Disponíveis</CardTitle>
           <CardDescription>
@@ -51,42 +54,44 @@ const AdminPlans = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Período</TableHead>
-                <TableHead>Mais Popular</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {plans.map((plan) => (
-                <TableRow key={plan.id}>
-                  <TableCell className="font-medium">{plan.name}</TableCell>
-                  <TableCell>{plan.type === PlanType.FREE ? "Gratuito" : "Pro"}</TableCell>
-                  <TableCell>
-                    {plan.price === 0 ? "Grátis" : `R$ ${plan.price.toFixed(2)}`}
-                  </TableCell>
-                  <TableCell>
-                    {plan.billingPeriod === "monthly" ? "Mensal" : "Anual"}
-                  </TableCell>
-                  <TableCell>{plan.isMostPopular ? "Sim" : "Não"}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditPlan(plan)}
-                    >
-                      Editar
-                    </Button>
-                  </TableCell>
+          <div className="w-full overflow-x-auto">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Preço</TableHead>
+                  <TableHead>Período</TableHead>
+                  <TableHead>Mais Popular</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {plans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="font-medium">{plan.name}</TableCell>
+                    <TableCell>{plan.type === PlanType.FREE ? "Gratuito" : "Pro"}</TableCell>
+                    <TableCell>
+                      {plan.price === 0 ? "Grátis" : `R$ ${plan.price.toFixed(2)}`}
+                    </TableCell>
+                    <TableCell>
+                      {plan.billingPeriod === "monthly" ? "Mensal" : "Anual"}
+                    </TableCell>
+                    <TableCell>{plan.isMostPopular ? "Sim" : "Não"}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditPlan(plan)}
+                      >
+                        Editar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

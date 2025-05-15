@@ -7,7 +7,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const AdminLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-background flex overflow-x-hidden">
+      <div className="min-h-screen bg-background flex overflow-x-hidden w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <AdminHeader />
