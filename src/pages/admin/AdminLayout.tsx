@@ -7,11 +7,11 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const AdminLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen bg-background flex overflow-x-hidden">
         <AdminSidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <AdminHeader />
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-6 overflow-y-auto overflow-x-hidden">
             <Outlet />
           </main>
         </div>
