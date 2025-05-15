@@ -12,6 +12,7 @@ import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
 import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
 import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@/components/admin/property-form/PropertyFormSchema";
+
 const AdminPropertyForm = () => {
   const {
     id
@@ -71,17 +72,29 @@ const AdminPropertyForm = () => {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl p-8">
-          <TabsTrigger value="basic" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
+        <TabsList className="grid grid-cols-4 w-full max-w-xl px-2 py-2 gap-1 h-auto min-h-12 items-center justify-center">
+          <TabsTrigger 
+            value="basic" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Informações Básicas
           </TabsTrigger>
-          <TabsTrigger value="details" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
+          <TabsTrigger 
+            value="details" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Detalhes
           </TabsTrigger>
-          <TabsTrigger value="media" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
+          <TabsTrigger 
+            value="media" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Mídia
           </TabsTrigger>
-          <TabsTrigger value="broker" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
+          <TabsTrigger 
+            value="broker" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Info. Corretor
           </TabsTrigger>
         </TabsList>
@@ -117,4 +130,5 @@ const AdminPropertyForm = () => {
       </Tabs>
     </div>;
 };
+
 export default AdminPropertyForm;
