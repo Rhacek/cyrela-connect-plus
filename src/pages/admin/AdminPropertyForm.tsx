@@ -87,11 +87,11 @@ const AdminPropertyForm = () => {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
-          <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-          <TabsTrigger value="details">Detalhes</TabsTrigger>
-          <TabsTrigger value="media">Mídia</TabsTrigger>
-          <TabsTrigger value="broker">Info. Corretor</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsTrigger value="basic" className="px-2 py-1.5 whitespace-normal text-sm h-auto min-h-10">Informações Básicas</TabsTrigger>
+          <TabsTrigger value="details" className="px-2 py-1.5 whitespace-normal text-sm h-auto min-h-10">Detalhes</TabsTrigger>
+          <TabsTrigger value="media" className="px-2 py-1.5 whitespace-normal text-sm h-auto min-h-10">Mídia</TabsTrigger>
+          <TabsTrigger value="broker" className="px-2 py-1.5 whitespace-normal text-sm h-auto min-h-10">Info. Corretor</TabsTrigger>
         </TabsList>
 
         <Form {...form}>
