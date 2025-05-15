@@ -47,7 +47,7 @@ export const BrokerInfoTab = ({ form }: BrokerInfoTabProps) => {
           name="commission"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Comissão (%)</FormLabel>
+              <FormLabel>Margem aplicada (%)</FormLabel>
               <FormControl>
                 <Input 
                   type="number" 
@@ -58,7 +58,7 @@ export const BrokerInfoTab = ({ form }: BrokerInfoTabProps) => {
                 />
               </FormControl>
               <FormDescription>
-                Percentual de comissão para o corretor que realizar a venda
+                Percentual de margem aplicada para o corretor que realizar a venda
               </FormDescription>
               <FormMessage />
             </FormItem>
