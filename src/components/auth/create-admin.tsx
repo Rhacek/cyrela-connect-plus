@@ -14,6 +14,10 @@ export function CreateAdmin() {
 
   const handleCreateAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!password) {
+      alert("Por favor, insira uma senha");
+      return;
+    }
     await createAdmin(email, password, name);
   };
 

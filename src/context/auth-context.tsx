@@ -150,13 +150,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
+      // Para o administrador, enviamos a role como string para evitar problemas com o tipo enum
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-            role: UserRole.ADMIN,
+            role: "ADMIN", // Enviamos como string em vez de UserRole.ADMIN
           },
         },
       });
