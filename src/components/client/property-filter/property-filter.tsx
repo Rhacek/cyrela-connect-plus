@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,15 +11,27 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { FilterCategory } from "./filter-types";
+import { ConstructionStageFilter } from "./construction-stage-filter";
+import { FeaturesFilter } from "./features-filter";
+import { SearchInput } from "./search-input";
 
 type PropertyFilterProps = {
   onSearch?: (query: string) => void;
   className?: string;
+  selectedFilters?: Record<FilterCategory, string[]>;
+  onFilterChange?: (category: FilterCategory, id: string) => void;
+  onApplyFilters?: (filters: any) => void;
+  onReset?: () => void;
 };
 
 export const PropertyFilter = ({ 
   onSearch, 
-  className = "" 
+  className = "",
+  selectedFilters = {},
+  onFilterChange,
+  onApplyFilters,
+  onReset
 }: PropertyFilterProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -27,6 +40,13 @@ export const PropertyFilter = ({
     e.preventDefault();
     if (onSearch) {
       onSearch(searchQuery);
+    }
+  };
+
+  const handleApplyFilters = () => {
+    setIsFilterOpen(false);
+    if (onApplyFilters) {
+      onApplyFilters(selectedFilters);
     }
   };
 
@@ -54,12 +74,36 @@ export const PropertyFilter = ({
             <SheetHeader>
               <SheetTitle>Filtros de Busca</SheetTitle>
             </SheetHeader>
-            <div className="py-4 space-y-4">
-              {/* Aqui seriam implementados os filtros específicos */}
-              <p className="text-muted-foreground">Filtros serão implementados conforme necessidade.</p>
+            <div className="py-4 space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+              {selectedFilters && onFilterChange && (
+                <>
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Estágio de Construção</h4>
+                    <ConstructionStageFilter 
+                      selectedFilters={selectedFilters.constructionStage || []}
+                      onFilterClick={(id) => onFilterChange("constructionStage", id)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <FeaturesFilter 
+                      selectedFilters={selectedFilters.bedrooms || []}
+                      onFilterClick={(id) => onFilterChange("bedrooms", id)}
+                    />
+                  </div>
+                </>
+              )}
+              {!selectedFilters && (
+                <p className="text-muted-foreground">Filtros serão implementados conforme necessidade.</p>
+              )}
             </div>
-            <SheetFooter>
-              <Button onClick={() => setIsFilterOpen(false)}>Aplicar Filtros</Button>
+            <SheetFooter className="pt-4 flex justify-between border-t">
+              {onReset && (
+                <Button variant="outline" onClick={onReset}>
+                  Limpar
+                </Button>
+              )}
+              <Button onClick={handleApplyFilters}>Aplicar Filtros</Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
