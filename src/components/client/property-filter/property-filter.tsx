@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { FilterCategory } from "./filter-types";
+import { FilterCategory, defaultFilterState } from "./filter-types";
 import { ConstructionStageFilter } from "./construction-stage-filter";
 import { FeaturesFilter } from "./features-filter";
 import { SearchInput } from "./search-input";
@@ -28,7 +28,7 @@ type PropertyFilterProps = {
 export const PropertyFilter = ({ 
   onSearch, 
   className = "",
-  selectedFilters = {},
+  selectedFilters = defaultFilterState,
   onFilterChange,
   onApplyFilters,
   onReset
