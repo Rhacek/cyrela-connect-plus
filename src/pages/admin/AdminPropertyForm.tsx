@@ -62,13 +62,14 @@ const AdminPropertyForm = () => {
 
   const onSubmit = (values: PropertyFormValues) => {
     console.log(values);
-    toast({
-      title: isEditing 
+    toast.success(
+      isEditing 
         ? "Imóvel atualizado com sucesso!" 
         : "Imóvel cadastrado com sucesso!",
-      description: "As informações foram salvas no sistema.",
-      variant: "default",
-    });
+      {
+        description: "As informações foram salvas no sistema.",
+      }
+    );
     navigate("/admin/properties");
   };
 
