@@ -1,148 +1,69 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "./search-input";
-import { LocationFilter } from "./location-filter";
-import { PriceRangeFilter } from "./price-range-filter";
-import { FeaturesFilter } from "./features-filter";
-import { ConstructionStageFilter } from "./construction-stage-filter";
-import { FilterButton } from "./filter-button";
-import { toast } from "@/hooks/use-toast";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { FilterX, Search } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { FilterCategory, defaultFilterState } from "./filter-types";
+import { Input } from "@/components/ui/input";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { 
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-interface PropertyFilterProps {
-  selectedFilters: Record<FilterCategory, string[]>;
-  onFilterChange: (category: FilterCategory, id: string) => void;
-  onApplyFilters: (filters: any) => void;
-  onReset: () => void;
+type PropertyFilterProps = {
+  onSearch?: (query: string) => void;
   className?: string;
-}
+};
 
-export function PropertyFilter({
-  selectedFilters,
-  onFilterChange,
-  onApplyFilters,
-  onReset,
-  className
-}: PropertyFilterProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  
-  // Get the selected zone
-  const selectedZone = selectedFilters.zone.length > 0 ? selectedFilters.zone[0] : null;
+export const PropertyFilter = ({ 
+  onSearch, 
+  className = "" 
+}: PropertyFilterProps) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const handleApplyFilters = () => {
-    onApplyFilters({...selectedFilters, search: searchValue});
-    toast.success("Filtros aplicados com sucesso!");
-    setIsOpen(false);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSearch) {
+      onSearch(searchQuery);
+    }
   };
-
-  const handleClearFilters = () => {
-    onReset();
-    setSearchValue("");
-    toast.info("Filtros limpos com sucesso!");
-  };
-
-  const filterContent = (
-    <div className="flex flex-col gap-6">
-      <LocationFilter
-        selectedFilters={{
-          city: selectedFilters.city,
-          zone: selectedFilters.zone,
-          neighborhood: selectedFilters.neighborhood
-        }}
-        selectedZone={selectedZone}
-        onFilterClick={onFilterChange}
-      />
-      
-      <PriceRangeFilter 
-        priceRange={[300000, 2000000]} 
-        onPriceRangeChange={(range) => console.log("Price range changed", range)}
-      />
-      
-      <FeaturesFilter 
-        selectedFilters={selectedFilters.bedrooms}
-        onFilterClick={(id) => onFilterChange("bedrooms", id)}
-      />
-      
-      <ConstructionStageFilter
-        selectedFilters={selectedFilters.constructionStage}
-        onFilterClick={(id) => onFilterChange("constructionStage", id)}
-      />
-      
-      <div className="flex gap-3 mt-4">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={handleClearFilters}
-        >
-          <FilterX className="mr-2 h-4 w-4" />
-          Limpar
-        </Button>
-        <Button
-          className="flex-1"
-          onClick={handleApplyFilters}
-        >
-          <Search className="mr-2 h-4 w-4" />
-          Buscar
-        </Button>
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <div className={`mb-6 ${className || ''}`}>
-        <div className="flex gap-3">
-          <SearchInput
-            value={searchValue}
-            onChange={setSearchValue}
-            onSearch={handleApplyFilters}
-            className="flex-1"
-          />
-          
-          <Sheet
-            open={isOpen}
-            onOpenChange={setIsOpen}
-          >
-            <SheetTrigger asChild>
-              <FilterButton
-                count={Object.keys(selectedFilters).filter(key => 
-                  selectedFilters[key as FilterCategory].length > 0
-                ).length}
-              />
-            </SheetTrigger>
-            <SheetContent
-              side="bottom"
-              className="h-[80vh]"
-            >
-              <SheetHeader className="mb-6">
-                <SheetTitle>Filtros</SheetTitle>
-              </SheetHeader>
-              {filterContent}
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className={`bg-card border rounded-lg p-6 mb-8 ${className || ''}`}>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <div className="md:col-span-5">
-          <SearchInput
-            value={searchValue}
-            onChange={setSearchValue}
-            onSearch={handleApplyFilters}
+    <div className={`w-full flex flex-col space-y-4 ${className}`}>
+      <form onSubmit={handleSearch} className="flex w-full space-x-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar imóveis..."
+            className="pl-8 w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {filterContent}
-      </div>
+        
+        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" type="button">
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              Filtros
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filtros de Busca</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 space-y-4">
+              {/* Aqui seriam implementados os filtros específicos */}
+              <p className="text-muted-foreground">Filtros serão implementados conforme necessidade.</p>
+            </div>
+            <SheetFooter>
+              <Button onClick={() => setIsFilterOpen(false)}>Aplicar Filtros</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </form>
     </div>
   );
-}
+};
