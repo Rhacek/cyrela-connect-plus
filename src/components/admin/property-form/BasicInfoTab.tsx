@@ -3,7 +3,6 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PropertyStatus } from "@/mocks/property-data";
 import { Card, CardContent } from "@/components/ui/card";
 import { UseFormReturn } from "react-hook-form";
 import { PropertyFormValues } from "./PropertyFormSchema";
@@ -62,60 +61,32 @@ export const BasicInfoTab = ({ form }: BasicInfoTabProps) => {
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Apartamento">Apartamento</SelectItem>
-                    <SelectItem value="Casa">Casa</SelectItem>
-                    <SelectItem value="Cobertura">Cobertura</SelectItem>
-                    <SelectItem value="Terreno">Terreno</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={PropertyStatus.AVAILABLE}>Disponível</SelectItem>
-                    <SelectItem value={PropertyStatus.RESERVED}>Reservado</SelectItem>
-                    <SelectItem value={PropertyStatus.SOLD}>Vendido</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Apartamento">Apartamento</SelectItem>
+                  <SelectItem value="Casa">Casa</SelectItem>
+                  <SelectItem value="Cobertura">Cobertura</SelectItem>
+                  <SelectItem value="Terreno">Terreno</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

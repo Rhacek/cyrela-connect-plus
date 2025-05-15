@@ -37,7 +37,6 @@ const AdminPropertyForm = () => {
           developmentName: property.developmentName || "",
           description: property.description,
           type: property.type,
-          status: property.status,
           price: property.price,
           promotionalPrice: property.promotionalPrice,
           area: property.area,

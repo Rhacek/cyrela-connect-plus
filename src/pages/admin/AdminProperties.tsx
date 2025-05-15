@@ -26,8 +26,7 @@ import {
   Eye,
   Building
 } from "lucide-react";
-import { mockProperties, PropertyStatus } from "@/mocks/property-data";
-import { Badge } from "@/components/ui/badge";
+import { mockProperties } from "@/mocks/property-data";
 
 const AdminProperties = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,19 +34,6 @@ const AdminProperties = () => {
   const filteredProperties = mockProperties.filter(
     property => property.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
-  const getStatusBadge = (status: PropertyStatus) => {
-    switch (status) {
-      case PropertyStatus.AVAILABLE:
-        return <Badge className="bg-green-500">Disponível</Badge>;
-      case PropertyStatus.RESERVED:
-        return <Badge className="bg-yellow-500">Reservado</Badge>;
-      case PropertyStatus.SOLD:
-        return <Badge className="bg-blue-500">Vendido</Badge>;
-      default:
-        return <Badge>Desconhecido</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -85,7 +71,6 @@ const AdminProperties = () => {
               <TableHead>Título</TableHead>
               <TableHead>Localização</TableHead>
               <TableHead>Preço</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Etapa</TableHead>
               <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
@@ -117,9 +102,6 @@ const AdminProperties = () => {
                     style: 'currency',
                     currency: 'BRL'
                   }).format(property.price)}
-                </TableCell>
-                <TableCell>
-                  {getStatusBadge(property.status)}
                 </TableCell>
                 <TableCell>
                   {property.constructionStage}

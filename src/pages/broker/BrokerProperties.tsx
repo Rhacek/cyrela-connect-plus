@@ -10,7 +10,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PropertyStatus, mockProperties } from "@/mocks/property-data";
+import { mockProperties } from "@/mocks/property-data";
 import { Button } from "@/components/ui/button";
 import { Building, Eye, MapPin, Plus, Search } from "lucide-react";
 import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
@@ -92,14 +92,13 @@ export default function BrokerProperties() {
                         <TableHead>Empreendimento</TableHead>
                         <TableHead>Endereço</TableHead>
                         <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredProperties.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-6">
+                          <TableCell colSpan={4} className="text-center py-6">
                             Nenhum imóvel encontrado
                           </TableCell>
                         </TableRow>
@@ -131,22 +130,6 @@ export default function BrokerProperties() {
                                 currency: 'BRL',
                                 maximumFractionDigits: 0,
                               })}
-                            </TableCell>
-                            <TableCell>
-                              <div className={`px-2 py-1 text-xs font-medium rounded-full inline-flex w-fit ${
-                                property.status === PropertyStatus.AVAILABLE 
-                                  ? "bg-green-100 text-green-800" 
-                                  : property.status === PropertyStatus.RESERVED
-                                  ? "bg-orange-100 text-orange-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}>
-                                {property.status === PropertyStatus.AVAILABLE 
-                                  ? "Disponível" 
-                                  : property.status === PropertyStatus.RESERVED
-                                  ? "Reservado"
-                                  : "Vendido"
-                                }
-                              </div>
                             </TableCell>
                             <TableCell className="text-right">
                               <Button variant="ghost" size="sm">

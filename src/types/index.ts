@@ -56,7 +56,6 @@ export interface Property {
   developmentName?: string; // Added development name field
   description: string;
   type: string;
-  status: PropertyStatus;
   price: number;
   promotionalPrice?: number;
   area: number;
