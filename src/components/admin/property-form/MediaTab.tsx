@@ -14,7 +14,7 @@ interface MediaTabProps {
 
 export const MediaTab = ({ form, initialImages = [] }: MediaTabProps) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="pt-6 space-y-4">
         <h3 className="text-lg font-medium">Imagens do Imóvel</h3>
         <p className="text-sm text-muted-foreground">

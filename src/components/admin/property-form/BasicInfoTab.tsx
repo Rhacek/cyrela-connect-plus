@@ -13,7 +13,7 @@ interface BasicInfoTabProps {
 
 export const BasicInfoTab = ({ form }: BasicInfoTabProps) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="pt-6 space-y-4">
         <FormField
           control={form.control}
