@@ -22,6 +22,10 @@ export const propertyFormSchema = z.object({
   constructionStage: z.string().optional(),
   youtubeUrl: z.string().url("Insira uma URL válida").or(z.string().length(0)).optional(),
   isHighlighted: z.boolean().default(false),
+  
+  // Campos específicos para corretores
+  brokerNotes: z.string().optional(),
+  commission: z.coerce.number().nonnegative("A comissão não pode ser negativa").optional(),
 });
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
@@ -46,4 +50,8 @@ export const defaultPropertyValues: PropertyFormValues = {
   constructionStage: "",
   youtubeUrl: "",
   isHighlighted: false,
+  
+  // Valores padrão para campos de corretor
+  brokerNotes: "",
+  commission: 0,
 };

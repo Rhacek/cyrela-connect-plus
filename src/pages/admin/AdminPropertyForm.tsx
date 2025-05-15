@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockProperties } from "@/mocks/property-data";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { BasicInfoTab } from "@/components/admin/property-form/BasicInfoTab";
 import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
+import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
 import { 
   propertyFormSchema, 
   PropertyFormValues, 
@@ -52,6 +53,8 @@ const AdminPropertyForm = () => {
           constructionStage: property.constructionStage || "",
           youtubeUrl: property.youtubeUrl || "",
           isHighlighted: property.isHighlighted,
+          brokerNotes: property.brokerNotes || "",
+          commission: property.commission || 0,
         });
       }
     }
@@ -59,11 +62,13 @@ const AdminPropertyForm = () => {
 
   const onSubmit = (values: PropertyFormValues) => {
     console.log(values);
-    toast.success(
-      isEditing 
+    toast({
+      title: isEditing 
         ? "Imóvel atualizado com sucesso!" 
-        : "Imóvel cadastrado com sucesso!"
-    );
+        : "Imóvel cadastrado com sucesso!",
+      description: "As informações foram salvas no sistema.",
+      variant: "default",
+    });
     navigate("/admin/properties");
   };
 
@@ -81,10 +86,11 @@ const AdminPropertyForm = () => {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-md">
           <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
           <TabsTrigger value="details">Detalhes</TabsTrigger>
           <TabsTrigger value="media">Mídia</TabsTrigger>
+          <TabsTrigger value="broker">Info. Corretor</TabsTrigger>
         </TabsList>
 
         <Form {...form}>
@@ -102,6 +108,10 @@ const AdminPropertyForm = () => {
                 form={form} 
                 initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []}
               />
+            </TabsContent>
+            
+            <TabsContent value="broker" className="w-full">
+              <BrokerInfoTab form={form} />
             </TabsContent>
 
             <div className="flex justify-end gap-4">
