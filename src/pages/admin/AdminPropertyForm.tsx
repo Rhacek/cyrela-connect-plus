@@ -71,7 +71,7 @@ const AdminPropertyForm = () => {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl p-6">
+        <TabsList className="grid grid-cols-4 w-full max-w-xl p-8">
           <TabsTrigger value="basic" className="flex items-center justify-center text-center p-2 whitespace-normal text-sm h-auto min-h-10">
             Informações Básicas
           </TabsTrigger>
