@@ -12,6 +12,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string, brokerCode?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  createAdmin: (email: string, password: string, name: string) => Promise<void>;
   isAdmin: () => boolean;
   isBroker: () => boolean;
   isClient: () => boolean;
@@ -145,6 +146,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const createAdmin = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role: UserRole.ADMIN,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error('Erro ao criar administrador', {
+          description: error.message,
+        });
+        return;
+      }
+
+      toast.success('Administrador criado com sucesso!', {
+        description: 'Verifique o e-mail do administrador para confirmar a conta.',
+      });
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      toast.error('Erro ao criar administrador');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
     try {
       setLoading(true);
@@ -187,6 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signIn,
         signUp,
         signOut,
+        createAdmin,
         isAdmin,
         isBroker,
         isClient,
