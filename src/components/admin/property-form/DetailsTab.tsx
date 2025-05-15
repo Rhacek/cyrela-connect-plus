@@ -11,7 +11,7 @@ interface DetailsTabProps {
 
 export const DetailsTab = ({ form }: DetailsTabProps) => {
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="pt-6 space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <FormField
