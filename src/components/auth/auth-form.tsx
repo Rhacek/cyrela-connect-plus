@@ -6,43 +6,45 @@ import { Label } from "@/components/ui/label";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { UserRole } from "@/types";
+import { useAuth } from "@/context/auth-context";
+import { useNavigate } from "react-router-dom";
 
 export function AuthForm() {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { signIn, signUp, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const navigate = useNavigate();
+
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // Register form state
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerBrokerCode, setRegisterBrokerCode] = useState("");
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    
     try {
-      // Mock login success
-      setTimeout(() => {
-        toast.success("Login realizado com sucesso!");
-        window.location.href = "/broker/dashboard";
-      }, 1500);
+      await signIn(loginEmail, loginPassword);
+      navigate("/broker/dashboard");
     } catch (error) {
-      toast.error("Erro ao fazer login. Verifique suas credenciais.");
-    } finally {
-      setIsLoading(false);
+      console.error("Login error:", error);
     }
   };
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    
     try {
-      // Mock registration success
-      setTimeout(() => {
-        toast.success("Cadastro realizado com sucesso!");
-        setActiveTab("login");
-      }, 1500);
+      await signUp(registerEmail, registerPassword, registerName, registerBrokerCode);
+      setActiveTab("login");
+      toast.success("Cadastro realizado com sucesso! Por favor, verifique seu email para confirmar sua conta.");
     } catch (error) {
-      toast.error("Erro ao realizar cadastro.");
-    } finally {
-      setIsLoading(false);
+      console.error("Registration error:", error);
     }
   };
 
@@ -81,6 +83,8 @@ export function AuthForm() {
                   placeholder="seu@email.com"
                   required
                   className="cyrela-input"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
                 />
               </div>
               
@@ -100,15 +104,17 @@ export function AuthForm() {
                   placeholder="••••••••"
                   required
                   className="cyrela-input"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
                 />
               </div>
               
               <Button
                 type="submit"
                 className="cyrela-button-primary w-full mt-6"
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {loading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </TabsContent>
@@ -123,6 +129,8 @@ export function AuthForm() {
                   placeholder="Seu nome completo"
                   required
                   className="cyrela-input"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
                 />
               </div>
               
@@ -134,6 +142,8 @@ export function AuthForm() {
                   placeholder="seu@email.com"
                   required
                   className="cyrela-input"
+                  value={registerEmail}
+                  onChange={(e) => setRegisterEmail(e.target.value)}
                 />
               </div>
               
@@ -145,6 +155,8 @@ export function AuthForm() {
                   placeholder="(11) 99999-9999"
                   required
                   className="cyrela-input"
+                  value={registerPhone}
+                  onChange={(e) => setRegisterPhone(e.target.value)}
                 />
               </div>
               
@@ -156,6 +168,8 @@ export function AuthForm() {
                   placeholder="••••••••"
                   required
                   className="cyrela-input"
+                  value={registerPassword}
+                  onChange={(e) => setRegisterPassword(e.target.value)}
                 />
               </div>
               
@@ -166,6 +180,8 @@ export function AuthForm() {
                   type="text"
                   placeholder="CRECI ou código interno"
                   className="cyrela-input"
+                  value={registerBrokerCode}
+                  onChange={(e) => setRegisterBrokerCode(e.target.value)}
                 />
                 <p className="text-xs text-cyrela-gray-dark font-inter">
                   Se você é corretor, informe seu CRECI ou código interno Cyrela
@@ -175,9 +191,9 @@ export function AuthForm() {
               <Button
                 type="submit"
                 className="cyrela-button-primary w-full mt-6"
-                disabled={isLoading}
+                disabled={loading}
               >
-                {isLoading ? "Cadastrando..." : "Cadastrar"}
+                {loading ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </form>
           </TabsContent>

@@ -1,133 +1,113 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FilterCategory, defaultFilterState } from "./filter-types";
-import { LocationFilter } from "./location-filter";
-import { ConstructionStageFilter } from "./construction-stage-filter";
-import { FeaturesFilter } from "./features-filter";
-import { PriceRangeFilter } from "./price-range-filter";
 import { SearchInput } from "./search-input";
-import { cn } from "@/lib/utils";
+import { FilterButton } from "./filter-button";
+import { PriceRangeFilter } from "./price-range-filter";
+import { LocationFilter } from "./location-filter";
+import { FeaturesFilter } from "./features-filter";
+import { ConstructionStageFilter } from "./construction-stage-filter";
+import { propertiesService } from "@/services/properties.service";
+import { useQuery } from "@tanstack/react-query";
 
-interface PropertyFilterProps {
-  selectedFilters: Record<FilterCategory, string[]>;
-  onFilterChange: (category: FilterCategory, id: string) => void;
-  onApplyFilters?: (filters: Record<FilterCategory, string[]>) => void;
-  onReset?: () => void;
-  priceRange?: number[];
-  onPriceRangeChange?: (range: number[]) => void;
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
-  onSearch?: () => void;
-  className?: string;
-}
+export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredProperties: any[]) => void }) {
+  const [search, setSearch] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([500000, 5000000]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const [stages, setStages] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-export function PropertyFilter({
-  selectedFilters = defaultFilterState,
-  onFilterChange,
-  onApplyFilters,
-  onReset,
-  priceRange,
-  onPriceRangeChange,
-  searchValue = "",
-  onSearchChange,
-  onSearch,
-  className
-}: PropertyFilterProps) {
-  const [localSearchValue, setLocalSearchValue] = useState(searchValue);
-  
-  // Determine if a zone is selected to show neighborhoods
-  const selectedZone = selectedFilters.zone.length > 0 ? selectedFilters.zone[0] : null;
-  
-  const handleSearchChange = (value: string) => {
-    setLocalSearchValue(value);
-    if (onSearchChange) {
-      onSearchChange(value);
-    }
-  };
-  
-  const getAppliedFiltersCount = () => {
-    return Object.values(selectedFilters).reduce((count, filterList) => count + filterList.length, 0);
-  };
-  
+  // Fetch all properties
+  const { data: properties = [], isLoading } = useQuery({
+    queryKey: ['properties'],
+    queryFn: () => propertiesService.getAll(),
+  });
+
+  // Apply filters
+  useEffect(() => {
+    if (!onFilterChange) return;
+
+    const filtered = properties.filter((property) => {
+      // Search filter
+      const searchMatches = search === "" || 
+        property.title.toLowerCase().includes(search.toLowerCase()) ||
+        property.description.toLowerCase().includes(search.toLowerCase()) ||
+        property.neighborhood.toLowerCase().includes(search.toLowerCase()) ||
+        property.city.toLowerCase().includes(search.toLowerCase());
+
+      // Price filter
+      const priceMatches = property.price >= priceRange[0] && property.price <= priceRange[1];
+
+      // Location filter
+      const locationMatches = locations.length === 0 || 
+        locations.some(loc => property.neighborhood === loc || property.city === loc);
+
+      // Features filter (simplified - would need proper feature property)
+      const featureMatches = selectedFeatures.length === 0;
+
+      // Construction stage filter
+      const stageMatches = stages.length === 0 || 
+        (property.constructionStage && stages.includes(property.constructionStage));
+
+      return searchMatches && priceMatches && locationMatches && featureMatches && stageMatches;
+    });
+
+    onFilterChange(filtered);
+  }, [properties, search, priceRange, locations, selectedFeatures, stages, onFilterChange]);
+
   return (
-    <div className={cn("p-4 space-y-4 overflow-y-auto bg-white rounded-md shadow-sm", className)}>
-      {/* Search input */}
-      {onSearchChange && (
-        <div className="mb-5">
-          <SearchInput
-            value={localSearchValue}
-            onChange={handleSearchChange}
-            onSearch={onSearch}
-            className="mb-2"
-          />
-        </div>
-      )}
-      
-      {/* Construction Stage Filter */}
-      <div>
-        <h3 className="text-base font-semibold mb-3">Estágio da Obra</h3>
-        <ConstructionStageFilter
-          selectedFilters={selectedFilters.constructionStage}
-          onFilterClick={(id) => onFilterChange("constructionStage", id)}
+    <div className="w-full space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <SearchInput 
+          value={search} 
+          onChange={setSearch} 
+          className="flex-1" 
+          isLoading={isLoading}
         />
+        
+        <Button 
+          variant="outline" 
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+          className="flex items-center gap-2"
+        >
+          <Filter size={16} />
+          Filtros
+        </Button>
       </div>
       
-      {/* Price Range Filter */}
-      {onPriceRangeChange && (
-        <div>
-          <h3 className="text-base font-semibold mb-3">Faixa de Preço</h3>
-          <PriceRangeFilter
-            priceRange={priceRange}
-            onPriceRangeChange={onPriceRangeChange}
-          />
-        </div>
-      )}
-      
-      {/* Location Filter */}
-      <div>
-        <h3 className="text-base font-semibold mb-3">Localização</h3>
-        <LocationFilter
-          selectedFilters={{
-            city: selectedFilters.city,
-            zone: selectedFilters.zone,
-            neighborhood: selectedFilters.neighborhood
-          }}
-          selectedZone={selectedZone}
-          onFilterClick={(category, id) => onFilterChange(category as FilterCategory, id)}
-        />
-      </div>
-      
-      {/* Features Filter */}
-      <div>
-        <h3 className="text-base font-semibold mb-3">Características</h3>
-        <FeaturesFilter
-          selectedFilters={selectedFilters.bedrooms}
-          onFilterClick={(id) => onFilterChange("bedrooms", id)}
-        />
-      </div>
-      
-      {/* Action buttons */}
-      {(onApplyFilters || onReset) && (
-        <div className="flex gap-2 pt-3 border-t">
-          {onReset && (
-            <Button
-              variant="outline"
-              onClick={onReset}
-              className="flex-1"
-            >
-              Limpar
-            </Button>
-          )}
-          {onApplyFilters && (
-            <Button
-              onClick={() => onApplyFilters(selectedFilters)}
-              className="flex-1 text-base"
-              disabled={getAppliedFiltersCount() === 0}
-            >
-              Aplicar {getAppliedFiltersCount() > 0 && `(${getAppliedFiltersCount()})`}
-            </Button>
-          )}
+      {isFilterOpen && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <FilterButton title="Preço">
+            <PriceRangeFilter 
+              value={priceRange} 
+              onChange={setPriceRange} 
+              min={500000} 
+              max={5000000} 
+            />
+          </FilterButton>
+          
+          <FilterButton title="Localização">
+            <LocationFilter 
+              selected={locations} 
+              onChange={setLocations} 
+            />
+          </FilterButton>
+          
+          <FilterButton title="Características">
+            <FeaturesFilter 
+              selected={selectedFeatures} 
+              onChange={setSelectedFeatures} 
+            />
+          </FilterButton>
+          
+          <FilterButton title="Estágio">
+            <ConstructionStageFilter 
+              selected={stages} 
+              onChange={setStages} 
+            />
+          </FilterButton>
         </div>
       )}
     </div>
