@@ -37,7 +37,7 @@ const AdminProperties = () => {
   );
 
   return (
-    <div className="container mx-auto p-0 w-full max-w-full">
+    <div className="p-0 w-full">
       <div className="flex justify-between items-center w-full mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Imóveis</h1>
