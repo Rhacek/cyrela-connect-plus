@@ -8,7 +8,7 @@ const IndexPage = () => {
   return (
     <div className="min-h-screen bg-cyrela-gray-lightest flex flex-col items-center justify-center p-4">
       <div className="flex flex-col items-center space-y-4 mb-8">
-        <AppLogo size="xl" />
+        <AppLogo size="lg" />
         <h1 className="text-3xl font-bold text-cyrela-red font-poppins text-center">
           Bem-vindo ao Cyrela Connect+
         </h1>
