@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,17 +13,18 @@ import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
 import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
 import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@/components/admin/property-form/PropertyFormSchema";
+
 const AdminPropertyForm = () => {
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
   const [currentTab, setCurrentTab] = useState("basic");
+  
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
     defaultValues: defaultPropertyValues
   });
+  
   useEffect(() => {
     if (isEditing) {
       const property = mockProperties.find(p => p.id === id);
@@ -50,9 +52,15 @@ const AdminPropertyForm = () => {
           brokerNotes: property.brokerNotes || "",
           commission: property.commission || 0
         });
+      } else {
+        toast.error("Imóvel não encontrado", {
+          description: "O imóvel que você está tentando editar não foi encontrado."
+        });
+        navigate("/admin/properties");
       }
     }
-  }, [id, isEditing, form]);
+  }, [id, isEditing, form, navigate]);
+  
   const onSubmit = (values: PropertyFormValues) => {
     console.log(values);
     toast.success(isEditing ? "Imóvel atualizado com sucesso!" : "Imóvel cadastrado com sucesso!", {
@@ -60,7 +68,9 @@ const AdminPropertyForm = () => {
     });
     navigate("/admin/properties");
   };
-  return <div className="space-y-6 w-full overflow-hidden">
+  
+  return (
+    <div className="space-y-6 w-full max-w-5xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           {isEditing ? "Editar Imóvel" : "Novo Imóvel"}
@@ -71,17 +81,29 @@ const AdminPropertyForm = () => {
       </div>
 
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl px-2 py-2 gap-1 h-auto min-h-8 items-center justify-center">
-          <TabsTrigger value="basic" className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm">
+        <TabsList className="grid grid-cols-4 w-full max-w-xl px-2 py-2 gap-1 min-h-12 items-center justify-center">
+          <TabsTrigger 
+            value="basic" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Informações Básicas
           </TabsTrigger>
-          <TabsTrigger value="details" className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm">
+          <TabsTrigger 
+            value="details" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Detalhes
           </TabsTrigger>
-          <TabsTrigger value="media" className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm">
+          <TabsTrigger 
+            value="media" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Mídia
           </TabsTrigger>
-          <TabsTrigger value="broker" className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm">
+          <TabsTrigger 
+            value="broker" 
+            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
+          >
             Info. Corretor
           </TabsTrigger>
         </TabsList>
@@ -104,7 +126,7 @@ const AdminPropertyForm = () => {
               <BrokerInfoTab form={form} />
             </TabsContent>
 
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end gap-4 mt-8">
               <Button type="button" variant="outline" onClick={() => navigate("/admin/properties")}>
                 Cancelar
               </Button>
@@ -115,6 +137,8 @@ const AdminPropertyForm = () => {
           </form>
         </Form>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
+
 export default AdminPropertyForm;
