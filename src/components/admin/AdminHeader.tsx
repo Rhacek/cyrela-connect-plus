@@ -15,12 +15,18 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 export function AdminHeader() {
   const sidebar = useSidebar();
+  const isCollapsed = sidebar.state === "collapsed";
   
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b">
       <div className="flex h-16 px-4 items-center justify-between">
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" className="mr-2" onClick={() => sidebar.collapsed ? sidebar.expand() : sidebar.collapse()}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2" 
+            onClick={() => isCollapsed ? sidebar.setOpen(true) : sidebar.setOpen(false)}
+          >
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle menu</span>
           </Button>
