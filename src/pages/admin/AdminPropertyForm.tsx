@@ -88,16 +88,16 @@ const AdminPropertyForm = () => {
         </TabsList>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
-            <TabsContent value="basic">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6 w-full">
+            <TabsContent value="basic" className="w-full">
               <BasicInfoTab form={form} />
             </TabsContent>
 
-            <TabsContent value="details">
+            <TabsContent value="details" className="w-full">
               <DetailsTab form={form} />
             </TabsContent>
 
-            <TabsContent value="media">
+            <TabsContent value="media" className="w-full">
               <MediaTab 
                 form={form} 
                 initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []}
