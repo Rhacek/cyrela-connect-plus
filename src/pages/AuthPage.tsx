@@ -4,7 +4,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
-import { supabase } from "@/lib/supabase";
+import { supabase, forceSessionRestore } from "@/lib/supabase";
 
 const AuthPage = () => {
   const { session, loading } = useAuth();
@@ -23,6 +23,18 @@ const AuthPage = () => {
       if (!session && !loading) {
         try {
           console.log("AuthPage checking session with Supabase directly");
+          
+          // Try to force session restoration
+          const forcedSession = await forceSessionRestore();
+          if (forcedSession) {
+            console.log("AuthPage found forced session:", forcedSession.user.id);
+            setTimeout(() => {
+              checkAuth(); // Check again after auth context has updated
+            }, 500);
+            return;
+          }
+          
+          // Standard session check
           const { data, error } = await supabase.auth.getSession();
           
           if (error) {

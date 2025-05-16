@@ -24,6 +24,9 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
       
+      // Limpar qualquer sessão antiga que possa estar em um estado inconsistente
+      localStorage.removeItem('supabase.auth.token');
+      
       // Sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
@@ -44,6 +47,14 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
           expiresAt: Math.floor(Date.now() / 1000) + data.session.expires_in
         }));
         
+        // Verifique se a sessão foi realmente armazenada
+        const storedSessionStr = localStorage.getItem('supabase.auth.token');
+        if (storedSessionStr) {
+          console.log("Session successfully stored in localStorage");
+        } else {
+          console.error("Failed to store session in localStorage");
+        }
+        
         await signIn(loginEmail, loginPassword);
         onLoginAttempt(); // Signal to parent that login was attempted
         toast.success("Login bem-sucedido!");
@@ -52,6 +63,14 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       // Verify session directly
       const sessionCheck = await supabase.auth.getSession();
       console.log("Session verification after login:", sessionCheck.data.session ? "Session found" : "No session");
+      
+      // Force a token refresh to ensure it's valid
+      if (sessionCheck.data.session) {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (refreshData.session) {
+          console.log("Session refreshed successfully");
+        }
+      }
       
     } catch (error) {
       console.error("Login error:", error);

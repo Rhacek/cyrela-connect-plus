@@ -11,8 +11,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     storage: localStorage,
-    detectSessionInUrl: true, // Enable detecting session in URL for OAuth providers
-    flowType: 'implicit'      // Use implicit flow for better browser compatibility
+    detectSessionInUrl: true,
+    flowType: 'implicit'
   }
 });
 
@@ -56,3 +56,51 @@ export const cleanupExpiredSessions = () => {
 
 // Initialize auth cleanup
 cleanupExpiredSessions();
+
+// Force restoration of session from localStorage on app load
+export const forceSessionRestore = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Error restoring session:", error);
+      return null;
+    }
+    
+    if (!data.session) {
+      console.log("No session found through getSession, trying localStorage");
+      
+      // Attempt direct localStorage recovery
+      try {
+        const storedSession = localStorage.getItem('supabase.auth.token');
+        if (storedSession) {
+          const parsedSession = JSON.parse(storedSession);
+          if (parsedSession && 
+              parsedSession.currentSession && 
+              parsedSession.expiresAt && 
+              parsedSession.expiresAt > Math.floor(Date.now() / 1000)) {
+            
+            console.log("Found valid session in localStorage, attempting to restore");
+            
+            // Try to refresh the session
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error("Error refreshing session:", refreshError);
+            } else if (refreshData.session) {
+              console.log("Session successfully restored from refresh");
+              return refreshData.session;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing localStorage session:", e);
+      }
+    }
+    
+    return data.session;
+  } catch (e) {
+    console.error("Error in forceSessionRestore:", e);
+    return null;
+  }
+};

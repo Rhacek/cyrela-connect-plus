@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, forceSessionRestore } from '@/lib/supabase';
 import { transformUserData } from '@/utils/auth-utils';
 import { UserSession } from '@/types/auth';
 
@@ -17,19 +17,35 @@ export const useSessionInit = () => {
     
     const initialize = async () => {
       try {
-        // First set up the auth state listener
+        // First forcibly try to restore any existing session
+        const existingSession = await forceSessionRestore();
+        if (existingSession?.user && isMounted) {
+          console.log("Pre-initialization: restored session for user:", existingSession.user.id);
+          setSession(transformUserData(existingSession.user));
+        }
+        
+        // Set up the auth state listener
         const { data } = await supabase.auth.onAuthStateChange(
-          (event, currentSession) => {
+          async (event, currentSession) => {
             console.log("Auth state changed:", event);
             if (currentSession?.user) {
               console.log("Setting session from auth state change:", currentSession.user.id);
               if (isMounted) {
                 setSession(transformUserData(currentSession.user));
+                
+                // Store for extra reliability, only if this isn't a token refresh
+                if (event !== 'TOKEN_REFRESHED') {
+                  localStorage.setItem('supabase.auth.token', JSON.stringify({
+                    currentSession: currentSession,
+                    expiresAt: Math.floor(Date.now() / 1000) + currentSession.expires_in
+                  }));
+                }
               }
             } else if (event === 'SIGNED_OUT') {
               console.log("User signed out, clearing session");
               if (isMounted) {
                 setSession(null);
+                localStorage.removeItem('supabase.auth.token');
               }
             }
             
@@ -56,6 +72,12 @@ export const useSessionInit = () => {
           console.log("Found existing session:", supabaseSession.user.id);
           if (isMounted) {
             setSession(transformUserData(supabaseSession.user));
+            
+            // Store session data in localStorage for backup recovery
+            localStorage.setItem('supabase.auth.token', JSON.stringify({
+              currentSession: supabaseSession,
+              expiresAt: Math.floor(Date.now() / 1000) + supabaseSession.expires_in
+            }));
           }
         } else {
           console.log("No existing session found");
@@ -70,6 +92,13 @@ export const useSessionInit = () => {
                 console.log("Recovered session from localStorage");
                 if (isMounted) {
                   setSession(transformUserData(localSession.currentSession.user));
+                  
+                  // Attempt to refresh the token to ensure it's valid
+                  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+                  if (!refreshError && refreshData.session) {
+                    console.log("Session refreshed successfully");
+                    setSession(transformUserData(refreshData.session.user));
+                  }
                 }
               }
             }
