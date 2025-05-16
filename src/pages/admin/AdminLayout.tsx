@@ -6,45 +6,80 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { refreshSession } from "@/integrations/supabase/client";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const { session, isAdmin, initialized } = useAuth();
   const [isVerifying, setIsVerifying] = useState(true);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
   
-  // Simplified session verification with better error handling
+  // Improved session verification with fallback to session refresh
   useEffect(() => {
-    // Wait for auth context to initialize first
-    if (!initialized) {
-      console.log("Auth context not initialized yet, waiting...");
-      return;
-    }
+    let isMounted = true;
     
-    console.log("AdminLayout - Verifying admin session:", {
-      hasSession: !!session,
-      sessionId: session?.id,
-      userMetadata: session?.user_metadata,
-      userRole: session?.user_metadata?.role,
-      isAdmin: isAdmin(),
-      initialized
-    });
+    const verifyAdminSession = async () => {
+      // Wait for auth context to initialize first
+      if (!initialized) {
+        console.log("Auth context not initialized yet, waiting...");
+        return;
+      }
+      
+      console.log("AdminLayout - Verifying admin session:", {
+        hasSession: !!session,
+        sessionId: session?.id,
+        userMetadata: session?.user_metadata,
+        userRole: session?.user_metadata?.role,
+        isAdmin: isAdmin(),
+        initialized
+      });
+      
+      // First, check if we have a valid admin session in context
+      if (session && isAdmin()) {
+        console.log("Admin session verified from context");
+        if (isMounted) setIsVerifying(false);
+        return;
+      }
+      
+      // Try refreshing the session if not found or not admin
+      if ((!session || !isAdmin()) && !isRefreshingSession) {
+        if (isMounted) setIsRefreshingSession(true);
+        
+        console.log("No valid admin session, attempting to refresh...");
+        try {
+          const refreshedSession = await refreshSession();
+          
+          if (refreshedSession && refreshedSession.user.user_metadata?.role === 'ADMIN') {
+            console.log("Successfully refreshed admin session");
+            // The auth context should be updated via listeners, we just wait for rerender
+            if (isMounted) {
+              setIsRefreshingSession(false);
+              // Don't set isVerifying false yet, let the updated session trigger rerender
+            }
+            return;
+          }
+        } catch (err) {
+          console.error("Error refreshing session:", err);
+        }
+        
+        if (isMounted) {
+          setIsRefreshingSession(false);
+          console.log("User is not an admin or not logged in");
+          toast.error("Acesso administrativo necessário");
+          redirectToAuth();
+        }
+      } else if (isMounted) {
+        setIsVerifying(false);
+      }
+    };
     
-    // First, check if we have a valid admin session in context
-    if (session && isAdmin()) {
-      console.log("Admin session verified from context");
-      setIsVerifying(false);
-      return;
-    }
+    verifyAdminSession();
     
-    // If not admin or no session, redirect
-    if (!session || !isAdmin()) {
-      console.log("User is not an admin or not logged in:", session?.user_metadata?.role);
-      toast.error("Acesso administrativo necessário");
-      redirectToAuth();
-    }
-  }, [navigate, session, isAdmin, initialized]);
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate, session, isAdmin, initialized, isRefreshingSession]);
   
   // Helper function to ensure consistent redirect with parameters
   const redirectToAuth = () => {
@@ -53,7 +88,7 @@ const AdminLayout = () => {
   };
   
   // Show loading state while verifying session
-  if (isVerifying && !initialized) {
+  if ((isVerifying || !initialized) && !session) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

@@ -1,5 +1,5 @@
 
-import { supabase, refreshSession, isRefreshing } from '@/lib/supabase';
+import { supabase, refreshSession, isRefreshing } from '@/integrations/supabase/client';
 import { UserSession } from '@/types/auth';
 
 // Handle invalid session during verification

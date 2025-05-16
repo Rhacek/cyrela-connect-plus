@@ -1,6 +1,6 @@
 
 import { UserSession } from '@/types/auth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Check if a session has all required fields
 export const hasRequiredSessionFields = (sessionToValidate: UserSession): boolean => {

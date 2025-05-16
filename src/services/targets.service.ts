@@ -1,78 +1,88 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Target } from '@/types';
+
+// Type mapper functions
+const mapFromDbModel = (dbModel: any): Target => ({
+  id: dbModel.id,
+  brokerId: dbModel.broker_id,
+  month: dbModel.month,
+  year: dbModel.year,
+  shareTarget: dbModel.share_target,
+  leadTarget: dbModel.lead_target,
+  scheduleTarget: dbModel.schedule_target,
+  visitTarget: dbModel.visit_target,
+  saleTarget: dbModel.sale_target
+});
+
+const mapToDbModel = (model: Partial<Target>) => ({
+  broker_id: model.brokerId,
+  month: model.month,
+  year: model.year,
+  share_target: model.shareTarget,
+  lead_target: model.leadTarget,
+  schedule_target: model.scheduleTarget,
+  visit_target: model.visitTarget,
+  sale_target: model.saleTarget
+});
 
 export const targetsService = {
   async getCurrentMonthTarget(brokerId: string): Promise<Target | null> {
-    if (!brokerId) {
-      console.error('Cannot fetch target: No broker ID provided');
-      return null;
-    }
-
     const today = new Date();
     const month = today.getMonth() + 1; // JavaScript months are 0-indexed
     const year = today.getFullYear();
 
-    console.log(`Fetching target data for broker ${brokerId} (${month}/${year})`);
+    const { data, error } = await supabase
+      .from('targets')
+      .select('*')
+      .eq('broker_id', brokerId)
+      .eq('month', month)
+      .eq('year', year)
+      .maybeSingle();
 
-    try {
-      const { data, error } = await supabase
-        .from('targets')
-        .select('*')
-        .eq('broker_id', brokerId)
-        .eq('month', month)
-        .eq('year', year)
-        .maybeSingle(); // Use maybeSingle instead of single to prevent errors
-
-      if (error) {
-        console.error(`Error fetching current month target for broker ${brokerId}:`, error);
-        throw error;
-      }
-
-      console.log('Target data from Supabase:', data);
-      
-      // If no data exists, return null (the hook will handle this)
-      return data;
-    } catch (err) {
-      console.error(`Unexpected error fetching target:`, err);
-      throw err;
+    if (error) {
+      console.error(`Error fetching current month target for broker ${brokerId}:`, error);
+      throw error;
     }
+
+    return data ? mapFromDbModel(data) : null;
   },
 
   async getMonthlyTargets(brokerId: string, year: number): Promise<Target[]> {
-    if (!brokerId) {
-      console.error('Cannot fetch monthly targets: No broker ID provided');
-      return [];
+    const { data, error } = await supabase
+      .from('targets')
+      .select('*')
+      .eq('broker_id', brokerId)
+      .eq('year', year)
+      .order('month', { ascending: true });
+
+    if (error) {
+      console.error(`Error fetching monthly targets for broker ${brokerId}:`, error);
+      throw error;
     }
 
-    console.log(`Fetching monthly target data for broker ${brokerId} (year ${year})`);
-
-    try {
-      const { data, error } = await supabase
-        .from('targets')
-        .select('*')
-        .eq('broker_id', brokerId)
-        .eq('year', year)
-        .order('month', { ascending: true });
-
-      if (error) {
-        console.error(`Error fetching monthly targets for broker ${brokerId}:`, error);
-        throw error;
-      }
-
-      console.log(`Retrieved ${data?.length || 0} monthly target records`);
-      return data || [];
-    } catch (err) {
-      console.error(`Unexpected error in getMonthlyTargets:`, err);
-      return [];
-    }
+    return data ? data.map(mapFromDbModel) : [];
   },
 
-  async updateTarget(brokerId: string, month: number, year: number, updates: Partial<Omit<Target, 'id' | 'brokerId' | 'month' | 'year'>>): Promise<Target> {
+  async updateTarget(
+    brokerId: string, 
+    month: number, 
+    year: number, 
+    updates: Partial<Omit<Target, 'id' | 'month' | 'year' | 'brokerId'>>
+  ): Promise<Target> {
+    // Convert frontend model to database model
+    const dbUpdates = {
+      share_target: updates.shareTarget,
+      lead_target: updates.leadTarget,
+      schedule_target: updates.scheduleTarget,
+      visit_target: updates.visitTarget,
+      sale_target: updates.saleTarget
+    };
+
     // First check if a record exists
     const { data: existingData, error: checkError } = await supabase
       .from('targets')
       .select('*')
-      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
+      .eq('broker_id', brokerId)
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -86,7 +96,7 @@ export const targetsService = {
       // Update existing record
       const { data, error } = await supabase
         .from('targets')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', existingData.id)
         .select()
         .single();
@@ -96,18 +106,18 @@ export const targetsService = {
         throw error;
       }
 
-      return data as unknown as Target;
+      return mapFromDbModel(data);
     } else {
       // Create new record
       const newTarget = {
-        broker_id: brokerId, // Fixed: changed from brokerId to broker_id
+        broker_id: brokerId,
         month,
         year,
         share_target: updates.shareTarget || 0,
         lead_target: updates.leadTarget || 0,
         schedule_target: updates.scheduleTarget || 0,
         visit_target: updates.visitTarget || 0,
-        sale_target: updates.saleTarget || 0,
+        sale_target: updates.saleTarget || 0
       };
 
       const { data, error } = await supabase
@@ -121,56 +131,7 @@ export const targetsService = {
         throw error;
       }
 
-      return data as unknown as Target;
-    }
-  },
-
-  // Helper method to create a new target record if none exists
-  async ensureCurrentMonthTarget(brokerId: string): Promise<Target> {
-    if (!brokerId) {
-      throw new Error('Cannot ensure target: No broker ID provided');
-    }
-
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-
-    try {
-      // First check if a record exists
-      const existingData = await this.getCurrentMonthTarget(brokerId);
-      
-      if (existingData) {
-        return existingData as Target;
-      }
-      
-      // Create new target record with default targets
-      console.log(`Creating new target record for ${brokerId} (${month}/${year})`);
-      const newTarget = {
-        broker_id: brokerId,
-        month,
-        year,
-        share_target: 10, // Default reasonable targets
-        lead_target: 5,
-        schedule_target: 3,
-        visit_target: 2,
-        sale_target: 1
-      };
-
-      const { data, error } = await supabase
-        .from('targets')
-        .insert(newTarget)
-        .select()
-        .single();
-
-      if (error) {
-        console.error(`Error creating initial target:`, error);
-        throw error;
-      }
-
-      return data as unknown as Target;
-    } catch (err) {
-      console.error(`Error in ensureCurrentMonthTarget:`, err);
-      throw err;
+      return mapFromDbModel(data);
     }
   }
 };
