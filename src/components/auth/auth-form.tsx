@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,7 @@ import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { UserRole } from "@/types";
 import { supabase } from "@/lib/supabase";
+import { transformUserData } from "@/utils/auth-utils";
 
 export function AuthForm() {
   const { session, setSession } = useAuth();
@@ -25,12 +25,11 @@ export function AuthForm() {
         if (!error && data.session) {
           console.log("Auth form found session directly:", data.session.user.id);
           
+          // Transform user data to our expected format
+          const userSession = transformUserData(data.session.user);
+          
           // Update the auth context with the session
-          setSession({
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            user_metadata: data.session.user.user_metadata
-          });
+          setSession(userSession);
         }
       }
     };

@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 export function AdminHeader() {
   const sidebar = useSidebar();
   const isCollapsed = sidebar.state === "collapsed";
-  const { signOut, setSession } = useAuth();
+  const { signOut, setSession, session } = useAuth();
   const navigate = useNavigate();
   
   const handleSignOut = async () => {
@@ -51,6 +51,9 @@ export function AdminHeader() {
       toast.error('Erro ao sair');
     }
   };
+
+  const userName = session?.user_metadata?.name || 'Admin';
+  const userEmail = session?.email || 'admin@example.com';
   
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b">
@@ -75,17 +78,17 @@ export function AdminHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="Admin" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarImage src="https://github.com/shadcn.png" alt={userName} />
+                  <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin</p>
+                  <p className="text-sm font-medium leading-none">{userName}</p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@example.com
+                    {userEmail}
                   </p>
                 </div>
               </DropdownMenuLabel>

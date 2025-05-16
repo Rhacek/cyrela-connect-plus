@@ -9,14 +9,14 @@ export const transformUserData = (user: User): UserSession => {
     id: user.id,
     email: user.email || '',
     user_metadata: {
-      name: user.user_metadata.name || '',
-      role: (user.user_metadata.role as UserRole) || UserRole.CLIENT,
-      brokerCode: user.user_metadata.brokerCode,
-      brokerage: user.user_metadata.brokerage,
-      creci: user.user_metadata.creci,
-      company: user.user_metadata.company,
-      city: user.user_metadata.city,
-      zone: user.user_metadata.zone,
+      name: user.user_metadata?.name || '',
+      role: (user.user_metadata?.role as UserRole) || UserRole.CLIENT,
+      brokerCode: user.user_metadata?.brokerCode,
+      brokerage: user.user_metadata?.brokerage,
+      creci: user.user_metadata?.creci,
+      company: user.user_metadata?.company,
+      city: user.user_metadata?.city,
+      zone: user.user_metadata?.zone,
     }
   };
 };

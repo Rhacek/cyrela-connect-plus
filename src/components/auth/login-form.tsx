@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/lib/supabase";
+import { transformUserData } from "@/utils/auth-utils";
 
 interface LoginFormProps {
   onLoginAttempt: () => void;
@@ -40,12 +41,11 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       if (data.session) {
         console.log("Login successful, session established:", data.session.user.id);
         
+        // Transform user data to our expected format
+        const userSession = transformUserData(data.session.user);
+        
         // Explicitly set the session in auth context
-        await setSession({
-          id: data.session.user.id,
-          email: data.session.user.email || '',
-          user_metadata: data.session.user.user_metadata
-        });
+        await setSession(userSession);
         
         // Additional verification for debugging
         const { data: sessionCheck } = await supabase.auth.getSession();

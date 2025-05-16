@@ -1,10 +1,10 @@
-
 import { useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
 import { supabase, forceSessionRestore } from "@/lib/supabase";
+import { transformUserData } from "@/utils/auth-utils";
 
 const AuthPage = () => {
   const { session, loading, setSession } = useAuth();
@@ -32,13 +32,10 @@ const AuthPage = () => {
           if (forcedSession) {
             console.log("AuthPage - Found forced session:", forcedSession.user.id);
             
-            // Update the auth context with the restored session
-            const userSession = {
-              id: forcedSession.user.id,
-              email: forcedSession.user.email || '',
-              user_metadata: forcedSession.user.user_metadata
-            };
+            // Transform user data to our expected format
+            const userSession = transformUserData(forcedSession.user);
             
+            // Update the auth context with the restored session
             setSession(userSession);
             
             // Use the session directly instead of waiting for context update
@@ -58,13 +55,10 @@ const AuthPage = () => {
           if (data.session) {
             console.log("AuthPage - Found session directly from Supabase:", data.session.user.id);
             
-            // Update the auth context with the found session
-            const userSession = {
-              id: data.session.user.id,
-              email: data.session.user.email || '',
-              user_metadata: data.session.user.user_metadata
-            };
+            // Transform user data to our expected format
+            const userSession = transformUserData(data.session.user);
             
+            // Update the auth context with the found session
             setSession(userSession);
             
             // Use the session directly 
@@ -88,9 +82,8 @@ const AuthPage = () => {
   const redirectBasedOnRole = (userSession: any) => {
     console.log("Auth page detected existing session, redirecting based on role");
     
-    const userRole = 'user' in userSession 
-      ? userSession.user.user_metadata.role 
-      : userSession.user_metadata.role;
+    // Get the role from the user_metadata
+    const userRole = userSession.user_metadata.role;
     
     console.log("User role detected:", userRole);
     
