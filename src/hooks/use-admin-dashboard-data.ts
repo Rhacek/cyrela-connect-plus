@@ -69,7 +69,12 @@ export function useAdminDashboardData(): AdminDashboardData {
   };
 
   return {
-    stats,
+    stats: { 
+      ...stats,
+      propertiesGrowth,
+      brokersGrowth,
+      leadsGrowth
+    } as AdminStats | null,
     isLoading,
     error,
     refetch,
