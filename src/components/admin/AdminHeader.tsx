@@ -40,7 +40,7 @@ export function AdminHeader() {
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle menu</span>
           </Button>
-          <Link to="/admin" className="flex items-center text-xl font-semibold">
+          <Link to="/admin/" className="flex items-center text-xl font-semibold">
             Admin Portal
           </Link>
         </div>

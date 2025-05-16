@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { useNavigate } from "react-router-dom";
 import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
+import { UserRole } from "@/types";
 
 export function AuthForm() {
   const { session } = useAuth();
@@ -15,8 +16,8 @@ export function AuthForm() {
   
   // Redirect if session exists (user is already logged in)
   useEffect(() => {
-    if (session && loginAttempted) {
-      console.log("Auth form detected existing session after login attempt:", session.id);
+    if (session) {
+      console.log("Auth form detected existing session:", session.id);
       
       // Check user role and redirect appropriately
       const userRole = session.user_metadata.role;
@@ -25,7 +26,7 @@ export function AuthForm() {
       if (userRole === 'BROKER') {
         redirectPath = '/broker/dashboard';
       } else if (userRole === 'ADMIN') {
-        redirectPath = '/admin';
+        redirectPath = '/admin/'; // Always use trailing slash for admin
       } else if (userRole === 'CLIENT') {
         redirectPath = '/client/welcome';
       }
@@ -33,7 +34,7 @@ export function AuthForm() {
       console.log(`Redirecting to ${redirectPath} based on role ${userRole}`);
       navigate(redirectPath, { replace: true });
     }
-  }, [session, navigate, loginAttempted]);
+  }, [session, navigate]);
 
   const handleSuccessfulLogin = () => {
     setLoginAttempted(true);

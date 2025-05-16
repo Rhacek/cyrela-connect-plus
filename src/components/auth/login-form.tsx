@@ -24,45 +24,23 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
       
-      // Sign in with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
+      // Signal that login was attempted
+      onLoginAttempt();
       
-      if (error) {
-        throw error;
-      }
+      // Sign in with Auth context (this will update the session in context)
+      await signIn(loginEmail, loginPassword);
       
-      // Additional check - make sure session is stored
-      if (data.session) {
-        console.log("Login successful, session obtained:", data.session.user.id);
-        
-        // Update Auth context
-        await signIn(loginEmail, loginPassword);
-        
-        // Verify session was set
-        const { data: sessionCheck } = await supabase.auth.getSession();
-        if (sessionCheck.session) {
-          console.log("Session verified after login:", sessionCheck.session.user.id);
-        } else {
-          console.warn("Session not found immediately after login");
-          // Try to refresh the session
-          const { data: refreshData } = await supabase.auth.refreshSession();
-          if (refreshData.session) {
-            console.log("Session refreshed successfully");
-          } else {
-            console.warn("Session refresh failed");
-          }
-        }
-        
-        onLoginAttempt(); // Signal to parent that login was attempted
-        toast.success("Login bem-sucedido!");
+      // Additional verification for debugging
+      console.log("Login function completed");
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      
+      if (sessionCheck.session) {
+        console.log("Session verified after login:", sessionCheck.session.user.id);
+        // Auth context will handle redirection in parent components
       } else {
-        console.error("No session returned after successful login");
-        toast.error("Erro no login: Sessão não foi criada");
+        console.warn("Session not found immediately after login");
+        toast.warning("Sessão não detectada. Tente novamente.");
       }
-      
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 

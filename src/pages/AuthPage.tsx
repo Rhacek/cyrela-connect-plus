@@ -28,9 +28,12 @@ const AuthPage = () => {
           const forcedSession = await forceSessionRestore();
           if (forcedSession) {
             console.log("AuthPage found forced session:", forcedSession.user.id);
-            setTimeout(() => {
-              checkAuth(); // Check again after auth context has updated
-            }, 500);
+            // Use the session directly instead of waiting for context update
+            redirectBasedOnRole({
+              id: forcedSession.user.id,
+              email: forcedSession.user.email || '',
+              user_metadata: forcedSession.user.user_metadata
+            });
             return;
           }
           
@@ -45,11 +48,12 @@ const AuthPage = () => {
           
           if (data.session) {
             console.log("AuthPage found session directly from Supabase");
-            // Let auth context handle the actual redirect
-            // It will pick up the session via onAuthStateChange
-            setTimeout(() => {
-              checkAuth(); // Check again after auth context has updated
-            }, 500);
+            // Use the session directly instead of waiting for auth context update
+            redirectBasedOnRole({
+              id: data.session.user.id,
+              email: data.session.user.email || '',
+              user_metadata: data.session.user.user_metadata
+            });
             return;
           }
           
@@ -75,7 +79,7 @@ const AuthPage = () => {
     if (userRole === UserRole.BROKER) {
       navigate("/broker/dashboard", { replace: true });
     } else if (userRole === UserRole.ADMIN) {
-      // Update: direct to /admin/ with trailing slash to ensure index route is loaded
+      // Always redirect admins to /admin/ with trailing slash
       navigate("/admin/", { replace: true });
     } else if (userRole === UserRole.CLIENT) {
       navigate("/client/welcome", { replace: true });
