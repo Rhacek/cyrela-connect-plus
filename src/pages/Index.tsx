@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AppLogo } from "@/components/ui/app-logo";
-import { CreateAdmin } from "@/components/auth/create-admin";
 
 const IndexPage = () => {
   return (
@@ -15,10 +14,6 @@ const IndexPage = () => {
         <p className="text-lg text-cyrela-gray-dark font-inter text-center max-w-lg">
           A plataforma que conecta corretores e clientes para uma experiência imobiliária superior
         </p>
-      </div>
-
-      <div className="w-full max-w-md mb-8">
-        <CreateAdmin />
       </div>
 
       <div className="flex gap-4">
