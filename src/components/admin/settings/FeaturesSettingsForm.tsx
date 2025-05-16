@@ -52,7 +52,15 @@ export const FeaturesSettingsForm = ({ loading, initialData, onSuccess }: Featur
   const onSubmit = async (values: FeatureFormValues) => {
     try {
       setIsSubmitting(true);
-      await settingsService.updateFeatureSettings(values);
+      // Make sure we pass a complete FeatureSettings object 
+      await settingsService.updateFeatureSettings({
+        enablePropertyComparisons: values.enablePropertyComparisons,
+        enableFavorites: values.enableFavorites,
+        enableReviews: values.enableReviews,
+        enableShareFeature: values.enableShareFeature,
+        enableBrokerProfiles: values.enableBrokerProfiles,
+        enableScheduleAppointment: values.enableScheduleAppointment,
+      });
       toast.success("Configurações de funcionalidades atualizadas com sucesso!");
       onSuccess?.();
     } catch (error) {

@@ -22,6 +22,7 @@ import BrokerLeads from "./pages/broker/BrokerLeads";
 import BrokerMetrics from "./pages/broker/BrokerMetrics";
 import BrokerShare from "./pages/broker/BrokerShare";
 import BrokerPlans from "./pages/broker/BrokerPlans";
+import BrokerSettings from "./pages/broker/BrokerSettings";
 
 // Client pages
 import WelcomePage from "./pages/client/WelcomePage";
@@ -122,6 +123,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
                   <BrokerPlans />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/broker/settings" 
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
+                  <BrokerSettings />
                 </ProtectedRoute>
               } 
             />

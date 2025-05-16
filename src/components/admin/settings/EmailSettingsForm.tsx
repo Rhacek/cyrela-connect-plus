@@ -52,7 +52,15 @@ export const EmailSettingsForm = ({ loading, initialData, onSuccess }: EmailSett
   const onSubmit = async (values: EmailFormValues) => {
     try {
       setIsSubmitting(true);
-      await settingsService.updateEmailSettings(values);
+      // Make sure we pass a complete EmailSettings object
+      await settingsService.updateEmailSettings({
+        smtpServer: values.smtpServer,
+        smtpPort: values.smtpPort,
+        smtpUser: values.smtpUser,
+        smtpPassword: values.smtpPassword,
+        senderEmail: values.senderEmail,
+        senderName: values.senderName,
+      });
       toast.success("Configurações de email atualizadas com sucesso!");
       onSuccess?.();
     } catch (error) {

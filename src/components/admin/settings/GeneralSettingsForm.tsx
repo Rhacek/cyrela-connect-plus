@@ -52,7 +52,14 @@ export const GeneralSettingsForm = ({ loading, initialData, onSuccess }: General
   const onSubmit = async (values: GeneralFormValues) => {
     try {
       setIsSubmitting(true);
-      await settingsService.updateGeneralSettings(values);
+      // Make sure we pass a complete GeneralSettings object
+      await settingsService.updateGeneralSettings({
+        siteName: values.siteName,
+        siteDescription: values.siteDescription,
+        contactEmail: values.contactEmail,
+        contactPhone: values.contactPhone,
+        address: values.address,
+      });
       toast.success("Configurações gerais atualizadas com sucesso!");
       onSuccess?.();
     } catch (error) {

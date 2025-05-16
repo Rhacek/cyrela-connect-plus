@@ -12,7 +12,8 @@ import {
   Mail, 
   Check, 
   Search, 
-  Bell 
+  Bell,
+  Settings
 } from "lucide-react";
 
 interface ExpandedNavLinksProps {
@@ -114,6 +115,18 @@ export const ExpandedNavLinks = ({ currentPath }: ExpandedNavLinksProps) => {
           >
             <User className="h-4 w-4" />
             <span>Meu Perfil</span>
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <SidebarLink 
+            to="/broker/settings" 
+            isActive={currentPath === "/broker/settings"}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Configurações</span>
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>

@@ -12,7 +12,8 @@ import {
   Mail, 
   Check, 
   Search, 
-  Bell 
+  Bell,
+  Settings
 } from "lucide-react";
 
 interface CollapsedNavLinksProps {
@@ -106,6 +107,17 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
             isActive={currentPath === "/broker/profile"}
           >
             <User className="h-4 w-4" />
+          </SidebarLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild tooltip="Configurações">
+          <SidebarLink 
+            to="/broker/settings" 
+            isActive={currentPath === "/broker/settings"}
+          >
+            <Settings className="h-4 w-4" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
