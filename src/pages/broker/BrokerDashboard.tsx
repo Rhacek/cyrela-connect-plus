@@ -9,6 +9,10 @@ import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar
 import { DashboardLoading } from "@/components/broker/dashboard/dashboard-loading";
 import { DashboardContent } from "@/components/broker/dashboard/dashboard-content";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useEffect } from "react";
+import { toast } from "@/hooks/use-toast";
+import { performanceService } from "@/services/performance.service";
+import { targetsService } from "@/services/targets.service";
 
 const BrokerDashboard = () => {
   const { session } = useAuth();
@@ -22,6 +26,43 @@ const BrokerDashboard = () => {
     recentLeads,
     handleAddLead
   } = useDashboardData();
+  
+  // Check if performance and target data exists, and create them if not
+  useEffect(() => {
+    const ensureInitialData = async () => {
+      if (session?.id && hasInitializedQueries && !isLoadingPerformance && !isLoadingTarget) {
+        try {
+          // If currentPerformance or currentTarget are empty records (all zeros),
+          // we should ensure records exist in the database for future queries
+          const hasPerformanceData = Object.values(currentPerformance).some(val => 
+            typeof val === 'number' && val > 0 && val !== currentPerformance.month && val !== currentPerformance.year
+          );
+          
+          const hasTargetData = Object.values(currentTarget).some(val => 
+            typeof val === 'number' && val > 0 && val !== currentTarget.month && val !== currentTarget.year
+          );
+          
+          if (!hasPerformanceData) {
+            console.log("No performance data found, ensuring record exists in database");
+            await performanceService.ensureCurrentMonthPerformance(session.id);
+          }
+          
+          if (!hasTargetData) {
+            console.log("No target data found, ensuring record exists in database");
+            await targetsService.ensureCurrentMonthTarget(session.id);
+          }
+          
+          if (!hasPerformanceData || !hasTargetData) {
+            toast.info("Dados iniciais criados. Os valores serão atualizados automaticamente com o seu uso do sistema.");
+          }
+        } catch (error) {
+          console.error("Error ensuring initial data:", error);
+        }
+      }
+    };
+    
+    ensureInitialData();
+  }, [session?.id, hasInitializedQueries, isLoadingPerformance, isLoadingTarget, currentPerformance, currentTarget]);
   
   // Get user name from session if available
   const userName = session?.user_metadata?.name || "";

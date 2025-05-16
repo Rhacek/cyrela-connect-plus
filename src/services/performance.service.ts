@@ -1,43 +1,70 @@
-
 import { supabase } from '@/lib/supabase';
 import { Performance } from '@/types';
 
 export const performanceService = {
   async getCurrentMonthPerformance(brokerId: string): Promise<Performance | null> {
+    if (!brokerId) {
+      console.error('Cannot fetch performance: No broker ID provided');
+      return null;
+    }
+
     const today = new Date();
     const month = today.getMonth() + 1; // JavaScript months are 0-indexed
     const year = today.getFullYear();
 
-    const { data, error } = await supabase
-      .from('performance')
-      .select('*')
-      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
-      .eq('month', month)
-      .eq('year', year)
-      .single();
+    console.log(`Fetching performance data for broker ${brokerId} (${month}/${year})`);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
-      console.error(`Error fetching current month performance for broker ${brokerId}:`, error);
-      throw error;
+    try {
+      const { data, error } = await supabase
+        .from('performance')
+        .select('*')
+        .eq('broker_id', brokerId)
+        .eq('month', month)
+        .eq('year', year)
+        .maybeSingle(); // Use maybeSingle instead of single to prevent errors
+
+      if (error) {
+        console.error(`Error fetching current month performance for broker ${brokerId}:`, error);
+        throw error;
+      }
+
+      console.log('Performance data from Supabase:', data);
+      
+      // If no data exists, return null (the hook will handle this)
+      return data;
+    } catch (err) {
+      console.error(`Unexpected error fetching performance:`, err);
+      throw err;
     }
-
-    return data as unknown as Performance;
   },
 
   async getMonthlyPerformance(brokerId: string, year: number): Promise<Performance[]> {
-    const { data, error } = await supabase
-      .from('performance')
-      .select('*')
-      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
-      .eq('year', year)
-      .order('month', { ascending: true });
-
-    if (error) {
-      console.error(`Error fetching monthly performance for broker ${brokerId}:`, error);
-      throw error;
+    if (!brokerId) {
+      console.error('Cannot fetch monthly performance: No broker ID provided');
+      return [];
     }
 
-    return data as unknown as Performance[];
+    console.log(`Fetching monthly performance data for broker ${brokerId} (year ${year})`);
+
+    try {
+      const { data, error } = await supabase
+        .from('performance')
+        .select('*')
+        .eq('broker_id', brokerId)
+        .eq('year', year)
+        .order('month', { ascending: true });
+
+      if (error) {
+        console.error(`Error fetching monthly performance for broker ${brokerId}:`, error);
+        throw error;
+      }
+
+      console.log(`Retrieved ${data?.length || 0} monthly performance records`);
+      return data || [];
+    } catch (err) {
+      console.error(`Unexpected error in getMonthlyPerformance:`, err);
+      return [];
+    }
   },
 
   async getYearlyPerformance(brokerId: string): Promise<any[]> {
@@ -56,7 +83,7 @@ export const performanceService = {
     const { data: existingData, error: checkError } = await supabase
       .from('performance')
       .select('*')
-      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
+      .eq('broker_id', brokerId)
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -84,7 +111,7 @@ export const performanceService = {
     } else {
       // Create new record
       const newPerformance = {
-        broker_id: brokerId, // Fixed: changed from brokerId to broker_id
+        broker_id: brokerId,
         month,
         year,
         shares: updates.shares || 0,
@@ -106,6 +133,54 @@ export const performanceService = {
       }
 
       return data as unknown as Performance;
+    }
+  },
+
+  async ensureCurrentMonthPerformance(brokerId: string): Promise<Performance> {
+    if (!brokerId) {
+      throw new Error('Cannot ensure performance: No broker ID provided');
+    }
+
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    try {
+      // First check if a record exists
+      const existingData = await this.getCurrentMonthPerformance(brokerId);
+      
+      if (existingData) {
+        return existingData as Performance;
+      }
+      
+      // Create new performance record with zeros
+      console.log(`Creating new performance record for ${brokerId} (${month}/${year})`);
+      const newPerformance = {
+        broker_id: brokerId,
+        month,
+        year,
+        shares: 0,
+        leads: 0,
+        schedules: 0,
+        visits: 0,
+        sales: 0
+      };
+
+      const { data, error } = await supabase
+        .from('performance')
+        .insert(newPerformance)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error creating initial performance:`, error);
+        throw error;
+      }
+
+      return data as unknown as Performance;
+    } catch (err) {
+      console.error(`Error in ensureCurrentMonthPerformance:`, err);
+      throw err;
     }
   }
 };

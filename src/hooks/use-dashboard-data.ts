@@ -7,17 +7,23 @@ import { targetsService } from "@/services/targets.service";
 import { leadsService } from "@/services/leads.service";
 import { logAuthState } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { Performance, Target } from "@/types";
 
 export const useDashboardData = () => {
   const { session } = useAuth();
   const [hasInitializedQueries, setHasInitializedQueries] = useState(false);
   
+  // Get current month and year for queries
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // 1-12
+  const currentYear = currentDate.getFullYear();
+  
   // Default empty states for data
-  const emptyPerformance = {
+  const emptyPerformance: Performance = {
     id: "",
-    broker_id: session?.id || "", 
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
+    brokerId: session?.id || "", 
+    month: currentMonth,
+    year: currentYear,
     shares: 0,
     leads: 0,
     schedules: 0,
@@ -25,16 +31,16 @@ export const useDashboardData = () => {
     sales: 0
   };
   
-  const emptyTarget = {
+  const emptyTarget: Target = {
     id: "",
-    broker_id: session?.id || "",
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-    share_target: 0,
-    lead_target: 0,
-    schedule_target: 0,
-    visit_target: 0,
-    sale_target: 0
+    brokerId: session?.id || "",
+    month: currentMonth,
+    year: currentYear,
+    shareTarget: 0,
+    leadTarget: 0,
+    scheduleTarget: 0,
+    visitTarget: 0,
+    saleTarget: 0
   };
 
   // Check if session is available, but only run once
@@ -63,7 +69,7 @@ export const useDashboardData = () => {
     isLoading: isLoadingPerformance,
     error: performanceError
   } = useQuery({
-    queryKey: ['brokerPerformance', session?.id],
+    queryKey: ['brokerPerformance', session?.id, currentMonth, currentYear],
     queryFn: () => performanceService.getCurrentMonthPerformance(session?.id || ""),
     enabled: !!session?.id && hasInitializedQueries
   });
@@ -82,7 +88,7 @@ export const useDashboardData = () => {
     isLoading: isLoadingTarget,
     error: targetError
   } = useQuery({
-    queryKey: ['brokerTarget', session?.id],
+    queryKey: ['brokerTarget', session?.id, currentMonth, currentYear],
     queryFn: () => targetsService.getCurrentMonthTarget(session?.id || ""),
     enabled: !!session?.id && hasInitializedQueries
   });
@@ -116,25 +122,42 @@ export const useDashboardData = () => {
   
   // Map database fields to our frontend models
   const mapPerformanceData = (data: any) => {
-    if (!data) return emptyPerformance;
+    if (!data) {
+      console.log("No performance data found, using empty performance object");
+      return emptyPerformance;
+    }
     
+    console.log("Mapping performance data:", data);
     return {
-      ...data,
-      brokerId: data.broker_id // Map for component usage
+      id: data.id || "",
+      brokerId: data.broker_id || session?.id || "", 
+      month: data.month || currentMonth,
+      year: data.year || currentYear,
+      shares: data.shares || 0,
+      leads: data.leads || 0,
+      schedules: data.schedules || 0,
+      visits: data.visits || 0,
+      sales: data.sales || 0
     };
   };
   
   const mapTargetData = (data: any) => {
-    if (!data) return emptyTarget;
+    if (!data) {
+      console.log("No target data found, using empty target object");
+      return emptyTarget;
+    }
     
+    console.log("Mapping target data:", data);
     return {
-      ...data,
-      brokerId: data.broker_id, // Map for component usage
-      shareTarget: data.share_target,
-      leadTarget: data.lead_target,
-      scheduleTarget: data.schedule_target,
-      visitTarget: data.visit_target,
-      saleTarget: data.sale_target
+      id: data.id || "",
+      brokerId: data.broker_id || session?.id || "", 
+      month: data.month || currentMonth,
+      year: data.year || currentYear,
+      shareTarget: data.share_target || 0,
+      leadTarget: data.lead_target || 0,
+      scheduleTarget: data.schedule_target || 0,
+      visitTarget: data.visit_target || 0,
+      saleTarget: data.sale_target || 0
     };
   };
   

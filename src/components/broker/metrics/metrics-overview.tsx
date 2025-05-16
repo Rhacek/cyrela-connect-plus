@@ -4,13 +4,15 @@ import { Progress } from "@/components/ui/progress";
 import { Performance, Target } from "@/types";
 import { Share, Users, Calendar, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MetricsOverviewProps {
   performance: Performance;
   target: Target;
+  isLoading?: boolean;
 }
 
-export function MetricsOverview({ performance, target }: MetricsOverviewProps) {
+export function MetricsOverview({ performance, target, isLoading = false }: MetricsOverviewProps) {
   // Calculate completion percentages
   const metrics = [
     {
@@ -53,7 +55,9 @@ export function MetricsOverview({ performance, target }: MetricsOverviewProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
       {metrics.map((metric) => {
-        const percentage = Math.min(100, Math.round((metric.value / metric.target) * 100));
+        const percentage = metric.target > 0 
+          ? Math.min(100, Math.round((metric.value / metric.target) * 100))
+          : 0;
         
         return (
           <Card key={metric.name} className="bg-white">
@@ -65,21 +69,31 @@ export function MetricsOverview({ performance, target }: MetricsOverviewProps) {
                 <h3 className="font-medium text-sm">{metric.name}</h3>
               </div>
               
-              <div className="mb-2">
-                <span className="text-2xl font-bold">
-                  {metric.value.toLocaleString("pt-BR")}
-                </span>
-                <span className="text-sm text-cyrela-gray-dark ml-1">
-                  / {metric.target.toLocaleString("pt-BR")}
-                </span>
-              </div>
-              
-              <div className="space-y-1">
-                <Progress value={percentage} className="h-2" />
-                <p className="text-xs text-cyrela-gray-dark text-right">
-                  {percentage}% concluído
-                </p>
-              </div>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-4 w-16 ml-auto" />
+                </div>
+              ) : (
+                <>
+                  <div className="mb-2">
+                    <span className="text-2xl font-bold">
+                      {metric.value.toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-sm text-cyrela-gray-dark ml-1">
+                      / {metric.target.toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Progress value={percentage} className="h-2" />
+                    <p className="text-xs text-cyrela-gray-dark text-right">
+                      {percentage}% concluído
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         );
