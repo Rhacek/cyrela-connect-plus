@@ -11,7 +11,7 @@ import { StatsGrid } from "@/components/broker/dashboard/stats-grid";
 import { RecentLeadsSection } from "@/components/broker/dashboard/recent-leads-section";
 import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { ProgressCard } from "@/components/broker/dashboard/progress-card";
-import { LeadStatus } from "@/types";
+import { Lead, LeadStatus } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
 import { useAuth } from "@/context/auth-context";
@@ -24,6 +24,11 @@ import { toast } from "@/hooks/use-toast";
 const BrokerDashboard = () => {
   const isMobile = useIsMobile();
   const { session } = useAuth();
+  
+  // Log user session for debugging
+  useEffect(() => {
+    console.log("BrokerDashboard: session =", session?.id);
+  }, [session]);
   
   // Default empty states for data
   const emptyPerformance = {
@@ -51,37 +56,61 @@ const BrokerDashboard = () => {
   };
   
   // Fetch current month's performance data
-  const { data: performance, isLoading: isLoadingPerformance } = useQuery({
+  const { 
+    data: performance, 
+    isLoading: isLoadingPerformance,
+    error: performanceError
+  } = useQuery({
     queryKey: ['brokerPerformance', session?.id],
     queryFn: () => performanceService.getCurrentMonthPerformance(session?.id || ""),
-    enabled: !!session?.id,
-    onError: (error) => {
-      console.error("Error fetching performance data:", error);
+    enabled: !!session?.id
+  });
+  
+  // Display toast if performance data fetch fails
+  useEffect(() => {
+    if (performanceError) {
+      console.error("Error fetching performance data:", performanceError);
       toast.error("Não foi possível carregar os dados de desempenho");
     }
-  });
+  }, [performanceError]);
   
   // Fetch current month's target data
-  const { data: target, isLoading: isLoadingTarget } = useQuery({
+  const { 
+    data: target, 
+    isLoading: isLoadingTarget,
+    error: targetError
+  } = useQuery({
     queryKey: ['brokerTarget', session?.id],
     queryFn: () => targetsService.getCurrentMonthTarget(session?.id || ""),
-    enabled: !!session?.id,
-    onError: (error) => {
-      console.error("Error fetching target data:", error);
-      toast.error("Não foi possível carregar os dados de metas");
-    }
+    enabled: !!session?.id
   });
   
+  // Display toast if target data fetch fails
+  useEffect(() => {
+    if (targetError) {
+      console.error("Error fetching target data:", targetError);
+      toast.error("Não foi possível carregar os dados de metas");
+    }
+  }, [targetError]);
+  
   // Fetch recent leads
-  const { data: leads, isLoading: isLoadingLeads } = useQuery({
+  const { 
+    data: leads, 
+    isLoading: isLoadingLeads,
+    error: leadsError
+  } = useQuery({
     queryKey: ['brokerLeads', session?.id],
     queryFn: () => leadsService.getBrokerLeads(session?.id || ""),
-    enabled: !!session?.id,
-    onError: (error) => {
-      console.error("Error fetching leads data:", error);
+    enabled: !!session?.id
+  });
+  
+  // Display toast if leads data fetch fails
+  useEffect(() => {
+    if (leadsError) {
+      console.error("Error fetching leads data:", leadsError);
       toast.error("Não foi possível carregar os leads recentes");
     }
-  });
+  }, [leadsError]);
   
   const handleAddLead = () => {
     // Function to handle adding a new lead
@@ -93,6 +122,9 @@ const BrokerDashboard = () => {
   const currentPerformance = performance || emptyPerformance;
   const currentTarget = target || emptyTarget;
   const recentLeads = leads || [];
+  
+  // Get user name from session if available
+  const userName = session?.user_metadata?.name || "";
   
   return (
     <SidebarProvider>
@@ -106,7 +138,7 @@ const BrokerDashboard = () => {
             <div className="flex flex-col w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
               <DashboardHeader 
                 title="Dashboard" 
-                description={`Bem-vindo de volta${session?.user_metadata?.name ? ', ' + session.user_metadata.name : ''}! Aqui está o resumo do seu desempenho.`}
+                description={`Bem-vindo de volta${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}
                 buttonLabel="Cadastrar lead"
                 onButtonClick={handleAddLead}
               />

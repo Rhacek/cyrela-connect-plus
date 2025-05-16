@@ -26,7 +26,7 @@ export function RecentLeadsSection({ leads, className, isLoading = false }: Rece
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
           </div>
-        ) : leads.length > 0 ? (
+        ) : leads && leads.length > 0 ? (
           <div className="space-y-3">
             {leads.slice(0, 3).map((lead) => (
               <LeadCard key={lead.id} lead={lead} />

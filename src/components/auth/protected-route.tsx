@@ -14,8 +14,20 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const navigate = useNavigate();
   
   useEffect(() => {
-    console.log("Protected route: session =", session?.id, "loading =", loading);
-  }, [session, loading]);
+    console.log("Protected route: session =", session?.id, "loading =", loading, "allowedRoles =", allowedRoles);
+    
+    // If we have a session but no allowed roles, it's a protected route but open to all roles
+    if (session && !allowedRoles) {
+      console.log("Route is protected but open to all authenticated users");
+    }
+    
+    // If we have a session and allowed roles, check if user has permission
+    if (session && allowedRoles) {
+      const userRole = session.user_metadata.role as UserRole;
+      const hasPermission = allowedRoles.includes(userRole);
+      console.log("User role:", userRole, "Has permission:", hasPermission);
+    }
+  }, [session, loading, allowedRoles]);
 
   // Show loading screen while checking auth
   if (loading) {
