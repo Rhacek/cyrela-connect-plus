@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
 import { UserSession } from "@/types/auth";
+import { transformUserData } from "@/utils/auth-utils";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -41,7 +42,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         
         if (data.session) {
           console.log("Session verified with Supabase:", data.session.user.id);
-          return data.session;
+          // Transform the Supabase session to our UserSession format
+          const userSession = transformUserData(data.session.user);
+          return userSession;
         } else {
           console.log("No session found with Supabase direct check");
           setIsAuthorized(false);
@@ -86,11 +89,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       let userRole: UserRole;
       
       if (isSupabaseSession(currentSession)) {
-        // This is a Supabase Session
-        userRole = currentSession.user.user_metadata.role as UserRole;
+        // This is a Supabase Session, transform it to our UserSession format
+        const userSession = transformUserData(currentSession.user);
+        userRole = userSession.user_metadata.role;
       } else {
         // This is our custom UserSession
-        userRole = currentSession.user_metadata.role as UserRole;
+        userRole = currentSession.user_metadata.role;
       }
       
       const hasPermission = allowedRoles.includes(userRole);
