@@ -1,53 +1,50 @@
 
 import { Button } from "@/components/ui/button";
-import { LeadCard } from "@/components/broker/dashboard/lead-card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lead } from "@/types";
+import { LeadCard } from "./lead-card";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
 
 interface RecentLeadsSectionProps {
   leads: Lead[];
   className?: string;
+  isLoading?: boolean;
 }
 
-export function RecentLeadsSection({ leads, className }: RecentLeadsSectionProps) {
+export function RecentLeadsSection({ leads, className, isLoading = false }: RecentLeadsSectionProps) {
   return (
-    <div className={cn(
-      "cyrela-card flex flex-col h-full animate-fade-in p-3 sm:p-4",
-      className
-    )}>
-      <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <h2 className="text-base sm:text-lg md:text-xl font-semibold font-poppins truncate">Leads recentes</h2>
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="text-primary border-primary hover:bg-cyrela-gray-lighter font-inter shrink-0 ml-2 text-xs sm:text-sm py-1 px-2 h-auto"
-          onClick={() => window.location.href = "/broker/leads"}
-        >
-          Ver todos
-        </Button>
-      </div>
+    <Card className={cn("", className)}>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">Leads Recentes</CardTitle>
+      </CardHeader>
       
-      <div className="grid gap-2 sm:gap-4 flex-1 overflow-auto max-h-[calc(100%-3rem)]">
-        {leads.length > 0 ? (
-          leads.map(lead => (
-            <LeadCard 
-              key={lead.id} 
-              lead={lead} 
-              className="h-full w-full hover-scale transition-all duration-200"
-            />
-          ))
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : leads.length > 0 ? (
+          <div className="space-y-3">
+            {leads.slice(0, 3).map((lead) => (
+              <LeadCard key={lead.id} lead={lead} />
+            ))}
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-cyrela-gray-dark p-2 sm:p-4">
-            <p className="text-center font-inter break-words text-xs sm:text-sm">Nenhum lead recente encontrado.</p>
-            <Button 
-              className="mt-3 sm:mt-4 cyrela-button-primary text-xs sm:text-sm py-1.5 px-3 h-auto"
-              onClick={() => window.location.href = "/broker/leads/new"}
-            >
-              Cadastrar novo lead
-            </Button>
+          <div className="text-center py-8 text-cyrela-gray-dark">
+            <p>Você ainda não tem leads.</p>
+            <p className="text-sm mt-2">Compartilhe imóveis para começar a gerar leads.</p>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+      
+      <CardFooter>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/broker/leads">Ver todos os leads</Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

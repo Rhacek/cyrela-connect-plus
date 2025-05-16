@@ -25,7 +25,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session and set up listener
+    // First set up the auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("Auth state changed:", event);
+        if (event === 'SIGNED_IN' && newSession?.user) {
+          setSession(transformUserData(newSession.user));
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Then check for existing session
     const getSession = async () => {
       try {
         const { data: { session: supabaseSession }, error } = await supabase.auth.getSession();
@@ -36,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (supabaseSession?.user) {
+          console.log("Found existing session");
           setSession(transformUserData(supabaseSession.user));
         }
       } catch (error) {
@@ -46,18 +60,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     getSession();
-
-    // Set up listener for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          setSession(transformUserData(newSession.user));
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-        }
-        setLoading(false);
-      }
-    );
 
     return () => {
       subscription.unsubscribe();

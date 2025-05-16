@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sidebar, 
   SidebarInset, 
@@ -14,70 +14,85 @@ import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { LeadStatus } from "@/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
+import { useAuth } from "@/context/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { performanceService } from "@/services/performance.service";
+import { targetsService } from "@/services/targets.service";
+import { leadsService } from "@/services/leads.service";
+import { toast } from "@/hooks/use-toast";
 
 const BrokerDashboard = () => {
   const isMobile = useIsMobile();
+  const { session } = useAuth();
   
-  // Mock data
-  const mockTarget = {
-    id: "1",
-    brokerId: "1",
-    month: 5, // May
-    year: 2025,
-    shareTarget: 2600,
-    leadTarget: 104,
-    scheduleTarget: 8,
-    visitTarget: 4,
-    saleTarget: 1,
+  // Default empty states for data
+  const emptyPerformance = {
+    id: "",
+    brokerId: session?.id || "",
+    month: new Date().getMonth() + 1, // Current month
+    year: new Date().getFullYear(),
+    shares: 0,
+    leads: 0,
+    schedules: 0,
+    visits: 0,
+    sales: 0
   };
   
-  const mockPerformance = {
-    id: "1",
-    brokerId: "1",
-    month: 5, // May
-    year: 2025,
-    shares: 857,
-    leads: 45,
-    schedules: 5,
-    visits: 3,
-    sales: 1,
+  const emptyTarget = {
+    id: "",
+    brokerId: session?.id || "",
+    month: new Date().getMonth() + 1, // Current month
+    year: new Date().getFullYear(),
+    shareTarget: 0,
+    leadTarget: 0,
+    scheduleTarget: 0,
+    visitTarget: 0,
+    saleTarget: 0
   };
   
-  const mockLeads = [
-    {
-      id: "1",
-      name: "Carlos Silva",
-      email: "carlos.silva@example.com",
-      phone: "(11) 98765-4321",
-      status: LeadStatus.NEW,
-      source: "WhatsApp",
-      isManual: false,
-      createdAt: new Date("2025-05-04T14:30:00"),
-      updatedAt: new Date("2025-05-04T14:30:00"),
-      createdById: "1",
-      notes: "Interessado em apartamentos na Zona Sul"
-    },
-    {
-      id: "2",
-      name: "Mariana Oliveira",
-      email: "mariana.oliveira@example.com",
-      phone: "(11) 91234-5678",
-      status: LeadStatus.SCHEDULED,
-      source: "Site",
-      isManual: true,
-      createdAt: new Date("2025-05-03T10:15:00"),
-      updatedAt: new Date("2025-05-03T16:45:00"),
-      createdById: "1",
-      assignedToId: "1",
-      notes: "Agendada visita para o próximo sábado"
+  // Fetch current month's performance data
+  const { data: performance, isLoading: isLoadingPerformance } = useQuery({
+    queryKey: ['brokerPerformance', session?.id],
+    queryFn: () => performanceService.getCurrentMonthPerformance(session?.id || ""),
+    enabled: !!session?.id,
+    onError: (error) => {
+      console.error("Error fetching performance data:", error);
+      toast.error("Não foi possível carregar os dados de desempenho");
     }
-  ];
+  });
+  
+  // Fetch current month's target data
+  const { data: target, isLoading: isLoadingTarget } = useQuery({
+    queryKey: ['brokerTarget', session?.id],
+    queryFn: () => targetsService.getCurrentMonthTarget(session?.id || ""),
+    enabled: !!session?.id,
+    onError: (error) => {
+      console.error("Error fetching target data:", error);
+      toast.error("Não foi possível carregar os dados de metas");
+    }
+  });
+  
+  // Fetch recent leads
+  const { data: leads, isLoading: isLoadingLeads } = useQuery({
+    queryKey: ['brokerLeads', session?.id],
+    queryFn: () => leadsService.getBrokerLeads(session?.id || ""),
+    enabled: !!session?.id,
+    onError: (error) => {
+      console.error("Error fetching leads data:", error);
+      toast.error("Não foi possível carregar os leads recentes");
+    }
+  });
   
   const handleAddLead = () => {
     // Function to handle adding a new lead
     console.log("Add lead button clicked");
     // Redirect or open modal logic would go here
   };
+  
+  // Use actual data or fallback to empty data if not available
+  const currentPerformance = performance || emptyPerformance;
+  const currentTarget = target || emptyTarget;
+  const recentLeads = leads || [];
   
   return (
     <SidebarProvider>
@@ -91,29 +106,32 @@ const BrokerDashboard = () => {
             <div className="flex flex-col w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
               <DashboardHeader 
                 title="Dashboard" 
-                description="Bem-vindo de volta, Ana Silva! Aqui está o resumo do seu desempenho."
+                description={`Bem-vindo de volta${session?.user_metadata?.name ? ', ' + session.user_metadata.name : ''}! Aqui está o resumo do seu desempenho.`}
                 buttonLabel="Cadastrar lead"
                 onButtonClick={handleAddLead}
               />
               
               <StatsGrid 
-                performance={mockPerformance} 
-                target={mockTarget} 
+                performance={currentPerformance} 
+                target={currentTarget} 
                 className="w-full mb-4 sm:mb-6"
+                isLoading={isLoadingPerformance || isLoadingTarget}
               />
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 min-h-[500px] w-full mb-6">
                 <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
                   <RecentLeadsSection 
-                    leads={mockLeads} 
-                    className="flex-1 w-full" 
+                    leads={recentLeads} 
+                    className="flex-1 w-full"
+                    isLoading={isLoadingLeads}
                   />
                   
                   {isMobile ? (
                     <ProgressCard 
-                      target={mockTarget} 
-                      performance={mockPerformance} 
+                      target={currentTarget} 
+                      performance={currentPerformance} 
                       className="w-full"
+                      isLoading={isLoadingPerformance || isLoadingTarget}
                     />
                   ) : (
                     <QuickAccess className="flex-1 w-full" />
@@ -123,9 +141,10 @@ const BrokerDashboard = () => {
                 {!isMobile && (
                   <div className="h-full">
                     <ProgressCard 
-                      target={mockTarget} 
-                      performance={mockPerformance} 
+                      target={currentTarget} 
+                      performance={currentPerformance} 
                       className="h-full w-full"
+                      isLoading={isLoadingPerformance || isLoadingTarget}
                     />
                   </div>
                 )}

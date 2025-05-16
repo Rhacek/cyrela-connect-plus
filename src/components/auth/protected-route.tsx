@@ -1,6 +1,6 @@
 
-import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { ReactNode, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 
@@ -11,6 +11,11 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { session, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    console.log("Protected route: session =", session?.id, "loading =", loading);
+  }, [session, loading]);
 
   // Show loading screen while checking auth
   if (loading) {
@@ -23,11 +28,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   // If not logged in, redirect to auth page
   if (!session) {
+    console.log("No session, redirecting to /auth");
     return <Navigate to="/auth" replace />;
   }
 
   // If allowedRoles is provided, check if user has one of the allowed roles
   if (allowedRoles && !allowedRoles.includes(session.user_metadata.role as UserRole)) {
+    console.log("Role not allowed:", session.user_metadata.role, "Allowed roles:", allowedRoles);
+    
     // Redirect based on role
     switch (session.user_metadata.role) {
       case UserRole.ADMIN:
