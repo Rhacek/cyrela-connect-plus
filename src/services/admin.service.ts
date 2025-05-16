@@ -6,6 +6,9 @@ export interface AdminStats {
   activeAgents: number;
   pendingLeads: number;
   conversionRate: number;
+  propertiesGrowth: number;
+  brokersGrowth: number;
+  leadsGrowth: number;
   recentProperties: RecentProperty[];
   recentActivities: RecentActivity[];
 }
@@ -131,6 +134,9 @@ export const getAdminStats = async (): Promise<AdminStats> => {
       activeAgents: activeAgents || 0,
       pendingLeads: pendingLeads || 0,
       conversionRate,
+      propertiesGrowth: 0, // Default values, will be updated by useAdminDashboardData hook
+      brokersGrowth: 0,
+      leadsGrowth: 0,
       recentProperties,
       recentActivities
     };
@@ -143,6 +149,9 @@ export const getAdminStats = async (): Promise<AdminStats> => {
       activeAgents: 0,
       pendingLeads: 0,
       conversionRate: 0,
+      propertiesGrowth: 0,
+      brokersGrowth: 0,
+      leadsGrowth: 0,
       recentProperties: [],
       recentActivities: []
     };

@@ -8,9 +8,6 @@ interface AdminDashboardData {
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  propertiesGrowth: number;
-  brokersGrowth: number;
-  leadsGrowth: number;
 }
 
 export function useAdminDashboardData(): AdminDashboardData {
@@ -28,7 +25,6 @@ export function useAdminDashboardData(): AdminDashboardData {
       
       // Fetch main statistics
       const adminStats = await getAdminStats();
-      setStats(adminStats);
       
       // Fetch growth statistics in parallel
       const [propGrowth, brokerGrowth, leadGrowth] = await Promise.all([
@@ -40,6 +36,13 @@ export function useAdminDashboardData(): AdminDashboardData {
       setPropertiesGrowth(propGrowth);
       setBrokersGrowth(brokerGrowth);
       setLeadsGrowth(leadGrowth);
+      
+      // Update the stats with growth values
+      adminStats.propertiesGrowth = propGrowth;
+      adminStats.brokersGrowth = brokerGrowth;
+      adminStats.leadsGrowth = leadGrowth;
+      
+      setStats(adminStats);
       
     } catch (err) {
       console.error("Error fetching admin dashboard data:", err);
@@ -69,17 +72,9 @@ export function useAdminDashboardData(): AdminDashboardData {
   };
 
   return {
-    stats: { 
-      ...stats,
-      propertiesGrowth,
-      brokersGrowth,
-      leadsGrowth
-    } as AdminStats | null,
+    stats,
     isLoading,
     error,
-    refetch,
-    propertiesGrowth,
-    brokersGrowth,
-    leadsGrowth
+    refetch
   };
 }
