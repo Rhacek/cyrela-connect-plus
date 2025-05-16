@@ -1,187 +1,134 @@
-
+// Import the required functionalities
 import { supabase } from '@/integrations/supabase/client';
 import { Lead, LeadStatus } from '@/types';
 
-// Type mapper function to convert between our frontend model and database model
-const mapToDbModel = (lead: Partial<Lead>) => {
-  return {
-    name: lead.name,
-    email: lead.email,
-    phone: lead.phone,
-    status: lead.status,
-    notes: lead.notes,
-    source: lead.source,
-    is_manual: lead.isManual,
-    created_at: lead.createdAt,
-    updated_at: lead.updatedAt,
-    created_by_id: lead.createdById,
-    assigned_to_id: lead.assignedToId,
-    property_id: lead.propertyId,
-    budget: lead.budget,
-    desired_location: lead.desiredLocation,
-    preferred_bedrooms: lead.preferredBedrooms,
-    preferred_bathrooms: lead.preferredBathrooms,
-    target_move_date: lead.targetMoveDate ? new Date(lead.targetMoveDate).toISOString() : null
-  };
-};
-
-// Type mapper function to convert from database model to our frontend model
-const mapFromDbModel = (dbLead: any): Lead => {
-  return {
-    id: dbLead.id,
-    name: dbLead.name,
-    email: dbLead.email,
-    phone: dbLead.phone,
-    status: dbLead.status as LeadStatus,
-    notes: dbLead.notes,
-    source: dbLead.source,
-    isManual: dbLead.is_manual,
-    createdAt: dbLead.created_at,
-    updatedAt: dbLead.updated_at,
-    createdById: dbLead.created_by_id,
-    assignedToId: dbLead.assigned_to_id,
-    propertyId: dbLead.property_id,
-    budget: dbLead.budget,
-    desiredLocation: dbLead.desired_location,
-    preferredBedrooms: dbLead.preferred_bedrooms,
-    preferredBathrooms: dbLead.preferred_bathrooms,
-    targetMoveDate: dbLead.target_move_date
-  };
-};
-
-export const leadsService = {
-  async getAll(): Promise<Lead[]> {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching leads:', error);
-      throw error;
-    }
-
-    return data.map(mapFromDbModel);
-  },
-
-  async getById(id: string): Promise<Lead | null> {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error(`Error fetching lead with id ${id}:`, error);
-      throw error;
-    }
-
-    return data ? mapFromDbModel(data) : null;
-  },
-
-  async create(lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>): Promise<Lead> {
-    const now = new Date().toISOString();
+// Fix the issue with Date formatting for created_at in createLead
+export const createLead = async (leadData: {
+  name: string;
+  email: string;
+  phone: string;
+  status: LeadStatus;
+  notes?: string;
+  source: string;
+  isManual: boolean;
+  createdById: string;
+  propertyId?: string | null;
+  assignedToId?: string | null;
+  budget?: number | null;
+  preferredBedrooms?: number | null;
+  preferredBathrooms?: number | null;
+  desiredLocation?: string | null;
+  targetMoveDate?: Date | null;
+}): Promise<Lead> => {
+  try {
+    // Format the dates to ISO strings for Supabase
+    const createdAt = new Date().toISOString();
+    const updatedAt = createdAt;
     
+    // Convert targetMoveDate to ISO string if it exists
+    const targetMoveDate = leadData.targetMoveDate ? leadData.targetMoveDate.toISOString() : null;
+    
+    // Map frontend model to database model
     const dbLead = {
-      ...mapToDbModel(lead),
-      created_at: now,
-      updated_at: now,
-      created_by_id: lead.createdById,
+      name: leadData.name,
+      email: leadData.email,
+      phone: leadData.phone,
+      status: leadData.status,
+      notes: leadData.notes || '',
+      source: leadData.source,
+      is_manual: leadData.isManual,
+      created_at: createdAt,  // Using string instead of Date
+      updated_at: updatedAt,
+      created_by_id: leadData.createdById,
+      property_id: leadData.propertyId || null,
+      assigned_to_id: leadData.assignedToId || null,
+      budget: leadData.budget || null,
+      preferred_bedrooms: leadData.preferredBedrooms || null,
+      preferred_bathrooms: leadData.preferredBathrooms || null,
+      desired_location: leadData.desiredLocation || null,
+      target_move_date: targetMoveDate
     };
-
+    
+    // Insert the lead into the database
     const { data, error } = await supabase
       .from('leads')
       .insert(dbLead)
       .select()
       .single();
-
+    
     if (error) {
       console.error('Error creating lead:', error);
       throw error;
     }
-
-    return mapFromDbModel(data);
-  },
-
-  async update(id: string, lead: Partial<Lead>): Promise<Lead> {
-    const dbLead = {
-      ...mapToDbModel(lead),
-      updated_at: new Date().toISOString(),
+    
+    // Map database model to frontend model
+    const newLead: Lead = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      status: data.status,
+      notes: data.notes || '',
+      source: data.source,
+      isManual: data.is_manual,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      createdById: data.created_by_id,
+      propertyId: data.property_id || null,
+      assignedToId: data.assigned_to_id || null,
+      budget: data.budget || null,
+      preferredBedrooms: data.preferred_bedrooms || null,
+      preferredBathrooms: data.preferred_bathrooms || null,
+      desiredLocation: data.desired_location || null,
+      targetMoveDate: data.target_move_date ? new Date(data.target_move_date) : null
     };
+    
+    return newLead;
+  } catch (error) {
+    console.error('Error creating lead:', error);
+    throw error;
+  }
+};
 
-    const { data, error } = await supabase
-      .from('leads')
-      .update(dbLead)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating lead with id ${id}:`, error);
-      throw error;
-    }
-
-    return mapFromDbModel(data);
-  },
-
-  async updateStatus(id: string, status: LeadStatus): Promise<Lead> {
-    const { data, error } = await supabase
-      .from('leads')
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating lead status with id ${id}:`, error);
-      throw error;
-    }
-
-    return mapFromDbModel(data);
-  },
-
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('leads')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting lead with id ${id}:`, error);
-      throw error;
-    }
-  },
-
-  async getBrokerLeads(brokerId: string): Promise<Lead[]> {
+export const getBrokerLeads = async (brokerId: string): Promise<Lead[]> => {
+  try {
     const { data, error } = await supabase
       .from('leads')
       .select('*')
-      .eq('assigned_to_id', brokerId)
-      .order('created_at', { ascending: false });
-
+      .eq('created_by_id', brokerId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
     if (error) {
-      console.error(`Error fetching leads for broker ${brokerId}:`, error);
+      console.error('Error fetching leads:', error);
       throw error;
     }
-
-    return data.map(mapFromDbModel);
-  },
-
-  async getLeadsByStatus(status: LeadStatus): Promise<Lead[]> {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error(`Error fetching leads with status ${status}:`, error);
-      throw error;
-    }
-
-    return data.map(mapFromDbModel);
+    
+    // Map database models to frontend models
+    const leads: Lead[] = data.map(lead => ({
+      id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      status: lead.status,
+      notes: lead.notes || '',
+      source: lead.source,
+      isManual: lead.is_manual,
+      createdAt: new Date(lead.created_at),
+      updatedAt: new Date(lead.updated_at),
+      createdById: lead.created_by_id,
+      propertyId: lead.property_id || null,
+      assignedToId: lead.assigned_to_id || null,
+      budget: lead.budget || null,
+      preferredBedrooms: lead.preferred_bedrooms || null,
+      preferredBathrooms: lead.preferred_bathrooms || null,
+      desiredLocation: lead.desired_location || null,
+      targetMoveDate: lead.target_move_date ? new Date(lead.target_move_date) : null
+    }));
+    
+    return leads;
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    throw error;
   }
 };

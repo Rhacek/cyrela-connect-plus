@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Target } from '@/types';
 
@@ -132,6 +133,55 @@ export const targetsService = {
       }
 
       return mapFromDbModel(data);
+    }
+  },
+
+  // Add the ensureCurrentMonthTarget function
+  async ensureCurrentMonthTarget(brokerId: string): Promise<Target> {
+    if (!brokerId) {
+      throw new Error('Cannot ensure target: No broker ID provided');
+    }
+
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    try {
+      // First check if a record exists
+      const existingData = await this.getCurrentMonthTarget(brokerId);
+      
+      if (existingData) {
+        return existingData;
+      }
+      
+      // Create new target record with zeros
+      console.log(`Creating new target record for ${brokerId} (${month}/${year})`);
+      const newTarget = {
+        broker_id: brokerId,
+        month,
+        year,
+        share_target: 0,
+        lead_target: 0,
+        schedule_target: 0,
+        visit_target: 0,
+        sale_target: 0
+      };
+
+      const { data, error } = await supabase
+        .from('targets')
+        .insert(newTarget)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error creating initial target:`, error);
+        throw error;
+      }
+
+      return mapFromDbModel(data);
+    } catch (err) {
+      console.error(`Error in ensureCurrentMonthTarget:`, err);
+      throw err;
     }
   }
 };

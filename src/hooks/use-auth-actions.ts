@@ -1,4 +1,8 @@
-import { supabase, getCurrentSession } from '@/integrations/supabase/client';
+import { 
+  supabase, 
+  refreshSession 
+} from '@/integrations/supabase/client';
+import { getCurrentSession } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { transformUserData } from '@/utils/auth-utils';
 import { UserSession } from '@/types/auth';
