@@ -20,3 +20,18 @@ export const logAuthState = async () => {
   console.log("Current auth session:", data.session);
   return data.session;
 };
+
+// Helper function to get current user with session
+export const getCurrentUser = async () => {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error("Error getting user:", error);
+      return null;
+    }
+    return data.user;
+  } catch (error) {
+    console.error("Unexpected error getting user:", error);
+    return null;
+  }
+};

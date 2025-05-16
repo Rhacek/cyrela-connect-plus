@@ -1,6 +1,6 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/types';
 import { UserSession } from '@/types/auth';
@@ -25,13 +25,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("AuthProvider initializing");
+    
     // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      async (event, currentSession) => {
         console.log("Auth state changed:", event);
-        if (event === 'SIGNED_IN' && newSession?.user) {
-          setSession(transformUserData(newSession.user));
+        if (currentSession?.user) {
+          console.log("Setting session from auth state change:", currentSession.user.id);
+          setSession(transformUserData(currentSession.user));
         } else if (event === 'SIGNED_OUT') {
+          console.log("User signed out, clearing session");
           setSession(null);
         }
         setLoading(false);
@@ -45,12 +49,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (error) {
           console.error('Error getting session:', error);
+          setLoading(false);
           return;
         }
 
         if (supabaseSession?.user) {
-          console.log("Found existing session");
+          console.log("Found existing session:", supabaseSession.user.id);
           setSession(transformUserData(supabaseSession.user));
+        } else {
+          console.log("No existing session found");
         }
       } catch (error) {
         console.error('Error fetching session:', error);
@@ -87,12 +94,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log("Signing in with email:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Error signing in:', error);
         toast.error('Erro ao fazer login', {
           description: error.message,
         });
@@ -100,8 +110,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
+        console.log("Sign in successful:", data.user.id);
+        const transformedUser = transformUserData(data.user);
+        console.log("Transformed user:", transformedUser);
+        setSession(transformedUser);
         toast.success('Login realizado com sucesso!');
-        setSession(transformUserData(data.user));
       }
     } catch (error) {
       console.error('Error signing in:', error);

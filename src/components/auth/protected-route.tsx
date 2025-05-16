@@ -4,6 +4,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -15,15 +16,61 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [sessionVerified, setSessionVerified] = useState(false);
   
   useEffect(() => {
     console.log("Protected route component mounting. Path:", location.pathname);
     console.log("Protected route: session =", session?.id, "loading =", loading, "allowedRoles =", allowedRoles);
     
-    if (!loading) {
-      // Check authorization once loading is complete
+    // Function to verify session directly with Supabase
+    const verifySessionWithSupabase = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error verifying session with Supabase:", error);
+          setSessionVerified(false);
+          return null;
+        }
+        
+        if (data.session) {
+          console.log("Session verified with Supabase:", data.session.user.id);
+          setSessionVerified(true);
+          return data.session;
+        } else {
+          console.log("No session found with Supabase direct check");
+          setSessionVerified(false);
+          return null;
+        }
+      } catch (err) {
+        console.error("Unexpected error verifying session:", err);
+        setSessionVerified(false);
+        return null;
+      }
+    };
+    
+    // Main check for authorization
+    const checkAuthorization = async () => {
+      if (loading) {
+        return; // Wait until loading is complete
+      }
+      
+      // If no session in context, verify with Supabase directly
       if (!session) {
-        console.log("No session found, user will be redirected to /auth");
+        console.log("No session in context, verifying with Supabase directly");
+        const supabaseSession = await verifySessionWithSupabase();
+        
+        if (!supabaseSession) {
+          console.log("No session found, redirecting to /auth");
+          setIsAuthorized(false);
+          return;
+        }
+      }
+      
+      const currentSession = session || (await verifySessionWithSupabase());
+      
+      if (!currentSession) {
+        console.log("No valid session found, user will be redirected to /auth");
         setIsAuthorized(false);
         return;
       }
@@ -36,7 +83,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       }
       
       // If we have a session and allowed roles, check if user has permission
-      const userRole = session.user_metadata.role as UserRole;
+      const userRole = currentSession.user.user_metadata.role as UserRole;
       const hasPermission = allowedRoles.includes(userRole);
       console.log("User role:", userRole, "Has permission:", hasPermission);
       
@@ -63,7 +110,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       } else {
         setIsAuthorized(true);
       }
-    }
+    };
+    
+    checkAuthorization();
   }, [session, loading, allowedRoles, navigate, location.pathname]);
 
   // Show loading screen while checking auth or determining authorization
@@ -78,15 +127,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // If not logged in, redirect to auth page
-  if (!session) {
-    console.log("No session, redirecting to /auth");
+  // If not authorized or no session, redirect to auth page
+  if (!isAuthorized || !session) {
+    console.log("Not authorized or no session, redirecting to /auth");
     return <Navigate to="/auth" replace />;
-  }
-
-  // If not authorized, the useEffect will handle redirection
-  if (!isAuthorized) {
-    return null;
   }
 
   // If logged in and has permission, render the children

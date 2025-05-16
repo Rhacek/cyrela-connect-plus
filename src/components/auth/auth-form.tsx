@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,13 +6,15 @@ import { AppLogo } from "@/components/ui/app-logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function AuthForm() {
-  const { signIn, signUp, loading } = useAuth();
+  const { signIn, signUp, loading, session } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const [processingAuth, setProcessingAuth] = useState(false);
+  
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -25,14 +26,50 @@ export function AuthForm() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerBrokerCode, setRegisterBrokerCode] = useState("");
 
+  // Redirect if session exists (user is already logged in)
+  useEffect(() => {
+    if (session) {
+      console.log("Auth form detected existing session:", session.id);
+      
+      // Check user role and redirect appropriately
+      const userRole = session.user_metadata.role;
+      let redirectPath = '/';
+      
+      if (userRole === 'BROKER') {
+        redirectPath = '/broker/dashboard';
+      } else if (userRole === 'ADMIN') {
+        redirectPath = '/admin';
+      } else if (userRole === 'CLIENT') {
+        redirectPath = '/client/welcome';
+      }
+      
+      console.log(`Redirecting to ${redirectPath} based on role ${userRole}`);
+      
+      // Use a short timeout to ensure state is fully updated
+      setTimeout(() => {
+        navigate(redirectPath);
+      }, 300);
+    }
+  }, [session, navigate]);
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     try {
+      setProcessingAuth(true);
+      console.log("Attempting login with:", loginEmail);
+      
       await signIn(loginEmail, loginPassword);
-      navigate("/broker/dashboard");
+      
+      // The redirect is now handled by the useEffect that watches the session
+      console.log("Login completed, waiting for session update to trigger redirect");
     } catch (error) {
       console.error("Login error:", error);
+      toast.error("Falha no login", { 
+        description: "Verifique seu email e senha e tente novamente." 
+      });
+    } finally {
+      setProcessingAuth(false);
     }
   };
 
@@ -40,13 +77,22 @@ export function AuthForm() {
     e.preventDefault();
     
     try {
+      setProcessingAuth(true);
       await signUp(registerEmail, registerPassword, registerName, registerBrokerCode);
       setActiveTab("login");
       toast.success("Cadastro realizado com sucesso! Por favor, verifique seu email para confirmar sua conta.");
     } catch (error) {
       console.error("Registration error:", error);
+      toast.error("Falha no cadastro", {
+        description: "Verifique seus dados e tente novamente."
+      });
+    } finally {
+      setProcessingAuth(false);
     }
   };
+
+  // Show loading state if we are processing auth or if auth is loading
+  const isLoading = loading || processingAuth;
 
   return (
     <div className="flex flex-col items-center space-y-6 w-full max-w-sm animate-fade-in">
@@ -85,6 +131,7 @@ export function AuthForm() {
                   className="cyrela-input"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               
@@ -106,15 +153,16 @@ export function AuthForm() {
                   className="cyrela-input"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               
               <Button
                 type="submit"
                 className="cyrela-button-primary w-full mt-6"
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? "Entrando..." : "Entrar"}
+                {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </TabsContent>
@@ -191,9 +239,9 @@ export function AuthForm() {
               <Button
                 type="submit"
                 className="cyrela-button-primary w-full mt-6"
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? "Cadastrando..." : "Cadastrar"}
+                {isLoading ? "Cadastrando..." : "Cadastrar"}
               </Button>
             </form>
           </TabsContent>
