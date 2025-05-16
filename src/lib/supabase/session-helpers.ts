@@ -1,5 +1,5 @@
 
-import { supabase, storageKey, emitSessionUpdate } from './client';
+import { supabase, storageKey, emitSessionUpdate } from '@/integrations/supabase/client';
 import { getCurrentSession } from './auth-helpers';
 
 // Enhanced session restore with additional checks and retries

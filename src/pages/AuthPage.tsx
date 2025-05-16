@@ -1,9 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { transformUserData } from "@/utils/auth-utils";
 
 const AuthPage = () => {

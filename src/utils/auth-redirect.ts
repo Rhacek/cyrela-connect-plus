@@ -1,5 +1,5 @@
 
-import { supabase, refreshSession } from '@/lib/supabase';
+import { supabase, refreshSession } from '@/integrations/supabase/client';
 
 // Re-export the main client for use by components importing from this location
 export { supabase };

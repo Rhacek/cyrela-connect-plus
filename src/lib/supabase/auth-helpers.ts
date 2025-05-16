@@ -1,5 +1,5 @@
 
-import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate } from './client';
+import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate } from '@/integrations/supabase/client';
 
 // Helper to log auth state for debugging
 export const logAuthState = async () => {

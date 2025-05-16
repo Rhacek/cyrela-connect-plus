@@ -1,5 +1,5 @@
-
-// Export all the functions from the different modules
+// Re-export the Supabase client from the integrations folder
+// This centralizes our Supabase client to a single implementation
 export { 
   supabase, 
   storageKey, 
@@ -10,8 +10,9 @@ export {
   emitSessionUpdate,
   emitSessionRemoval,
   isRefreshing
-} from './client';
+} from '@/integrations/supabase/client';
 
+// Keep exporting the helper functions from the actual implementation files
 export { 
   logAuthState, 
   getCurrentSession,
@@ -24,7 +25,7 @@ export {
   initializeSession 
 } from './session-helpers';
 
-// Call initialization
+// Continue to initialize the session during module import
 import { initializeSession } from './session-helpers';
 
 initializeSession().catch(err => {

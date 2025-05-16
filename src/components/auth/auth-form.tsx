@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { UserRole } from "@/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { transformUserData } from "@/utils/auth-utils";
 
 export function AuthForm() {
