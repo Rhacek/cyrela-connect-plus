@@ -11,7 +11,14 @@ console.log("Auth redirect layer: Using the consolidated Supabase client");
 // Export a helper function to verify admin access with the consolidated client
 export const verifyAdminAccess = async () => {
   try {
-    const { data } = await supabase.auth.getSession();
+    // Use the get session method to verify the current session
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Error in verifyAdminAccess:", error);
+      return false;
+    }
+    
     return data.session && 
       data.session.user && 
       data.session.user.user_metadata?.role === 'ADMIN';
