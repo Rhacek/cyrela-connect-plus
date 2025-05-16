@@ -13,6 +13,11 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
+// Type guard to check if session is a Supabase Session
+const isSupabaseSession = (session: Session | UserSession): session is Session => {
+  return 'user' in session;
+};
+
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
@@ -80,7 +85,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       // Handle different session types correctly
       let userRole: UserRole;
       
-      if ('user' in currentSession) {
+      if (isSupabaseSession(currentSession)) {
         // This is a Supabase Session
         userRole = currentSession.user.user_metadata.role as UserRole;
       } else {
