@@ -25,8 +25,8 @@ export const useSessionInit = () => {
   const { sessionFromEvent, isListening } = useAuthListener();
   const { currentSession, isChecking } = useCurrentSession();
 
-  // For debugging
-  useEffect(() => {
+  // Logging helper function for development environment
+  const logSessionStatus = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log("useSessionInit status:", {
         isRestoring,
@@ -50,96 +50,188 @@ export const useSessionInit = () => {
     isRefreshing
   ]);
 
-  // Improved session validation helper with rate limiting protection
+  // Debug logging effect
+  useEffect(() => {
+    logSessionStatus();
+  }, [
+    isRestoring,
+    isListening,
+    isChecking,
+    restoredSession,
+    sessionFromEvent,
+    currentSession,
+    session,
+    isRefreshing,
+    logSessionStatus
+  ]);
+
+  // Session validation with rate limiting protection
   const validateSession = useCallback(async (sessionToValidate: UserSession | null) => {
     if (!sessionToValidate) return false;
     
     try {
-      // Check if the user data actually contains what we expect
-      if (!sessionToValidate.id || !sessionToValidate.email) {
+      // Check for required session fields
+      if (!hasRequiredSessionFields(sessionToValidate)) {
         console.warn("Session validation failed: missing critical fields", sessionToValidate);
         return false;
       }
       
-      // Prevent too frequent validation checks
-      const now = Date.now();
-      if (now - lastRefreshAttempt < 60000) { // At least 1 minute between validations
+      // Apply rate limiting
+      if (isRateLimited(lastRefreshAttempt)) {
         console.log("Skipping validation check due to recent attempt");
         return true; // Assume valid to prevent excessive checks
       }
       
-      setLastRefreshAttempt(now);
+      setLastRefreshAttempt(Date.now());
       
-      // Get fresh session to verify it's still valid
-      const { data } = await supabase.auth.getSession();
-      const isValid = !!data.session;
-      
-      if (!isValid) {
-        console.warn("Session validation failed: session not found in Supabase");
-      }
-      
-      return isValid;
+      // Verify session with Supabase
+      return await verifySessionWithSupabase();
     } catch (err) {
       console.error("Error validating session:", err);
       return false;
     }
   }, [lastRefreshAttempt]);
 
-  // Combine the results from all hooks with improved validation
+  // Helper for checking required session fields
+  const hasRequiredSessionFields = (sessionToValidate: UserSession) => {
+    return !!sessionToValidate.id && !!sessionToValidate.email;
+  };
+
+  // Helper for rate limiting
+  const isRateLimited = (lastAttemptTime: number) => {
+    const now = Date.now();
+    return (now - lastAttemptTime < 60000); // At least 1 minute between validations
+  };
+
+  // Helper for verifying session with Supabase
+  const verifySessionWithSupabase = async () => {
+    const { data } = await supabase.auth.getSession();
+    const isValid = !!data.session;
+    
+    if (!isValid) {
+      console.warn("Session validation failed: session not found in Supabase");
+    }
+    
+    return isValid;
+  };
+
+  // Handle session updates from event listeners
+  const handleSessionUpdate = useCallback((event: any) => {
+    if (event.detail?.session) {
+      console.log("Session context received session update event");
+      const userSession = transformUserData(event.detail.session.user);
+      setSession(userSession);
+    }
+  }, []);
+
+  // Handle session removal events
+  const handleSessionRemoval = useCallback(() => {
+    console.log("Session context received session removal event");
+    setSession(null);
+  }, []);
+
+  // Process session data from different sources
+  const processSessions = useCallback(async () => {
+    // Prioritize session sources: auth events > current check > restore
+    const sessionToUse = sessionFromEvent || currentSession || restoredSession;
+    
+    if (sessionToUse !== null) {
+      await handleExistingSession(sessionToUse);
+    } else if (allSessionChecksComplete()) {
+      // If all checks are complete and we don't have a session, clear it
+      console.log("All session checks complete, no valid session found");
+      setSession(null);
+    }
+    
+    // Mark as not loading when all checks are complete
+    if (allSessionChecksComplete()) {
+      console.log("All session checks complete, setting loading=false");
+      setLoading(false);
+      setInitialized(true);
+    }
+  }, [
+    restoredSession, 
+    sessionFromEvent, 
+    currentSession, 
+    isRestoring, 
+    isListening, 
+    isChecking,
+    validateSession
+  ]);
+
+  // Helper to check if all session checks are complete
+  const allSessionChecksComplete = () => {
+    return !isRestoring && isListening && !isChecking;
+  };
+
+  // Handle existing session with validation
+  const handleExistingSession = async (sessionToUse: UserSession) => {
+    const isValid = await validateSession(sessionToUse);
+    
+    if (isValid) {
+      setSession(sessionToUse);
+    } else if (!isRefreshing) {
+      // Only try to refresh if we're not already refreshing
+      console.warn("Session failed validation, attempting refresh...");
+      const refreshedSession = await refreshSession();
+      
+      if (!refreshedSession) {
+        setSession(null);
+      }
+    }
+  };
+
+  // Run periodic session verification
+  const runPeriodicVerification = useCallback(async () => {
+    // Skip checks if a refresh is already in progress
+    if (isRefreshing) {
+      console.log("Skipping periodic check - refresh already in progress");
+      return;
+    }
+    
+    console.log("Performing periodic session verification check");
+    
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error || !data.session) {
+        await handleInvalidSession();
+      } else {
+        console.log("Periodic check: Session still valid");
+      }
+    } catch (err) {
+      console.error("Error during periodic session check:", err);
+    }
+  }, []);
+
+  // Handle invalid session during verification
+  const handleInvalidSession = async () => {
+    console.warn("Periodic check: Session invalid, attempting to refresh");
+    
+    // Use the centralized refresh function
+    const refreshedSession = await refreshSession();
+    
+    if (!refreshedSession) {
+      // Only clear the session after a delay to avoid race conditions
+      setTimeout(() => {
+        setSession(null);
+      }, 2000);
+    }
+  };
+
+  // Main effect for session processing
   useEffect(() => {
     let isMounted = true;
     
-    const processSessions = async () => {
-      // If we have a session from any source, prioritize auth events > current check > restore
-      const sessionToUse = sessionFromEvent || currentSession || restoredSession;
-      
-      if (sessionToUse !== null) {
-        // Extra validation step with throttling
-        const isValid = await validateSession(sessionToUse);
-        
-        if (isValid && isMounted) {
-          setSession(sessionToUse);
-        } else if (!isValid && isMounted && !isRefreshing) {
-          // Only try to refresh if we're not already refreshing
-          console.warn("Session failed validation, attempting refresh...");
-          const refreshedSession = await refreshSession();
-          
-          if (!refreshedSession && isMounted) {
-            setSession(null);
-          }
-        }
-      } else if (!isRestoring && !isChecking && isListening && isMounted) {
-        // If all checks are complete and we don't have a session, clear it
-        console.log("All session checks complete, no valid session found");
-        setSession(null);
-      }
-      
-      // Mark as not loading when all checks are complete
-      if (!isRestoring && isListening && !isChecking && isMounted) {
-        console.log("All session checks complete, setting loading=false");
-        setLoading(false);
-        setInitialized(true);
+    const processSessionsWrapper = async () => {
+      if (isMounted) {
+        await processSessions();
       }
     };
     
-    processSessions();
+    processSessionsWrapper();
     
     // Listen for session events
-    const handleSessionUpdate = (event: any) => {
-      if (isMounted && event.detail?.session) {
-        console.log("Session context received session update event");
-        const userSession = transformUserData(event.detail.session.user);
-        setSession(userSession);
-      }
-    };
-    
-    const handleSessionRemoval = () => {
-      if (isMounted) {
-        console.log("Session context received session removal event");
-        setSession(null);
-      }
-    };
-    
     sessionEvent.addEventListener(SESSION_UPDATED, handleSessionUpdate);
     sessionEvent.addEventListener(SESSION_REMOVED, handleSessionRemoval);
     
@@ -152,49 +244,24 @@ export const useSessionInit = () => {
     restoredSession, isRestoring,
     sessionFromEvent, isListening,
     currentSession, isChecking,
-    validateSession
+    validateSession,
+    processSessions,
+    handleSessionUpdate,
+    handleSessionRemoval
   ]);
 
-  // Periodic session verification with reduced frequency and backoff
+  // Periodic session verification effect
   useEffect(() => {
     let isMounted = true;
     let intervalId: number | null = null;
     
     if (initialized && session) {
-      // Verify session every 20 minutes instead of 5
-      intervalId = window.setInterval(async () => {
-        if (!isMounted) return;
-        
-        // Skip checks if a refresh is already in progress
-        if (isRefreshing) {
-          console.log("Skipping periodic check - refresh already in progress");
-          return;
+      // Verify session every 20 minutes
+      intervalId = window.setInterval(() => {
+        if (isMounted) {
+          runPeriodicVerification();
         }
-        
-        console.log("Performing periodic session verification check");
-        
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error || !data.session) {
-            console.warn("Periodic check: Session invalid, attempting to refresh");
-            
-            // Use the centralized refresh function
-            const refreshedSession = await refreshSession();
-            
-            if (!refreshedSession && isMounted) {
-              // Only clear the session after a delay to avoid race conditions
-              setTimeout(() => {
-                if (isMounted) setSession(null);
-              }, 2000);
-            }
-          } else {
-            console.log("Periodic check: Session still valid");
-          }
-        } catch (err) {
-          console.error("Error during periodic session check:", err);
-        }
-      }, 20 * 60 * 1000); // 20 minutes instead of 5
+      }, 20 * 60 * 1000); // 20 minutes
     }
     
     return () => {
@@ -203,7 +270,7 @@ export const useSessionInit = () => {
         clearInterval(intervalId);
       }
     };
-  }, [initialized, session]);
+  }, [initialized, session, runPeriodicVerification]);
 
   return {
     session,
