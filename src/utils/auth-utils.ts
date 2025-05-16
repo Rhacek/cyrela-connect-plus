@@ -5,12 +5,15 @@ import { UserSession } from '@/types/auth';
 
 // Transform Supabase user to our UserSession format
 export const transformUserData = (user: User): UserSession => {
+  // Extract user metadata with proper defaults
+  const role = user.user_metadata?.role || UserRole.CLIENT;
+  
   return {
     id: user.id,
     email: user.email || '',
     user_metadata: {
       name: user.user_metadata?.name || '',
-      role: (user.user_metadata?.role as UserRole) || UserRole.CLIENT,
+      role: role as UserRole,
       brokerCode: user.user_metadata?.brokerCode,
       brokerage: user.user_metadata?.brokerage,
       creci: user.user_metadata?.creci,

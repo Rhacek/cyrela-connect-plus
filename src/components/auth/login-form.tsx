@@ -13,7 +13,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLoginAttempt }: LoginFormProps) {
-  const { signIn, setSession } = useAuth();
+  const { setSession } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -45,7 +45,7 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
         const userSession = transformUserData(data.session.user);
         
         // Explicitly set the session in auth context
-        await setSession(userSession);
+        setSession(userSession);
         
         // Additional verification for debugging
         const { data: sessionCheck } = await supabase.auth.getSession();

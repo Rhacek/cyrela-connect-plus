@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
@@ -27,9 +26,9 @@ export const useAuthActions = (
         return;
       }
 
-      if (data.user) {
-        console.log("Sign in successful:", data.user.id);
-        const transformedUser = transformUserData(data.user);
+      if (data.session) {
+        console.log("Sign in successful:", data.session.user.id);
+        const transformedUser = transformUserData(data.session.user);
         console.log("Transformed user:", transformedUser);
         setSession(transformedUser);
         toast.success('Login realizado com sucesso!');

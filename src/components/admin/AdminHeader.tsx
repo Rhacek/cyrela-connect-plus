@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 export function AdminHeader() {
   const sidebar = useSidebar();
   const isCollapsed = sidebar.state === "collapsed";
-  const { signOut, setSession, session } = useAuth();
+  const { setSession, session } = useAuth();
   const navigate = useNavigate();
   
   const handleSignOut = async () => {
