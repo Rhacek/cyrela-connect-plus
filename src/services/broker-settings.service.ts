@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/auth-context";
+import { Json } from "@/integrations/supabase/types";
 
 export type BrokerSettingsCategory = 'profile' | 'notifications';
 
@@ -42,7 +43,7 @@ export const brokerSettingsService = {
     return data?.value as T;
   },
 
-  async updateBrokerSettings<T>(category: BrokerSettingsCategory, settings: T): Promise<void> {
+  async updateBrokerSettings<T extends Record<string, any>>(category: BrokerSettingsCategory, settings: T): Promise<void> {
     const { session } = useAuth();
     if (!session) throw new Error("Usuário não autenticado");
 
@@ -63,7 +64,7 @@ export const brokerSettingsService = {
       // Update existing settings
       const { error } = await supabase
         .from("settings")
-        .update({ value: settings })
+        .update({ value: settings as Json })
         .eq("id", data.id);
 
       if (error) {
@@ -76,8 +77,8 @@ export const brokerSettingsService = {
         .from("settings")
         .insert({
           key: settingsKey,
-          category: "general", // Using general category for all broker settings
-          value: settings
+          category: "general" as const, // Using general category for all broker settings
+          value: settings as Json
         });
 
       if (error) {
@@ -89,7 +90,7 @@ export const brokerSettingsService = {
 
   async getBrokerProfileSettings(): Promise<BrokerProfileSettings> {
     try {
-      return await this.getBrokerSettings<BrokerProfileSettings>("profile");
+      return await this.getBrokerSettings("profile");
     } catch (error) {
       // Return default settings if not found
       return {
@@ -104,7 +105,7 @@ export const brokerSettingsService = {
 
   async getBrokerNotificationSettings(): Promise<BrokerNotificationSettings> {
     try {
-      return await this.getBrokerSettings<BrokerNotificationSettings>("notifications");
+      return await this.getBrokerSettings("notifications");
     } catch (error) {
       // Return default settings if not found
       return {
