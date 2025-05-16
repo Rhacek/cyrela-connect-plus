@@ -35,7 +35,7 @@ export const BrokerTable = ({ brokers, deletingId, onDeleteBroker }: BrokerTable
           <BrokerRow 
             key={broker.id}
             broker={broker}
-            isDeleting={deletingId === broker.id}
+            isDeleting={deletingId}
             onDelete={onDeleteBroker}
           />
         ))}

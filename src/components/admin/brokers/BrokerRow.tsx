@@ -7,7 +7,7 @@ import { BrokerActionMenu } from "./BrokerActionMenu";
 
 interface BrokerRowProps {
   broker: Broker;
-  isDeleting: boolean;
+  isDeleting: string | null;
   onDelete: (id: string) => Promise<void>;
 }
 
