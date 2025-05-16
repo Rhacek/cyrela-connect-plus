@@ -218,7 +218,9 @@ export type Database = {
           area: number
           bathrooms: number
           bedrooms: number
+          broker_notes: string | null
           city: string
+          commission: number | null
           construction_stage: string | null
           created_at: string
           created_by_id: string
@@ -248,7 +250,9 @@ export type Database = {
           area: number
           bathrooms: number
           bedrooms: number
+          broker_notes?: string | null
           city: string
+          commission?: number | null
           construction_stage?: string | null
           created_at?: string
           created_by_id: string
@@ -278,7 +282,9 @@ export type Database = {
           area?: number
           bathrooms?: number
           bedrooms?: number
+          broker_notes?: string | null
           city?: string
+          commission?: number | null
           construction_stage?: string | null
           created_at?: string
           created_by_id?: string
