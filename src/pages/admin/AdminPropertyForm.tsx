@@ -1,203 +1,44 @@
 
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
+import { useParams } from "react-router-dom";
 import { Form } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BasicInfoTab } from "@/components/admin/property-form/BasicInfoTab";
 import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
 import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
-import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@/components/admin/property-form/PropertyFormSchema";
-import { propertiesService } from "@/services/properties.service";
+import { FormHeader } from "@/components/admin/property-form/FormHeader";
+import { FormTabs } from "@/components/admin/property-form/FormTabs";
+import { FormActions } from "@/components/admin/property-form/FormActions";
+import { PropertyFormLoader } from "@/components/admin/property-form/PropertyFormLoader";
+import { usePropertyForm } from "@/hooks/use-property-form";
 import { useAuth } from "@/context/auth-context";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { TabsContent } from "@/components/ui/tabs";
 
 const AdminPropertyForm = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { session } = useAuth();
-  const { toast } = useToast();
-  const isEditing = Boolean(id);
-  const [currentTab, setCurrentTab] = useState("basic");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(isEditing);
   
-  const form = useForm<PropertyFormValues>({
-    resolver: zodResolver(propertyFormSchema),
-    defaultValues: defaultPropertyValues
+  const { 
+    form, 
+    currentTab, 
+    setCurrentTab, 
+    isSubmitting, 
+    isLoading, 
+    isEditing,
+    onSubmit 
+  } = usePropertyForm({
+    propertyId: id,
+    userId: session?.id || ""
   });
   
-  useEffect(() => {
-    if (isEditing && id) {
-      const fetchProperty = async () => {
-        try {
-          setIsLoading(true);
-          const property = await propertiesService.getById(id);
-          
-          if (property) {
-            form.reset({
-              title: property.title,
-              developmentName: property.developmentName || "",
-              description: property.description,
-              type: property.type,
-              price: property.price,
-              promotionalPrice: property.promotionalPrice,
-              area: property.area,
-              bedrooms: property.bedrooms,
-              bathrooms: property.bathrooms,
-              suites: property.suites,
-              parkingSpaces: property.parkingSpaces,
-              address: property.address,
-              neighborhood: property.neighborhood,
-              city: property.city,
-              state: property.state,
-              zipCode: property.zipCode,
-              constructionStage: property.constructionStage || "",
-              youtubeUrl: property.youtubeUrl || "",
-              isHighlighted: property.isHighlighted,
-              brokerNotes: property.brokerNotes || "",
-              commission: property.commission || 0
-            });
-          } else {
-            toast.error("Imóvel não encontrado", {
-              description: "O imóvel que você está tentando editar não foi encontrado."
-            });
-            navigate("/admin/properties");
-          }
-        } catch (error) {
-          console.error("Error fetching property:", error);
-          toast.error("Erro ao carregar imóvel", {
-            description: "Ocorreu um erro ao carregar as informações do imóvel."
-          });
-          navigate("/admin/properties");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchProperty();
-    }
-  }, [id, isEditing, form, navigate, toast]);
-  
-  const onSubmit = async (values: PropertyFormValues) => {
-    if (!session) {
-      toast.error("Não autenticado", {
-        description: "Você precisa estar logado para cadastrar um imóvel."
-      });
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      if (isEditing && id) {
-        // Update existing property
-        await propertiesService.update(id, {
-          ...values,
-          createdById: session.id
-        });
-        
-        toast.success("Imóvel atualizado com sucesso!", {
-          description: "As informações foram salvas no sistema."
-        });
-      } else {
-        // Create new property - ensure all required fields are present
-        const newProperty = await propertiesService.create({
-          title: values.title,
-          description: values.description,
-          developmentName: values.developmentName || "",
-          type: values.type,
-          price: values.price,
-          promotionalPrice: values.promotionalPrice,
-          area: values.area,
-          bedrooms: values.bedrooms,
-          bathrooms: values.bathrooms,
-          suites: values.suites,
-          parkingSpaces: values.parkingSpaces,
-          address: values.address,
-          neighborhood: values.neighborhood,
-          city: values.city,
-          state: values.state,
-          zipCode: values.zipCode,
-          constructionStage: values.constructionStage || "",
-          youtubeUrl: values.youtubeUrl || "",
-          isHighlighted: values.isHighlighted,
-          brokerNotes: values.brokerNotes || "",
-          commission: values.commission || 0,
-          createdById: session.id,
-          isActive: true,
-          viewCount: 0,
-          shareCount: 0
-        });
-        
-        toast.success("Imóvel cadastrado com sucesso!", {
-          description: "O novo imóvel foi adicionado ao sistema."
-        });
-      }
-      
-      navigate("/admin/properties");
-    } catch (error) {
-      console.error("Error saving property:", error);
-      toast.error("Erro ao salvar imóvel", {
-        description: "Ocorreu um erro ao salvar as informações do imóvel. Tente novamente."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[300px] w-full">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-        <p className="text-muted-foreground">Carregando informações do imóvel...</p>
-      </div>
-    );
+    return <PropertyFormLoader />;
   }
   
   return (
     <div className="space-y-6 w-full max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isEditing ? "Editar Imóvel" : "Novo Imóvel"}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          {isEditing ? "Atualize as informações do imóvel conforme necessário." : "Preencha as informações para cadastrar um novo imóvel."}
-        </p>
-      </div>
+      <FormHeader isEditing={isEditing} />
 
-      <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl px-2 py-2 gap-1 min-h-12 items-center justify-center">
-          <TabsTrigger 
-            value="basic" 
-            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
-          >
-            Informações Básicas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="details" 
-            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
-          >
-            Detalhes
-          </TabsTrigger>
-          <TabsTrigger 
-            value="media" 
-            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
-          >
-            Mídia
-          </TabsTrigger>
-          <TabsTrigger 
-            value="broker" 
-            className="h-full w-full flex items-center justify-center text-center p-2 whitespace-normal text-sm"
-          >
-            Info. Corretor
-          </TabsTrigger>
-        </TabsList>
-
+      <FormTabs currentTab={currentTab} onTabChange={setCurrentTab}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6 w-full">
             <TabsContent value="basic" className="w-full">
@@ -220,29 +61,10 @@ const AdminPropertyForm = () => {
               <BrokerInfoTab form={form} />
             </TabsContent>
 
-            <div className="flex justify-end gap-4 mt-8">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate("/admin/properties")}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? "Atualizando..." : "Cadastrando..."}
-                  </>
-                ) : (
-                  isEditing ? "Atualizar Imóvel" : "Cadastrar Imóvel"
-                )}
-              </Button>
-            </div>
+            <FormActions isSubmitting={isSubmitting} isEditing={isEditing} />
           </form>
         </Form>
-      </Tabs>
+      </FormTabs>
     </div>
   );
 };
