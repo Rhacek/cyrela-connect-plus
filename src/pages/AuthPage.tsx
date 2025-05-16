@@ -43,6 +43,18 @@ const AuthPage = () => {
         try {
           console.log("AuthPage - No session in context, checking with Supabase directly");
           
+          const lastAuthCheck = sessionStorage.getItem('lastAuthCheck');
+          const now = Date.now();
+          
+          // Only check once per minute to avoid rate limits
+          if (lastAuthCheck && now - parseInt(lastAuthCheck) < 60000) {
+            console.log("Skipping auth check - performed recently");
+            setIsVerifyingAuth(false);
+            return;
+          }
+          
+          sessionStorage.setItem('lastAuthCheck', now.toString());
+          
           // Check for existing session
           const { data, error } = await supabase.auth.getSession();
           
@@ -55,32 +67,13 @@ const AuthPage = () => {
           if (data.session) {
             console.log("AuthPage - Found session from Supabase:", data.session.user.id);
             
-            // Try to refresh the token to ensure it stays valid
-            try {
-              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-              
-              if (refreshError) {
-                console.error("Error refreshing session:", refreshError);
-              } else if (refreshData.session) {
-                console.log("Session refreshed successfully");
-                
-                // Transform user data to our expected format
-                const userSession = transformUserData(refreshData.session.user);
-                
-                // Update the auth context with the restored session
-                setSession(userSession);
-                
-                // Use the session directly instead of waiting for context update
-                redirectBasedOnRole(userSession, redirectPath);
-                return;
-              }
-            } catch (refreshErr) {
-              console.error("Error refreshing session:", refreshErr);
-            }
-            
-            // Fall back to original session if refresh failed
+            // Transform user data to our expected format
             const userSession = transformUserData(data.session.user);
+            
+            // Update the auth context with the restored session
             setSession(userSession);
+            
+            // Use the session directly instead of waiting for context update
             redirectBasedOnRole(userSession, redirectPath);
             return;
           }

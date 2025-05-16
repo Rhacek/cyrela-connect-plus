@@ -6,7 +6,6 @@ import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { refreshSession } from "@/lib/supabase";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +17,7 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
-  const { session, setSession, initialized } = useAuth();
+  const { session, initialized } = useAuth();
   const [isLocallyVerifying, setIsLocallyVerifying] = useState(true);
   
   // Use the custom hook for session verification
@@ -27,46 +26,23 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   // Setup periodic session check for authenticated users
   usePeriodicSessionCheck(isAuthorized);
   
-  // Direct verification for session - runs even before useSessionVerification
+  // Simpler verification that relies more on the auth context
   useEffect(() => {
-    // Skip if useSessionVerification is ready or if we already have a session
-    if (!isVerifying && !isLocallyVerifying) return;
-    if (session && !isVerifying) {
+    // Skip if useSessionVerification is ready
+    if (!isVerifying) {
       setIsLocallyVerifying(false);
       return;
     }
     
-    const verifySessionDirectly = async () => {
-      // If auth context isn't initialized yet, wait
-      if (!initialized) {
-        console.log("Auth context not initialized yet, waiting...");
-        return;
-      }
-      
-      if (!session) {
-        console.log("Protected route accessed without session, attempting refresh");
-        
-        const refreshedSession = await refreshSession();
-        
-        if (refreshedSession) {
-          console.log("Session refreshed successfully in protected route");
-          
-          // Set local verification as complete
-          setIsLocallyVerifying(false);
-          
-          // Session update will happen through the auth listener
-        } else {
-          console.log("No session could be refreshed");
-          setIsLocallyVerifying(false);
-        }
-      } else {
-        // We have a session, verification is complete
-        setIsLocallyVerifying(false);
-      }
-    };
+    // Wait for auth context to initialize
+    if (!initialized) {
+      console.log("Auth context not initialized yet, waiting...");
+      return;
+    }
     
-    verifySessionDirectly();
-  }, [session, setSession, initialized, isVerifying, isLocallyVerifying]);
+    // We have a session, verification is complete
+    setIsLocallyVerifying(false);
+  }, [session, initialized, isVerifying]);
   
   // Effect to log protected route access
   useEffect(() => {

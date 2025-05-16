@@ -9,7 +9,8 @@ import {
   sessionEvent, 
   SESSION_UPDATED, 
   SESSION_REMOVED,
-  supabase 
+  supabase,
+  isRefreshing 
 } from '@/lib/supabase';
 import { transformUserData } from '@/utils/auth-utils';
 
@@ -17,6 +18,7 @@ export const useSessionInit = () => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [lastRefreshAttempt, setLastRefreshAttempt] = useState(0);
 
   // Use the smaller, more focused hooks
   const { restoredSession, isRestoring } = useSessionRestore();
@@ -33,7 +35,8 @@ export const useSessionInit = () => {
         hasRestoredSession: !!restoredSession,
         hasEventSession: !!sessionFromEvent,
         hasCurrentSession: !!currentSession,
-        sessionId: session?.id
+        sessionId: session?.id,
+        isRefreshing
       });
     }
   }, [
@@ -43,10 +46,11 @@ export const useSessionInit = () => {
     restoredSession,
     sessionFromEvent,
     currentSession,
-    session
+    session,
+    isRefreshing
   ]);
 
-  // Improved session validation helper
+  // Improved session validation helper with rate limiting protection
   const validateSession = useCallback(async (sessionToValidate: UserSession | null) => {
     if (!sessionToValidate) return false;
     
@@ -56,6 +60,15 @@ export const useSessionInit = () => {
         console.warn("Session validation failed: missing critical fields", sessionToValidate);
         return false;
       }
+      
+      // Prevent too frequent validation checks
+      const now = Date.now();
+      if (now - lastRefreshAttempt < 60000) { // At least 1 minute between validations
+        console.log("Skipping validation check due to recent attempt");
+        return true; // Assume valid to prevent excessive checks
+      }
+      
+      setLastRefreshAttempt(now);
       
       // Get fresh session to verify it's still valid
       const { data } = await supabase.auth.getSession();
@@ -70,7 +83,7 @@ export const useSessionInit = () => {
       console.error("Error validating session:", err);
       return false;
     }
-  }, []);
+  }, [lastRefreshAttempt]);
 
   // Combine the results from all hooks with improved validation
   useEffect(() => {
@@ -81,14 +94,19 @@ export const useSessionInit = () => {
       const sessionToUse = sessionFromEvent || currentSession || restoredSession;
       
       if (sessionToUse !== null) {
-        // Extra validation step
+        // Extra validation step with throttling
         const isValid = await validateSession(sessionToUse);
         
         if (isValid && isMounted) {
           setSession(sessionToUse);
-        } else if (!isValid && isMounted) {
-          console.warn("Session failed validation, clearing...");
-          setSession(null);
+        } else if (!isValid && isMounted && !isRefreshing) {
+          // Only try to refresh if we're not already refreshing
+          console.warn("Session failed validation, attempting refresh...");
+          const refreshedSession = await refreshSession();
+          
+          if (!refreshedSession && isMounted) {
+            setSession(null);
+          }
         }
       } else if (!isRestoring && !isChecking && isListening && isMounted) {
         // If all checks are complete and we don't have a session, clear it
@@ -137,15 +155,21 @@ export const useSessionInit = () => {
     validateSession
   ]);
 
-  // Periodic session verification with reduced frequency
+  // Periodic session verification with reduced frequency and backoff
   useEffect(() => {
     let isMounted = true;
     let intervalId: number | null = null;
     
     if (initialized && session) {
-      // Verify session every 15 minutes instead of 5
+      // Verify session every 20 minutes instead of 5
       intervalId = window.setInterval(async () => {
         if (!isMounted) return;
+        
+        // Skip checks if a refresh is already in progress
+        if (isRefreshing) {
+          console.log("Skipping periodic check - refresh already in progress");
+          return;
+        }
         
         console.log("Performing periodic session verification check");
         
@@ -170,7 +194,7 @@ export const useSessionInit = () => {
         } catch (err) {
           console.error("Error during periodic session check:", err);
         }
-      }, 15 * 60 * 1000); // 15 minutes instead of 5
+      }, 20 * 60 * 1000); // 20 minutes instead of 5
     }
     
     return () => {

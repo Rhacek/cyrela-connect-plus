@@ -8,7 +8,8 @@ export {
   SESSION_UPDATED, 
   SESSION_REMOVED,
   emitSessionUpdate,
-  emitSessionRemoval
+  emitSessionRemoval,
+  isRefreshing
 } from './client';
 
 export { 

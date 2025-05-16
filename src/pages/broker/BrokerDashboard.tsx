@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { performanceService } from "@/services/performance.service";
 import { targetsService } from "@/services/targets.service";
-import { supabase } from "@/lib/supabase"; // Use the consolidated client
+import { supabase } from "@/lib/supabase";
 
 const BrokerDashboard = () => {
   const { session, initialized } = useAuth();
@@ -28,11 +28,21 @@ const BrokerDashboard = () => {
     handleAddLead
   } = useDashboardData();
   
-  // Verify session on dashboard load for extra security
+  // Verify session on dashboard load for extra security - with throttling
   useEffect(() => {
     const checkSessionValid = async () => {
       if (session?.id) {
         try {
+          // Check at most once per minute
+          const lastCheck = sessionStorage.getItem('lastSessionCheck');
+          const now = Date.now();
+          
+          if (lastCheck && now - parseInt(lastCheck) < 60000) {
+            return; // Skip check if done recently
+          }
+          
+          sessionStorage.setItem('lastSessionCheck', now.toString());
+          
           const { data, error } = await supabase.auth.getUser();
           if (error || !data.user) {
             console.error("Dashboard session verification failed:", error);

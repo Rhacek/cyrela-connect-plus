@@ -10,7 +10,12 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 export const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
 
 // Token refresh lock to prevent multiple simultaneous refresh attempts
-let isRefreshing = false;
+// This needs to be a module-level variable with actual state
+export let isRefreshing = false;
+
+// Exponential backoff for refresh attempts
+let refreshBackoffTime = 1000; // Start with 1 second
+const MAX_BACKOFF = 30000; // Max 30 seconds
 
 // Create a single instance of the Supabase client with optimized auth settings
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -42,7 +47,7 @@ export function emitSessionRemoval() {
   sessionEvent.dispatchEvent(event);
 }
 
-// Centralized token refresh function
+// Centralized token refresh function with proper locking and backoff
 export async function refreshSession() {
   // Use a lock to prevent multiple refresh attempts
   if (isRefreshing) {
@@ -58,11 +63,22 @@ export async function refreshSession() {
     
     if (error) {
       console.error("Error refreshing session:", error.message);
+      
+      // Handle rate limiting specifically
+      if (error.message.includes("429") || error.message.includes("rate limit")) {
+        console.warn("Rate limit hit, applying exponential backoff");
+        refreshBackoffTime = Math.min(refreshBackoffTime * 2, MAX_BACKOFF);
+        console.log(`Next refresh attempt will wait ${refreshBackoffTime/1000} seconds`);
+        return null;
+      }
+      
       return null;
     }
     
     if (data?.session) {
       console.log("Token refreshed successfully");
+      // Reset backoff time after successful refresh
+      refreshBackoffTime = 1000;
       emitSessionUpdate(data.session);
       return data.session;
     }
@@ -72,9 +88,9 @@ export async function refreshSession() {
     console.error("Unexpected error during token refresh:", err);
     return null;
   } finally {
-    // Release the lock after a small delay to prevent immediate re-attempts
+    // Release the lock after a delay based on backoff
     setTimeout(() => {
       isRefreshing = false;
-    }, 1000);
+    }, refreshBackoffTime);
   }
 }

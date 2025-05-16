@@ -20,6 +20,17 @@ export function AuthForm() {
   useEffect(() => {
     const checkSessionDirectly = async () => {
       if (!session && initialized) {
+        // Only check once per minute to avoid rate limits
+        const lastDirectCheck = sessionStorage.getItem('lastDirectCheck');
+        const now = Date.now();
+        
+        if (lastDirectCheck && now - parseInt(lastDirectCheck) < 60000) {
+          console.log("Skipping direct session check - performed recently");
+          return;
+        }
+        
+        sessionStorage.setItem('lastDirectCheck', now.toString());
+        
         console.log("Auth form directly checking for session");
         const { data, error } = await supabase.auth.getSession();
         

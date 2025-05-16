@@ -29,6 +29,11 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
+    if (loading) {
+      console.log("Login already in progress, ignoring duplicate request");
+      return;
+    }
+    
     try {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
