@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { UseFormReturn } from "react-hook-form";
 import { PropertyFormValues } from "./PropertyFormSchema";
-import { PropertyImageUpload } from "@/components/admin/PropertyImageUpload";
 import { PropertyImage } from "@/types";
 import { useEffect, useState } from "react";
 import { propertiesService } from "@/services/properties.service";
 import { useToast } from "@/hooks/use-toast";
+import { PropertyImageUploader } from "../property-images/PropertyImageUploader";
 
 interface MediaTabProps {
   form: UseFormReturn<PropertyFormValues>;
@@ -69,7 +69,7 @@ export const MediaTab = ({ form, initialImages = [], propertyId }: MediaTabProps
           )}
         />
         
-        <PropertyImageUpload 
+        <PropertyImageUploader 
           initialImages={images} 
           propertyId={propertyId}
         />
