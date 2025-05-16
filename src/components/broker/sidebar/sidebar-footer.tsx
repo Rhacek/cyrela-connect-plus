@@ -1,7 +1,8 @@
 
-import { User, Settings, Menu } from "lucide-react";
+import { LogOut, User, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SidebarLink } from "./sidebar-link";
+import { useAuth } from "@/context/auth-context";
 
 interface SidebarFooterProps {
   isCollapsed: boolean;
@@ -9,6 +10,16 @@ interface SidebarFooterProps {
 }
 
 export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFooterProps) {
+  const { signOut } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
   return (
     <div className="p-4 border-t border-cyrela-gray-light">
       {!isCollapsed && (
@@ -34,6 +45,26 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
             label="Configurações" 
             to="/settings" 
           />
+        )}
+      </div>
+      
+      {/* Logout button */}
+      <div className="mt-4">
+        {isCollapsed ? (
+          <button 
+            onClick={handleLogout}
+            className="block p-3 hover:bg-cyrela-gray-lighter rounded-full mx-auto w-fit text-cyrela-gray-dark"
+          >
+            <LogOut size={20} />
+          </button>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full px-3 py-2 text-cyrela-gray-dark hover:bg-cyrela-gray-lighter rounded-md transition-colors"
+          >
+            <LogOut size={18} />
+            <span className="text-sm font-medium">Sair</span>
+          </button>
         )}
       </div>
       

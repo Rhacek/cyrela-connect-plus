@@ -127,10 +127,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         if (isMounted) {
           toast.error("Você não tem permissão para acessar esta página");
           
-          // Redirect based on role
+          // Redirect based on role - FIX: Ensure consistent paths with trailing slash for admin
           switch (userRole) {
             case UserRole.ADMIN:
-              navigate("/admin", { replace: true });
+              navigate("/admin/", { replace: true }); // Add trailing slash for consistency
               break;
             case UserRole.BROKER:
               navigate("/broker/dashboard", { replace: true });
