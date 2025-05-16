@@ -82,15 +82,15 @@ export const settingsService = {
   },
 
   async getGeneralSettings(): Promise<GeneralSettings> {
-    return this.getByCategory<GeneralSettings>("general");
+    return this.getByCategory("general") as Promise<GeneralSettings>;
   },
 
   async getEmailSettings(): Promise<EmailSettings> {
-    return this.getByCategory<EmailSettings>("email");
+    return this.getByCategory("email") as Promise<EmailSettings>;
   },
 
   async getFeatureSettings(): Promise<FeatureSettings> {
-    return this.getByCategory<FeatureSettings>("features");
+    return this.getByCategory("features") as Promise<FeatureSettings>;
   },
 
   async updateGeneralSettings(settings: GeneralSettings): Promise<void> {
