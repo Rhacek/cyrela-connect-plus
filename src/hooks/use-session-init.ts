@@ -1,9 +1,17 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { UserSession } from '@/types/auth';
 import { useSessionRestore } from './use-session-restore';
 import { useAuthListener } from './use-auth-listener';
 import { useCurrentSession } from './use-current-session';
-import { refreshSession, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase';
+import { 
+  refreshSession, 
+  sessionEvent, 
+  SESSION_UPDATED, 
+  SESSION_REMOVED,
+  supabase 
+} from '@/lib/supabase';
+import { transformUserData } from '@/utils/auth-utils';
 
 export const useSessionInit = () => {
   const [session, setSession] = useState<UserSession | null>(null);
@@ -102,7 +110,6 @@ export const useSessionInit = () => {
     const handleSessionUpdate = (event: any) => {
       if (isMounted && event.detail?.session) {
         console.log("Session context received session update event");
-        const { transformUserData } = require('@/utils/auth-utils');
         const userSession = transformUserData(event.detail.session.user);
         setSession(userSession);
       }
