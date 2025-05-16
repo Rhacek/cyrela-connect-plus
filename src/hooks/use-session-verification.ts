@@ -1,35 +1,26 @@
 
-import { ReactNode, useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types";
-import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
-import { DashboardLoading } from "@/components/broker/dashboard/dashboard-loading";
+import { UserRole } from "@/types";
+import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-  allowedRoles?: UserRole[];
+interface SessionVerificationResult {
+  isAuthorized: boolean | null;
+  isVerifying: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerificationResult {
   const { session, loading, setSession } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
-  
+
   useEffect(() => {
-    console.log("Protected route mounting. Path:", location.pathname);
-    console.log("Auth state:", { 
-      sessionExists: !!session, 
-      loading, 
-      allowedRoles 
-    });
-    
     let isMounted = true;
-    
+
     // Function to verify session directly with Supabase
     const verifySessionWithSupabase = async () => {
       try {
@@ -72,7 +63,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         return null;
       }
     };
-    
+
     // Main check for authorization
     const checkAuthorization = async () => {
       // If already loading in auth context, wait
@@ -101,7 +92,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         return;
       }
       
-      // If we have a session but no allowed roles, it's protected but open to all
+      // If we have a session but no allowed roles, it's protected but open to all authenticated
       if (!allowedRoles) {
         console.log("Route is protected but open to all authenticated users");
         if (isMounted) {
@@ -127,10 +118,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         if (isMounted) {
           toast.error("Você não tem permissão para acessar esta página");
           
-          // Redirect based on role - FIX: Ensure consistent paths with trailing slash for admin
+          // Redirect based on role
           switch (userRole) {
             case UserRole.ADMIN:
-              navigate("/admin/", { replace: true }); // Add trailing slash for consistency
+              navigate("/admin/", { replace: true });
               break;
             case UserRole.BROKER:
               navigate("/broker/dashboard", { replace: true });
@@ -159,54 +150,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return () => {
       isMounted = false;
     };
-  }, [session, loading, allowedRoles, navigate, location.pathname, setSession]);
+  }, [session, loading, allowedRoles, navigate, setSession]);
 
-  // Periodic verification of session while on protected routes
-  useEffect(() => {
-    let isMounted = true;
-    let intervalId: number | null = null;
-    
-    if (isAuthorized) {
-      // Verify session every 5 minutes
-      intervalId = window.setInterval(async () => {
-        if (!isMounted) return;
-        
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error || !data.session) {
-            console.warn("Protected route: Session lost during periodic check");
-            
-            if (isMounted) {
-              toast.error("Sua sessão expirou. Redirecionando para login...");
-              navigate("/auth", { replace: true });
-            }
-          }
-        } catch (err) {
-          console.error("Error during periodic session check in protected route:", err);
-        }
-      }, 5 * 60 * 1000); // 5 minutes
-    }
-    
-    return () => {
-      isMounted = false;
-      if (intervalId !== null) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isAuthorized, navigate]);
-
-  // Show loading screen while checking auth or determining authorization
-  if (loading || isVerifying || isAuthorized === null) {
-    return <DashboardLoading />;
-  }
-
-  // If not authorized or no session, redirect to auth page
-  if (!isAuthorized || !session) {
-    console.log("Not authorized or no session, redirecting to /auth");
-    return <Navigate to="/auth" replace />;
-  }
-
-  // If logged in and has permission, render the children
-  return <>{children}</>;
+  return { isAuthorized, isVerifying };
 }
