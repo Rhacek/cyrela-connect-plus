@@ -6,7 +6,7 @@ import { useAuthListener } from './use-auth-listener';
 import { useCurrentSession } from './use-current-session';
 import { isRefreshing } from '@/lib/supabase';
 
-// Import our new utility modules
+// Import our utility modules
 import { validateSession } from './use-session/validation';
 import { setupSessionEventListeners } from './use-session/event-handlers';
 import { processSession } from './use-session/process-session';
