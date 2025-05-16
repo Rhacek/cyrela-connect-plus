@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/auth-context";
 import { 
   Sidebar, 
@@ -11,7 +10,7 @@ import { DashboardContent } from "@/components/broker/dashboard/dashboard-conten
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { performanceService } from "@/services/performance.service";
+import { ensureCurrentMonthPerformance } from "@/services/performance";
 import { targetsService } from "@/services/targets.service";
 import { supabase } from "@/lib/supabase";
 
@@ -76,7 +75,7 @@ const BrokerDashboard = () => {
           
           if (!hasPerformanceData) {
             console.log("No performance data found, ensuring record exists in database");
-            await performanceService.ensureCurrentMonthPerformance(session.id);
+            await ensureCurrentMonthPerformance(session.id);
           }
           
           if (!hasTargetData) {
