@@ -64,7 +64,7 @@ export default function BrokerMetrics() {
         
         // Fetch performance data
         setIsLoadingPerformance(true);
-        let performanceData: Performance[] = [];
+        let performanceData: any[] = [];
         
         try {
           performanceData = await performanceService.getMonthlyPerformance(session.id, selectedYear);
@@ -81,8 +81,15 @@ export default function BrokerMetrics() {
         if (monthPerformance) {
           // Map database fields to frontend model
           setPerformance({
-            ...monthPerformance,
-            brokerId: monthPerformance.broker_id
+            id: monthPerformance.id,
+            brokerId: monthPerformance.broker_id,
+            month: monthPerformance.month,
+            year: monthPerformance.year,
+            shares: monthPerformance.shares,
+            leads: monthPerformance.leads,
+            schedules: monthPerformance.schedules,
+            visits: monthPerformance.visits,
+            sales: monthPerformance.sales
           });
         } else {
           // No data found, use empty performance
@@ -91,7 +98,7 @@ export default function BrokerMetrics() {
         
         // Fetch target data
         setIsLoadingTarget(true);
-        let targetData: Target[] = [];
+        let targetData: any[] = [];
         
         try {
           targetData = await targetsService.getMonthlyTargets(session.id, selectedYear);
@@ -108,8 +115,10 @@ export default function BrokerMetrics() {
         if (monthTarget) {
           // Map database fields to frontend model
           setTarget({
-            ...monthTarget,
+            id: monthTarget.id,
             brokerId: monthTarget.broker_id,
+            month: monthTarget.month,
+            year: monthTarget.year,
             shareTarget: monthTarget.share_target,
             leadTarget: monthTarget.lead_target, 
             scheduleTarget: monthTarget.schedule_target,
