@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { UserSession } from '@/types/auth';
 import { useSessionRestore } from './use-session-restore';
 import { useAuthListener } from './use-auth-listener';
 import { useCurrentSession } from './use-current-session';
-import { supabase, refreshSession, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase';
+import { refreshSession, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase';
 
 export const useSessionInit = () => {
   const [session, setSession] = useState<UserSession | null>(null);
