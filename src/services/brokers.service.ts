@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
 
@@ -13,6 +12,16 @@ export interface Broker {
   properties: number;
   clients: number;
   creci?: string | null;
+}
+
+export interface CreateBrokerData {
+  name: string;
+  email: string;
+  phone: string;
+  brokerCode: string;
+  brokerage: string;
+  status?: "active" | "inactive";
+  creci?: string;
 }
 
 export const brokersService = {
@@ -150,6 +159,58 @@ export const brokersService = {
 
     if (error) {
       console.error("Error deactivating broker:", error);
+      throw error;
+    }
+  },
+
+  async create(brokerData: CreateBrokerData): Promise<Broker | null> {
+    try {
+      // Generate a random temporary password (this will be changed by the user)
+      const tempPassword = Math.random().toString(36).substring(2, 12);
+
+      // Create the user in Supabase Auth
+      const { data: userData, error: authError } = await supabase.auth.admin.createUser({
+        email: brokerData.email,
+        password: tempPassword,
+        email_confirm: true, // Auto-confirm the email
+        user_metadata: {
+          name: brokerData.name,
+          role: UserRole.BROKER,
+          brokerCode: brokerData.brokerCode,
+          brokerage: brokerData.brokerage,
+          creci: brokerData.creci
+        }
+      });
+
+      if (authError) {
+        console.error("Error creating broker user:", authError);
+        throw authError;
+      }
+
+      if (!userData.user) {
+        console.error("No user returned after creation");
+        return null;
+      }
+
+      // The handle_new_user trigger in Supabase will automatically create the profile
+      // But we need to wait a moment for it to happen
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Return the new broker
+      return {
+        id: userData.user.id,
+        name: brokerData.name,
+        email: brokerData.email,
+        phone: brokerData.phone,
+        brokerCode: brokerData.brokerCode,
+        brokerage: brokerData.brokerage,
+        status: "active",
+        properties: 0,
+        clients: 0,
+        creci: brokerData.creci
+      };
+    } catch (error) {
+      console.error("Error in broker creation:", error);
       throw error;
     }
   }

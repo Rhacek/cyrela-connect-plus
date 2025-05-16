@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { brokersService, Broker } from "@/services/brokers.service";
 
 const formSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
@@ -31,35 +32,18 @@ const formSchema = z.object({
   brokerCode: z.string().min(1, "Código do corretor é obrigatório"),
   brokerage: z.string().min(1, "Imobiliária é obrigatória"),
   status: z.enum(["active", "inactive"]),
+  creci: z.string().optional(),
 });
 
-const mockBrokers = [
-  {
-    id: "1",
-    name: "Ana Silva",
-    email: "ana.silva@cyrela.com.br",
-    phone: "(11) 99876-5432",
-    brokerCode: "BR001",
-    brokerage: "Cyrela Imóveis",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Carlos Oliveira",
-    email: "carlos.oliveira@cyrela.com.br",
-    phone: "(11) 98765-4321",
-    brokerCode: "BR002",
-    brokerage: "Cyrela Lançamentos",
-    status: "active",
-  },
-];
+type FormValues = z.infer<typeof formSchema>;
 
 const AdminBrokerForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const isEditing = Boolean(id);
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -68,33 +52,87 @@ const AdminBrokerForm = () => {
       brokerCode: "",
       brokerage: "",
       status: "active",
+      creci: "",
     },
   });
 
   useEffect(() => {
     if (isEditing && id) {
-      const broker = mockBrokers.find(b => b.id === id);
-      if (broker) {
-        form.reset({
-          name: broker.name,
-          email: broker.email,
-          phone: broker.phone,
-          brokerCode: broker.brokerCode,
-          brokerage: broker.brokerage,
-          status: broker.status as "active" | "inactive",
+      setLoading(true);
+      brokersService.getById(id)
+        .then((broker) => {
+          if (broker) {
+            form.reset({
+              name: broker.name,
+              email: broker.email,
+              phone: broker.phone || "",
+              brokerCode: broker.brokerCode || "",
+              brokerage: broker.brokerage || "",
+              status: broker.status,
+              creci: broker.creci || "",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching broker:", error);
+          toast.error("Erro ao carregar dados do corretor");
+        })
+        .finally(() => {
+          setLoading(false);
         });
-      }
     }
   }, [id, isEditing, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    toast.success(
-      isEditing 
-        ? "Corretor atualizado com sucesso!" 
-        : "Corretor cadastrado com sucesso!"
-    );
-    navigate("/admin/brokers");
+  const onSubmit = async (values: FormValues) => {
+    setLoading(true);
+    
+    try {
+      if (isEditing && id) {
+        // Update existing broker
+        await brokersService.update(id, {
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          brokerCode: values.brokerCode,
+          brokerage: values.brokerage,
+          status: values.status,
+          creci: values.creci,
+        });
+        
+        toast.success("Corretor atualizado com sucesso!");
+      } else {
+        // Create new broker
+        await brokersService.create({
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          brokerCode: values.brokerCode,
+          brokerage: values.brokerage,
+          status: values.status,
+          creci: values.creci,
+        });
+        
+        toast.success("Corretor cadastrado com sucesso!");
+      }
+      
+      navigate("/admin/brokers");
+    } catch (error: any) {
+      console.error("Error saving broker:", error);
+      
+      // Handle common error messages
+      if (error.message?.includes("already exists")) {
+        toast.error("Email já cadastrado no sistema");
+      } else if (error.message?.includes("password")) {
+        toast.error("Problema com a senha temporária");
+      } else {
+        toast.error(isEditing 
+          ? "Erro ao atualizar corretor" 
+          : "Erro ao cadastrar corretor"
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,7 +174,12 @@ const AdminBrokerForm = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} type="email" placeholder="email@exemplo.com" />
+                        <Input 
+                          {...field} 
+                          type="email" 
+                          placeholder="email@exemplo.com" 
+                          disabled={isEditing} // Email can't be changed if editing
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -188,30 +231,46 @@ const AdminBrokerForm = () => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                    >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="creci"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CRECI</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
+                        <Input {...field} placeholder="Número do CRECI" />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Ativo</SelectItem>
+                          <SelectItem value="inactive">Inativo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -220,11 +279,12 @@ const AdminBrokerForm = () => {
               type="button"
               variant="outline"
               onClick={() => navigate("/admin/brokers")}
+              disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              {isEditing ? "Atualizar Corretor" : "Cadastrar Corretor"}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Processando...' : isEditing ? "Atualizar Corretor" : "Cadastrar Corretor"}
             </Button>
           </div>
         </form>
