@@ -24,16 +24,35 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
       
-      await signIn(loginEmail, loginPassword);
-      onLoginAttempt(); // Signal to parent that login was attempted
+      // Sign in with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
       
-      // Verify session directly
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        console.log("Login successful, session verified:", data.session.user.id);
+      if (error) {
+        throw error;
       }
       
-      // The redirect is handled by the useEffect in the parent AuthForm component
+      // Additional check - make sure session is stored
+      if (data.session) {
+        console.log("Login successful, session obtained:", data.session.user.id);
+        
+        // Explicitly store session in local storage for extra reliability
+        localStorage.setItem('supabase.auth.token', JSON.stringify({
+          currentSession: data.session,
+          expiresAt: Math.floor(Date.now() / 1000) + data.session.expires_in
+        }));
+        
+        await signIn(loginEmail, loginPassword);
+        onLoginAttempt(); // Signal to parent that login was attempted
+        toast.success("Login bem-sucedido!");
+      }
+      
+      // Verify session directly
+      const sessionCheck = await supabase.auth.getSession();
+      console.log("Session verification after login:", sessionCheck.data.session ? "Session found" : "No session");
+      
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 

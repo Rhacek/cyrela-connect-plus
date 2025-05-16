@@ -13,11 +13,12 @@ export const useSessionInit = () => {
     console.log("AuthProvider initializing");
     
     let isMounted = true;
+    let subscription: { unsubscribe: () => void } | null = null;
     
     const initialize = async () => {
       try {
         // First set up the auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        const { data } = await supabase.auth.onAuthStateChange(
           (event, currentSession) => {
             console.log("Auth state changed:", event);
             if (currentSession?.user) {
@@ -38,6 +39,8 @@ export const useSessionInit = () => {
           }
         );
 
+        subscription = data.subscription;
+
         // Then check for existing session
         const { data: { session: supabaseSession }, error } = await supabase.auth.getSession();
         
@@ -56,16 +59,29 @@ export const useSessionInit = () => {
           }
         } else {
           console.log("No existing session found");
+          
+          // Try to recover session from localStorage as a backup
+          try {
+            const sessionStr = localStorage.getItem('supabase.auth.token');
+            if (sessionStr) {
+              const localSession = JSON.parse(sessionStr);
+              if (localSession?.currentSession?.user && 
+                  localSession.expiresAt > Math.floor(Date.now() / 1000)) {
+                console.log("Recovered session from localStorage");
+                if (isMounted) {
+                  setSession(transformUserData(localSession.currentSession.user));
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error recovering session from localStorage:", err);
+          }
         }
         
         if (isMounted) {
           setLoading(false);
           setInitialized(true);
         }
-        
-        return () => {
-          subscription.unsubscribe();
-        };
       } catch (err) {
         console.error("Error during auth initialization:", err);
         if (isMounted) {
@@ -78,6 +94,9 @@ export const useSessionInit = () => {
     
     return () => {
       isMounted = false;
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
