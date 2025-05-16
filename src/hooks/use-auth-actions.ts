@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+
+import { supabase, getCurrentSession } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { transformUserData } from '@/utils/auth-utils';
 import { UserSession } from '@/types/auth';
@@ -29,19 +29,38 @@ export const useAuthActions = (
       if (data.session) {
         console.log("Sign in successful:", data.session.user.id);
         const transformedUser = transformUserData(data.session.user);
-        console.log("Transformed user:", transformedUser);
+        
+        // Validate the session immediately after login
+        const validationSession = await getCurrentSession();
+        
+        if (!validationSession) {
+          console.error("Session validation failed immediately after login");
+          toast.error('Falha na autenticação', {
+            description: 'Não foi possível estabelecer a sessão.'
+          });
+          return;
+        }
+        
+        console.log("Session validated after login");
         setSession(transformedUser);
         toast.success('Login realizado com sucesso!');
 
-        // Verify session immediately after login for debugging
+        // Verify session persistence
         setTimeout(async () => {
-          const { data: sessionCheck } = await supabase.auth.getSession();
-          console.log("Session check after login:", sessionCheck.session?.user.id);
+          const sessionCheck = await getCurrentSession();
+          console.log("Session check after login:", !!sessionCheck?.user?.id);
         }, 500);
+      } else {
+        console.error("No session returned after successful login");
+        toast.error('Falha na autenticação', {
+          description: 'Login bem-sucedido, mas nenhuma sessão foi criada.'
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in:', error);
-      toast.error('Erro ao fazer login');
+      toast.error('Erro ao fazer login', {
+        description: error?.message || 'Ocorreu um erro inesperado.'
+      });
     } finally {
       setLoading(false);
     }
@@ -54,6 +73,8 @@ export const useAuthActions = (
       // Determine the role based on whether a broker code was provided
       const role = brokerCode ? "BROKER" : "CLIENT";
       
+      console.log(`Signing up new user with email ${email} and role ${role}`);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -63,22 +84,30 @@ export const useAuthActions = (
             role,
             ...(brokerCode && { brokerCode }),
           },
+          emailRedirectTo: window.location.origin + '/auth',
         },
       });
 
       if (error) {
+        console.error('Error signing up:', error);
         toast.error('Erro ao criar conta', {
           description: error.message,
         });
         return;
       }
 
+      if (data.user) {
+        console.log("Sign up successful for:", data.user.id);
+      }
+
       toast.success('Conta criada com sucesso!', {
         description: 'Verifique seu e-mail para confirmar sua conta.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing up:', error);
-      toast.error('Erro ao criar conta');
+      toast.error('Erro ao criar conta', {
+        description: error?.message || 'Ocorreu um erro inesperado.'
+      });
     } finally {
       setLoading(false);
     }
@@ -88,62 +117,40 @@ export const useAuthActions = (
     try {
       setLoading(true);
       
-      // Para o administrador, enviamos a role como string para evitar problemas com o tipo enum
+      console.log(`Creating admin user with email ${email}`);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-            role: "ADMIN", // Enviamos como string em vez de UserRole.ADMIN
+            role: "ADMIN",
           },
+          emailRedirectTo: window.location.origin + '/auth',
         },
       });
 
       if (error) {
+        console.error('Error creating admin:', error);
         toast.error('Erro ao criar administrador', {
           description: error.message,
         });
         return;
       }
 
+      if (data.user) {
+        console.log("Admin creation successful for:", data.user.id);
+      }
+
       toast.success('Administrador criado com sucesso!', {
         description: 'Verifique o e-mail do administrador para confirmar a conta.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating admin:', error);
-      toast.error('Erro ao criar administrador');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      setLoading(true);
-      console.log("Starting sign out process in useAuthActions");
-      
-      // First clear the local session to prevent redirection issues
-      setSession(null);
-      
-      // Then sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        toast.error('Erro ao sair', {
-          description: error.message,
-        });
-        return;
-      }
-      
-      toast.success('Você saiu com sucesso');
-      
-      // Clear local storage for complete signout
-      localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-      
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Erro ao sair');
+      toast.error('Erro ao criar administrador', {
+        description: error?.message || 'Ocorreu um erro inesperado.'
+      });
     } finally {
       setLoading(false);
     }
@@ -152,7 +159,6 @@ export const useAuthActions = (
   return {
     signIn,
     signUp,
-    signOut,
     createAdmin,
   };
 };

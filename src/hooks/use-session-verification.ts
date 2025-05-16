@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/lib/supabase";
+import { supabase, verifySession } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
@@ -13,13 +13,14 @@ interface SessionVerificationResult {
 }
 
 export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerificationResult {
-  const { session, loading, setSession } = useAuth();
+  const { session, loading, setSession, initialized } = useAuth();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
+    let checkTimeout: number | null = null;
 
     // Function to verify session directly with Supabase
     const verifySessionWithSupabase = async () => {
@@ -41,21 +42,17 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
             setSession(userSession);
           }
           
+          // Additional validation to ensure session is actually valid
+          const isValid = await verifySession(data.session);
+          
+          if (!isValid) {
+            console.warn("Session verification failed");
+            return null;
+          }
+          
           return transformUserData(data.session.user);
         } else {
           console.log("No session found with Supabase direct check");
-          
-          // Try session refresh as a last resort
-          try {
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            if (refreshData.session) {
-              console.log("Session refreshed successfully");
-              return transformUserData(refreshData.session.user);
-            }
-          } catch (refreshErr) {
-            console.error("Error refreshing session:", refreshErr);
-          }
-          
           return null;
         }
       } catch (err) {
@@ -64,9 +61,20 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
     };
 
-    // Main check for authorization
-    const checkAuthorization = async () => {
-      // If already loading in auth context, wait
+    // Main check for authorization with retries
+    const checkAuthorization = async (retryCount = 0) => {
+      // If initialized is false, wait for it before proceeding
+      if (!initialized && loading) {
+        console.log("Auth context not yet initialized, will retry");
+        if (isMounted && retryCount < 5) {
+          checkTimeout = window.setTimeout(() => {
+            checkAuthorization(retryCount + 1);
+          }, 500);
+        }
+        return;
+      }
+      
+      // If still loading in auth context, wait
       if (loading) {
         console.log("Auth context is still loading, waiting...");
         return;
@@ -74,13 +82,11 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       
       // If no session in context, verify with Supabase directly
       let currentSession = session;
-      let verifiedWithSupabase = false;
       
       if (!currentSession) {
         console.log("No session in context, verifying with Supabase directly");
         const verifiedSession = await verifySessionWithSupabase();
         currentSession = verifiedSession;
-        verifiedWithSupabase = true;
       }
       
       if (!currentSession) {
@@ -88,6 +94,8 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           setIsAuthorized(false);
           setIsVerifying(false);
+          // Force navigation to auth page if we're on a protected route
+          navigate("/auth", { replace: true });
         }
         return;
       }
@@ -149,8 +157,11 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     
     return () => {
       isMounted = false;
+      if (checkTimeout !== null) {
+        clearTimeout(checkTimeout);
+      }
     };
-  }, [session, loading, allowedRoles, navigate, setSession]);
+  }, [session, loading, allowedRoles, navigate, setSession, initialized]);
 
   return { isAuthorized, isVerifying };
 }

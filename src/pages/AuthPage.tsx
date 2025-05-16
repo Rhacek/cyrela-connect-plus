@@ -8,18 +8,24 @@ import { supabase, forceSessionRestore } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 
 const AuthPage = () => {
-  const { session, loading, setSession } = useAuth();
+  const { session, loading, setSession, initialized } = useAuth();
   const navigate = useNavigate();
   const [isVerifyingAuth, setIsVerifyingAuth] = useState(true);
   
   useEffect(() => {
     // First, verify if we have a local session
     const checkAuth = async () => {
-      console.log("AuthPage - Checking authentication. Session exists:", !!session, "Loading:", loading);
+      console.log("AuthPage - Checking authentication. Session exists:", !!session, "Loading:", loading, "Initialized:", initialized);
       
       if (session && !loading) {
         console.log("AuthPage - Found session in context:", session.id);
         redirectBasedOnRole(session);
+        return;
+      }
+      
+      // If auth context is not yet initialized, wait for it
+      if (!initialized && loading) {
+        console.log("AuthPage - Auth context not yet initialized, waiting...");
         return;
       }
       
@@ -44,29 +50,6 @@ const AuthPage = () => {
             return;
           }
           
-          // Standard session check
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Error checking session:", error);
-            setIsVerifyingAuth(false);
-            return;
-          }
-          
-          if (data.session) {
-            console.log("AuthPage - Found session directly from Supabase:", data.session.user.id);
-            
-            // Transform user data to our expected format
-            const userSession = transformUserData(data.session.user);
-            
-            // Update the auth context with the found session
-            setSession(userSession);
-            
-            // Use the session directly 
-            redirectBasedOnRole(userSession);
-            return;
-          }
-          
           // No session found anywhere
           console.log("AuthPage - No valid session found after all checks");
           setIsVerifyingAuth(false);
@@ -78,7 +61,15 @@ const AuthPage = () => {
     };
     
     checkAuth();
-  }, [session, loading, navigate, setSession]);
+  }, [session, loading, navigate, setSession, initialized]);
+  
+  // Separate useEffect to prevent redirection race conditions
+  useEffect(() => {
+    // If session changes, check for redirection
+    if (session) {
+      redirectBasedOnRole(session);
+    }
+  }, [session, navigate]);
   
   const redirectBasedOnRole = (userSession: any) => {
     console.log("Auth page detected existing session, redirecting based on role");

@@ -1,9 +1,10 @@
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useCallback } from 'react';
 import { UserSession } from '@/types/auth';
 import { useSessionInit } from '@/hooks/use-session-init';
 import { useAuthActions } from '@/hooks/use-auth-actions';
 import { isAdmin, isBroker, isClient } from '@/utils/auth-utils';
+import { signOutAndCleanup } from '@/lib/supabase';
 
 interface AuthContextType {
   session: UserSession | null;
@@ -16,6 +17,7 @@ interface AuthContextType {
   isBroker: () => boolean;
   isClient: () => boolean;
   setSession: (session: UserSession | null) => void;
+  initialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,14 +34,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { 
     signIn, 
     signUp, 
-    signOut, 
     createAdmin 
   } = useAuthActions(setSession, setLoading);
+  
+  // Improved signOut function that uses our enhanced cleanup
+  const signOut = useCallback(async () => {
+    try {
+      console.log("Starting sign out process in AuthContext");
+      setLoading(true);
+      
+      // First clear the local session to prevent redirection issues
+      setSession(null);
+      
+      // Then use our enhanced signout function
+      const { success, error } = await signOutAndCleanup();
+      
+      if (!success) {
+        console.error("Error during sign out:", error);
+        return;
+      }
+      
+      console.log("Sign out completed successfully");
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, setSession]);
 
   // Role check methods using the utility functions
-  const checkIsAdmin = () => isAdmin(session);
-  const checkIsBroker = () => isBroker(session);
-  const checkIsClient = () => isClient(session);
+  const checkIsAdmin = useCallback(() => isAdmin(session), [session]);
+  const checkIsBroker = useCallback(() => isBroker(session), [session]);
+  const checkIsClient = useCallback(() => isClient(session), [session]);
 
   return (
     <AuthContext.Provider
@@ -53,7 +79,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin: checkIsAdmin,
         isBroker: checkIsBroker,
         isClient: checkIsClient,
-        setSession, // Expose setSession to allow direct session updates
+        setSession,
+        initialized
       }}
     >
       {children}

@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 
 export function AuthForm() {
-  const { session, setSession } = useAuth();
+  const { session, setSession, initialized } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const navigate = useNavigate();
   const [loginAttempted, setLoginAttempted] = useState(false);
@@ -19,7 +19,7 @@ export function AuthForm() {
   // Perform a direct session check to ensure we're not missing a valid session
   useEffect(() => {
     const checkSessionDirectly = async () => {
-      if (!session) {
+      if (!session && initialized) {
         console.log("Auth form directly checking for session");
         const { data, error } = await supabase.auth.getSession();
         
@@ -36,7 +36,7 @@ export function AuthForm() {
     };
     
     checkSessionDirectly();
-  }, [session, setSession]);
+  }, [session, setSession, initialized]);
   
   // Redirect if session exists (user is already logged in)
   useEffect(() => {

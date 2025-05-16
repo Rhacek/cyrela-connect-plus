@@ -6,9 +6,10 @@ import { Database } from '@/types/supabase';
 const supabaseUrl = "https://cbdytpkwalaoshbvxxri.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHl0cGt3YWxhb3NoYnZ4eHJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNzM5MjcsImV4cCI6MjA2Mjg0OTkyN30.bXu9Bi6kSxgCnY8uD64Ez_dRash8UT6ar0J_-UP4fVI";
 
-// Explicitly set storage key and ensure proper session handling
-const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
+// Explicitly set storage key to ensure consistent storage
+export const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
 
+// Create a single instance of the Supabase client with optimized auth settings
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -16,7 +17,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: localStorage,
     detectSessionInUrl: true,
     flowType: 'implicit',
-    storageKey: storageKey
+    storageKey: storageKey,
+    debug: true // Enable debug mode for authentication
   }
 });
 
@@ -27,25 +29,25 @@ export const logAuthState = async () => {
   return data.session;
 };
 
-// Helper function to get current user with session
-export const getCurrentUser = async () => {
+// Enhanced get current user function with session
+export const getCurrentSession = async () => {
   try {
-    const { data, error } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getSession();
     if (error) {
-      console.error("Error getting user:", error);
+      console.error("Error getting session:", error);
       return null;
     }
-    return data.user;
+    return data.session;
   } catch (error) {
-    console.error("Unexpected error getting user:", error);
+    console.error("Unexpected error getting session:", error);
     return null;
   }
 };
 
-// Improved session restore function with additional checks
-export const forceSessionRestore = async () => {
+// Enhanced session restore with additional checks and retries
+export const forceSessionRestore = async (retryCount = 0) => {
   try {
-    console.log("Attempting to restore session...");
+    console.log(`Attempting to restore session (attempt ${retryCount + 1})...`);
     
     // First try the standard getSession method
     const { data, error } = await supabase.auth.getSession();
@@ -71,11 +73,9 @@ export const forceSessionRestore = async () => {
         
         if (parsedSession && 
             parsedSession.access_token && 
-            parsedSession.refresh_token && 
-            parsedSession.expires_at && 
-            new Date(parsedSession.expires_at * 1000) > new Date()) {
+            parsedSession.refresh_token) {
           
-          console.log("Found valid session in localStorage, attempting to restore");
+          console.log("Found session data in localStorage, attempting to restore");
           
           // Try to set the session manually and refresh
           const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
@@ -85,6 +85,13 @@ export const forceSessionRestore = async () => {
           
           if (setSessionError) {
             console.error("Error setting session manually:", setSessionError);
+            
+            // If the tokens are expired, try to clear them to avoid future errors
+            if (setSessionError.message.includes("token is expired")) {
+              console.log("Tokens expired, clearing localStorage");
+              localStorage.removeItem(storageKey);
+            }
+            
             return null;
           }
           
@@ -93,7 +100,7 @@ export const forceSessionRestore = async () => {
             return sessionData.session;
           }
         } else {
-          console.log("Stored session is invalid or expired");
+          console.log("Stored session is invalid or missing tokens");
         }
       } else {
         console.log("No session found in localStorage");
@@ -102,10 +109,16 @@ export const forceSessionRestore = async () => {
       console.error("Error parsing localStorage session:", e);
     }
     
-    // Try one last resort - refresh token
+    // Try token refresh as last resort
     try {
       console.log("Attempting token refresh as last resort");
-      const { data: refreshData } = await supabase.auth.refreshSession();
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error("Error refreshing session:", refreshError);
+        return null;
+      }
+      
       if (refreshData.session) {
         console.log("Session refreshed successfully");
         return refreshData.session;
@@ -114,10 +127,88 @@ export const forceSessionRestore = async () => {
       console.error("Error refreshing session:", refreshErr);
     }
     
+    // If we've retried less than 2 times and still failed, try again
+    if (retryCount < 2) {
+      console.log(`Retry attempt ${retryCount + 1}...`);
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return forceSessionRestore(retryCount + 1);
+    }
+    
     return null;
   } catch (e) {
     console.error("Error in forceSessionRestore:", e);
     return null;
+  }
+};
+
+// Verify session validity more thoroughly
+export const verifySession = async (session: any) => {
+  if (!session) return false;
+  
+  try {
+    // Check if the session has a valid access token
+    if (!session.access_token) {
+      console.log("Session missing access token");
+      return false;
+    }
+    
+    // Verify the session by checking user data
+    const { data, error } = await supabase.auth.getUser(session.access_token);
+    
+    if (error) {
+      console.error("Error verifying session:", error);
+      return false;
+    }
+    
+    if (data.user) {
+      console.log("Session verified with valid user");
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error("Unexpected error verifying session:", error);
+    return false;
+  }
+};
+
+// Improved logout function that cleans up everything
+export const signOutAndCleanup = async () => {
+  try {
+    console.log("Starting full signout and cleanup");
+    
+    // First, sign out through Supabase
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    
+    if (error) {
+      console.error("Error during signout:", error);
+    }
+    
+    // Manually clear localStorage regardless of the signOut result
+    localStorage.removeItem(storageKey);
+    
+    // Check if we successfully cleared everything
+    const sessionCheck = await getCurrentSession();
+    if (sessionCheck) {
+      console.warn("Session still exists after logout, forcing removal");
+      localStorage.clear(); // More aggressive cleanup
+    } else {
+      console.log("Signout successful, no session remains");
+    }
+    
+    return { success: true };
+  } catch (e) {
+    console.error("Error in signOutAndCleanup:", e);
+    
+    // Even if there's an error, try to clear localStorage
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (e) {
+      console.error("Error clearing localStorage:", e);
+    }
+    
+    return { success: false, error: e };
   }
 };
 

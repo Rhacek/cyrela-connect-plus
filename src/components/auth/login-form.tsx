@@ -35,31 +35,51 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       });
       
       if (error) {
-        throw error;
+        console.error("Login error:", error);
+        toast.error("Falha no login", { 
+          description: error.message || "Verifique seu email e senha e tente novamente." 
+        });
+        return;
       }
       
-      if (data.session) {
-        console.log("Login successful, session established:", data.session.user.id);
-        
-        // Transform user data to our expected format
-        const userSession = transformUserData(data.session.user);
-        
-        // Explicitly set the session in auth context
-        setSession(userSession);
-        
-        // Additional verification for debugging
-        const { data: sessionCheck } = await supabase.auth.getSession();
-        if (sessionCheck.session) {
-          console.log("Session confirmed after login:", sessionCheck.session.user.id);
-          toast.success("Login realizado com sucesso!");
-        } else {
-          console.warn("Session not found immediately after login");
-          toast.warning("Sessão não detectada. Tente novamente.");
-        }
-      } else {
+      if (!data.session) {
         console.warn("No session returned from login");
         toast.warning("Falha no login. Nenhuma sessão retornada.");
+        return;
       }
+      
+      console.log("Login successful, session established:", data.session.user.id);
+      
+      // Ensure we wait for the session to be fully established
+      setTimeout(async () => {
+        try {
+          // Verify session is actually persisted
+          const { data: sessionCheck } = await supabase.auth.getSession();
+          
+          if (sessionCheck.session) {
+            console.log("Session confirmed after login:", sessionCheck.session.user.id);
+            
+            // Transform user data to our expected format
+            const userSession = transformUserData(sessionCheck.session.user);
+            
+            // Explicitly set the session in auth context
+            setSession(userSession);
+            
+            toast.success("Login realizado com sucesso!");
+          } else {
+            console.warn("Session not found after successful login and timeout");
+            
+            // Try one more time with a direct session from the login response
+            const userSession = transformUserData(data.session.user);
+            setSession(userSession);
+            
+            toast.success("Login realizado com sucesso!");
+          }
+        } catch (verifyError) {
+          console.error("Error verifying session after login:", verifyError);
+          toast.error("Erro ao verificar sessão após login");
+        }
+      }, 500); // Small delay to ensure session is established
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 

@@ -13,9 +13,10 @@ import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { performanceService } from "@/services/performance.service";
 import { targetsService } from "@/services/targets.service";
+import { supabase } from "@/lib/supabase"; // Use the consolidated client
 
 const BrokerDashboard = () => {
-  const { session } = useAuth();
+  const { session, initialized } = useAuth();
   const { 
     hasInitializedQueries,
     isLoadingPerformance,
@@ -26,6 +27,27 @@ const BrokerDashboard = () => {
     recentLeads,
     handleAddLead
   } = useDashboardData();
+  
+  // Verify session on dashboard load for extra security
+  useEffect(() => {
+    const checkSessionValid = async () => {
+      if (session?.id) {
+        try {
+          const { data, error } = await supabase.auth.getUser();
+          if (error || !data.user) {
+            console.error("Dashboard session verification failed:", error);
+            // Auth will handle redirect via periodic session check
+          } else {
+            console.log("Dashboard session verified valid");
+          }
+        } catch (err) {
+          console.error("Error verifying dashboard session:", err);
+        }
+      }
+    };
+    
+    checkSessionValid();
+  }, [session?.id]);
   
   // Check if performance and target data exists, and create them if not
   useEffect(() => {
@@ -68,7 +90,7 @@ const BrokerDashboard = () => {
   const userName = session?.user_metadata?.name || "";
   
   // Show a more informative loading state if we're still verifying auth
-  if (!hasInitializedQueries && session) {
+  if (!initialized || !hasInitializedQueries) {
     return <DashboardLoading />;
   }
   
