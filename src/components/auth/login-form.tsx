@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/auth-redirect";
 import { transformUserData } from "@/utils/auth-utils";
 
 interface LoginFormProps {
@@ -31,10 +31,8 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       // Signal that login was attempted
       onLoginAttempt();
       
-      // Clear any existing session first to avoid conflicts
-      await supabase.auth.signOut();
-      
-      // Use direct Supabase login for more reliable session handling
+      // No need to sign out first - this was causing session loss
+      // Use the consolidated Supabase client for login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
@@ -63,6 +61,12 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setSession(userSession);
       
       toast.success("Login realizado com sucesso!");
+      
+      // Verify the session was set correctly
+      console.log("Session after login:", {
+        id: userSession.id,
+        role: userSession.user_metadata.role
+      });
       
       // Immediately redirect based on role without waiting for effect
       const userRole = userSession.user_metadata.role;

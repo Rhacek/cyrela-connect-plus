@@ -6,6 +6,7 @@ import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { supabase } from "@/utils/auth-redirect";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,13 +18,35 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
-  const { session } = useAuth();
+  const { session, setSession } = useAuth();
   
   // Use the custom hook for session verification
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
   
   // Setup periodic session check for authenticated users
   usePeriodicSessionCheck(isAuthorized);
+  
+  // Effect to check for session directly when entering protected routes
+  useEffect(() => {
+    const verifySessionDirectly = async () => {
+      if (!session) {
+        console.log("Protected route accessed without session, checking with Supabase directly");
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            console.log("Found session directly from Supabase:", data.session.user.id);
+            // Update auth context
+            const { transformUserData } = await import('@/utils/auth-utils');
+            setSession(transformUserData(data.session.user));
+          }
+        } catch (error) {
+          console.error("Error checking direct session:", error);
+        }
+      }
+    };
+    
+    verifySessionDirectly();
+  }, [session, setSession]);
   
   // Effect to log protected route access
   useEffect(() => {

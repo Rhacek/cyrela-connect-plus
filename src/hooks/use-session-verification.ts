@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { supabase, verifySession } from "@/lib/supabase";
+import { supabase } from "@/utils/auth-redirect";
 import { transformUserData } from "@/utils/auth-utils";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
@@ -40,14 +40,6 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
           if (!session && isMounted) {
             const userSession = transformUserData(data.session.user);
             setSession(userSession);
-          }
-          
-          // Additional validation to ensure session is actually valid
-          const isValid = await verifySession(data.session);
-          
-          if (!isValid) {
-            console.warn("Session verification failed");
-            return null;
           }
           
           return transformUserData(data.session.user);
@@ -102,6 +94,21 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
           setIsVerifying(false);
         }
         return;
+      }
+      
+      // Try session refresh to ensure we have a fresh token
+      try {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (refreshData.session) {
+          console.log("Session refreshed successfully");
+          const refreshedSession = transformUserData(refreshData.session.user);
+          if (isMounted) {
+            setSession(refreshedSession);
+          }
+          currentSession = refreshedSession;
+        }
+      } catch (refreshError) {
+        console.error("Error refreshing session:", refreshError);
       }
       
       // If we have a session but no allowed roles, it's protected but open to all authenticated

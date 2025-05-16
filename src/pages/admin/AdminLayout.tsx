@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase, verifyAdminAccess } from "@/utils/auth-redirect";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -24,29 +24,37 @@ const AdminLayout = () => {
       isAdmin: isAdmin()
     });
     
-    // Verify the session directly with Supabase
-    const verifySessionWithSupabase = async () => {
+    // Double verification process for admin access
+    const verifySession = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        console.log("Direct Supabase session check in AdminLayout:", {
-          hasSession: !!data.session,
-          sessionId: data.session?.user?.id,
-          userRole: data.session?.user?.user_metadata?.role
-        });
+        // First, check context session
+        if (session && isAdmin()) {
+          console.log("Admin session verified from context");
+          return;
+        }
         
-        // If no session or not admin, redirect
-        if (!data.session || data.session.user.user_metadata.role !== UserRole.ADMIN) {
-          console.log("Invalid admin session detected in AdminLayout, redirecting");
+        // If context check fails, verify directly with Supabase
+        const hasAdminAccess = await verifyAdminAccess();
+        
+        if (!hasAdminAccess) {
+          console.log("No valid admin session found, redirecting to auth");
           toast.error("Acesso administrativo necessário");
-          navigate("/auth", { replace: true });
+          navigate("/auth?redirect=/admin/", { replace: true });
         }
       } catch (error) {
-        console.error("Error verifying admin session:", error);
-        navigate("/auth", { replace: true });
+        console.error("Error in admin session verification:", error);
+        navigate("/auth?redirect=/admin/", { replace: true });
       }
     };
     
-    verifySessionWithSupabase();
+    verifySession();
+    
+    // Set up a periodic verification for long admin sessions
+    const intervalId = setInterval(verifySession, 5 * 60 * 1000); // Every 5 minutes
+    
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [navigate, session, isAdmin]);
   
   return (
