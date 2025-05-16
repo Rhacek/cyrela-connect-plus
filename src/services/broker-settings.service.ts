@@ -29,10 +29,9 @@ export const brokerSettingsService = {
     if (!session) throw new Error("Usuário não autenticado");
 
     const { data, error } = await supabase
-      .from("broker_settings")
+      .from("settings")
       .select("*")
-      .eq("broker_id", session.user.id)
-      .eq("category", category)
+      .eq("key", `broker:${session.id}:${category}`)
       .single();
 
     if (error) {
@@ -40,18 +39,19 @@ export const brokerSettingsService = {
       throw error;
     }
 
-    return data?.settings as T;
+    return data?.value as T;
   },
 
   async updateBrokerSettings<T>(category: BrokerSettingsCategory, settings: T): Promise<void> {
     const { session } = useAuth();
     if (!session) throw new Error("Usuário não autenticado");
 
+    const settingsKey = `broker:${session.id}:${category}`;
+
     const { data, error: getError } = await supabase
-      .from("broker_settings")
+      .from("settings")
       .select("id")
-      .eq("broker_id", session.user.id)
-      .eq("category", category)
+      .eq("key", settingsKey)
       .single();
 
     if (getError && getError.code !== 'PGRST116') {
@@ -62,8 +62,8 @@ export const brokerSettingsService = {
     if (data?.id) {
       // Update existing settings
       const { error } = await supabase
-        .from("broker_settings")
-        .update({ settings })
+        .from("settings")
+        .update({ value: settings })
         .eq("id", data.id);
 
       if (error) {
@@ -73,11 +73,11 @@ export const brokerSettingsService = {
     } else {
       // Insert new settings
       const { error } = await supabase
-        .from("broker_settings")
+        .from("settings")
         .insert({
-          broker_id: session.user.id,
-          category,
-          settings
+          key: settingsKey,
+          category: "general", // Using general category for all broker settings
+          value: settings
         });
 
       if (error) {
