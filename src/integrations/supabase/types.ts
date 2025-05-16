@@ -118,28 +118,37 @@ export type Database = {
       }
       plans: {
         Row: {
+          billing_period: string | null
           description: string
           features: Json
           id: string
           is_active: boolean
+          is_most_popular: boolean | null
           name: string
           price: number
+          type: string | null
         }
         Insert: {
+          billing_period?: string | null
           description: string
           features: Json
           id?: string
           is_active?: boolean
+          is_most_popular?: boolean | null
           name: string
           price: number
+          type?: string | null
         }
         Update: {
+          billing_period?: string | null
           description?: string
           features?: Json
           id?: string
           is_active?: boolean
+          is_most_popular?: boolean | null
           name?: string
           price?: number
+          type?: string | null
         }
         Relationships: []
       }

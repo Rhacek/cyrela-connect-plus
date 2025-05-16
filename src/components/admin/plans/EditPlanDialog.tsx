@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Plan } from "@/types/plan";
 import { PlanType } from "@/types";
+import { Plan } from "@/services/plans.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface EditPlanDialogProps {
@@ -22,22 +22,32 @@ interface EditPlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (plan: Plan) => void;
+  isCreating?: boolean;
 }
 
-export function EditPlanDialog({ plan, open, onOpenChange, onSave }: EditPlanDialogProps) {
+export function EditPlanDialog({ plan, open, onOpenChange, onSave, isCreating = false }: EditPlanDialogProps) {
   const [editedPlan, setEditedPlan] = useState<Partial<Plan>>({});
+  const [featuresText, setFeaturesText] = useState("");
   
   useEffect(() => {
     if (plan) {
       setEditedPlan(plan);
+      setFeaturesText(plan.features?.join("\n") || "");
     }
   }, [plan]);
   
   const handleSave = () => {
     if (editedPlan && plan) {
+      // Converte as features de texto para array
+      const features = featuresText
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+      
       onSave({
         ...plan,
         ...editedPlan,
+        features
       } as Plan);
     }
   };
@@ -48,9 +58,11 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSave }: EditPlanDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Editar Plano</DialogTitle>
+          <DialogTitle>{isCreating ? "Criar Novo Plano" : "Editar Plano"}</DialogTitle>
           <DialogDescription>
-            Ajuste as configurações do plano conforme necessário
+            {isCreating 
+              ? "Preencha os detalhes para criar um novo plano" 
+              : "Ajuste as configurações do plano conforme necessário"}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -138,6 +150,19 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSave }: EditPlanDia
             </div>
           </div>
           
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="features" className="text-right pt-2">
+              Recursos
+            </Label>
+            <Textarea
+              id="features"
+              value={featuresText}
+              onChange={(e) => setFeaturesText(e.target.value)}
+              className="col-span-3 min-h-[120px]"
+              placeholder="Insira um recurso por linha"
+            />
+          </div>
+          
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">
               Descrição
@@ -154,7 +179,7 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSave }: EditPlanDia
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>Salvar Alterações</Button>
+          <Button onClick={handleSave}>{isCreating ? "Criar Plano" : "Salvar Alterações"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
