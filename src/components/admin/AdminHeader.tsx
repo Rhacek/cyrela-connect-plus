@@ -14,7 +14,7 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/auth-context";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AdminHeader() {
   const sidebar = useSidebar();
@@ -94,7 +94,7 @@ export function AdminHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <Link to="/admin/settings" className="w-full">Configurações</Link>
+                <Link to="/admin/settings/" className="w-full">Configurações</Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>
                 Sair

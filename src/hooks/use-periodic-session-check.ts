@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, refreshSession, isRefreshing } from "@/lib/supabase";
+import { supabase, refreshSession, isRefreshing } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export function usePeriodicSessionCheck(isAuthorized: boolean | null) {
@@ -98,31 +98,31 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null) {
         }
       };
       
-      // Start the first check cycle
-      scheduleNextCheck();
-    }
-    
-    function handleSessionLossWithDelay() {
-      if (!isMounted) return;
-      
-      // Clear any existing redirect timer
-      if (redirectTimerRef.current) {
-        clearTimeout(redirectTimerRef.current);
-      }
-      
-      // Set a new redirect timer with delay
-      redirectTimerRef.current = setTimeout(() => {
+      function handleSessionLossWithDelay() {
         if (!isMounted) return;
         
-        console.warn("Protected route: Session lost, redirecting to login");
-        toast.error("Sua sessão expirou", { 
-          description: "Redirecionando para página de login..." 
-        });
+        // Clear any existing redirect timer
+        if (redirectTimerRef.current) {
+          clearTimeout(redirectTimerRef.current);
+        }
         
-        // Navigate to auth page with current route as redirect parameter
-        const currentPath = window.location.pathname;
-        navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
-      }, 3000); // 3 second delay before redirect
+        // Set a new redirect timer with delay
+        redirectTimerRef.current = setTimeout(() => {
+          if (!isMounted) return;
+          
+          console.warn("Protected route: Session lost, redirecting to login");
+          toast.error("Sua sessão expirou", { 
+            description: "Redirecionando para página de login..." 
+          });
+          
+          // Navigate to auth page with current route as redirect parameter
+          const currentPath = window.location.pathname;
+          navigate(`/auth?redirect=${encodeURIComponent(currentPath)}`, { replace: true });
+        }, 3000); // 3 second delay before redirect
+      }
+      
+      // Start the first check cycle
+      scheduleNextCheck();
     }
     
     return () => {

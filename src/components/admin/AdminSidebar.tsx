@@ -29,7 +29,7 @@ export const AdminSidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin" end className={({ isActive }) => 
+              <NavLink to="/admin/" end className={({ isActive }) => 
                 isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
               }>
                 <Home className="h-4 w-4 mr-2" />
@@ -40,7 +40,7 @@ export const AdminSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin/properties" className={({ isActive }) => 
+              <NavLink to="/admin/properties/" className={({ isActive }) => 
                 isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
               }>
                 <Building className="h-4 w-4 mr-2" />
@@ -51,7 +51,7 @@ export const AdminSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin/brokers" className={({ isActive }) => 
+              <NavLink to="/admin/brokers/" className={({ isActive }) => 
                 isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
               }>
                 <Users className="h-4 w-4 mr-2" />
@@ -62,7 +62,7 @@ export const AdminSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin/plans" className={({ isActive }) => 
+              <NavLink to="/admin/plans/" className={({ isActive }) => 
                 isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
               }>
                 <Check className="h-4 w-4 mr-2" />
@@ -73,7 +73,7 @@ export const AdminSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin/settings" className={({ isActive }) => 
+              <NavLink to="/admin/settings/" className={({ isActive }) => 
                 isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
               }>
                 <Cog className="h-4 w-4 mr-2" />
