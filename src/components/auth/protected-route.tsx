@@ -6,6 +6,7 @@ import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
+import { UserSession } from "@/types/auth";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -17,7 +18,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [sessionVerified, setSessionVerified] = useState(false);
   
   useEffect(() => {
     console.log("Protected route component mounting. Path:", location.pathname);
@@ -30,22 +30,21 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         
         if (error) {
           console.error("Error verifying session with Supabase:", error);
-          setSessionVerified(false);
+          setIsAuthorized(false);
           return null;
         }
         
         if (data.session) {
           console.log("Session verified with Supabase:", data.session.user.id);
-          setSessionVerified(true);
           return data.session;
         } else {
           console.log("No session found with Supabase direct check");
-          setSessionVerified(false);
+          setIsAuthorized(false);
           return null;
         }
       } catch (err) {
         console.error("Unexpected error verifying session:", err);
-        setSessionVerified(false);
+        setIsAuthorized(false);
         return null;
       }
     };
@@ -57,18 +56,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       }
       
       // If no session in context, verify with Supabase directly
-      if (!session) {
-        console.log("No session in context, verifying with Supabase directly");
-        const supabaseSession = await verifySessionWithSupabase();
-        
-        if (!supabaseSession) {
-          console.log("No session found, redirecting to /auth");
-          setIsAuthorized(false);
-          return;
-        }
-      }
+      let currentSession = session;
       
-      const currentSession = session || (await verifySessionWithSupabase());
+      if (!currentSession) {
+        console.log("No session in context, verifying with Supabase directly");
+        currentSession = await verifySessionWithSupabase();
+      }
       
       if (!currentSession) {
         console.log("No valid session found, user will be redirected to /auth");

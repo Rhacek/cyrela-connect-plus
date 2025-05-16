@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 export function AuthForm() {
   const { signIn, signUp, loading, session } = useAuth();
@@ -14,6 +15,7 @@ export function AuthForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const [processingAuth, setProcessingAuth] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -28,8 +30,8 @@ export function AuthForm() {
 
   // Redirect if session exists (user is already logged in)
   useEffect(() => {
-    if (session) {
-      console.log("Auth form detected existing session:", session.id);
+    if (session && loginAttempted) {
+      console.log("Auth form detected existing session after login attempt:", session.id);
       
       // Check user role and redirect appropriately
       const userRole = session.user_metadata.role;
@@ -44,13 +46,9 @@ export function AuthForm() {
       }
       
       console.log(`Redirecting to ${redirectPath} based on role ${userRole}`);
-      
-      // Use a short timeout to ensure state is fully updated
-      setTimeout(() => {
-        navigate(redirectPath);
-      }, 300);
+      navigate(redirectPath, { replace: true });
     }
-  }, [session, navigate]);
+  }, [session, navigate, loginAttempted]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,9 +58,15 @@ export function AuthForm() {
       console.log("Attempting login with:", loginEmail);
       
       await signIn(loginEmail, loginPassword);
+      setLoginAttempted(true);
       
-      // The redirect is now handled by the useEffect that watches the session
-      console.log("Login completed, waiting for session update to trigger redirect");
+      // Verify session directly
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        console.log("Login successful, session verified:", data.session.user.id);
+      }
+      
+      // The redirect is handled by the useEffect that watches the session
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 
