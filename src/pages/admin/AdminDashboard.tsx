@@ -1,92 +1,26 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Users, MessageSquare, TrendingUp } from "lucide-react";
-import { mockProperties } from "@/mocks/property-data";
-import { useAuth } from "@/context/auth-context";
-import { useNavigate } from "react-router-dom";
-import { UserRole } from "@/types";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { useAdminDashboardData } from "@/hooks/use-admin-dashboard-data";
+import { formatCurrency } from "@/lib/utils";
 
 const AdminDashboard = () => {
-  const { session, isAdmin, initialized } = useAuth();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const { 
+    stats, 
+    isLoading, 
+    propertiesGrowth, 
+    brokersGrowth, 
+    leadsGrowth 
+  } = useAdminDashboardData();
   
-  // More comprehensive session verification
-  useEffect(() => {
-    const verifyAdminAccess = async () => {
-      try {
-        // Wait for auth context to be initialized
-        if (!initialized) {
-          console.log("Auth context not initialized yet, waiting...");
-          return; // Will re-run when initialized changes
-        }
-        
-        console.log("AdminDashboard - Verifying admin session:", {
-          hasSession: !!session,
-          sessionId: session?.id,
-          userRole: session?.user_metadata?.role,
-          isAdmin: isAdmin(),
-          initialized
-        });
-        
-        // If session exists in context and is admin, proceed
-        if (session && isAdmin()) {
-          console.log("Admin access confirmed via context");
-          setIsLoading(false);
-          return;
-        }
-        
-        // Direct verification with Supabase if context doesn't have session
-        console.log("Verifying admin access directly with Supabase");
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error fetching session:", error);
-          redirectToAuth();
-          return;
-        }
-        
-        if (!data.session) {
-          console.log("No valid session found");
-          redirectToAuth();
-          return;
-        }
-        
-        // Check if user has admin role
-        const userRole = data.session.user.user_metadata?.role;
-        if (userRole !== UserRole.ADMIN) {
-          console.log("User is not an admin:", userRole);
-          toast.error("Acesso administrativo necessário");
-          redirectToAuth();
-          return;
-        }
-        
-        console.log("Admin access confirmed via direct check");
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error in admin verification:", error);
-        redirectToAuth();
-      }
-    };
-    
-    verifyAdminAccess();
-  }, [session, isAdmin, navigate, initialized]);
-  
-  // Helper function to ensure consistent redirect with parameters
-  const redirectToAuth = () => {
-    navigate("/auth?redirect=/admin/", { replace: true });
-  };
-
-  // Show loading state while verifying
+  // Show loading state while fetching data
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Verificando acesso administrativo...</p>
+          <p className="text-sm text-muted-foreground">Carregando dados do dashboard...</p>
         </div>
       </div>
     );
@@ -106,9 +40,9 @@ const AdminDashboard = () => {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockProperties.length}</div>
+            <div className="text-2xl font-bold">{stats?.totalProperties || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +2 no último mês
+              {propertiesGrowth > 0 ? `+${propertiesGrowth}` : "0"} no último mês
             </p>
           </CardContent>
         </Card>
@@ -119,9 +53,9 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{stats?.activeAgents || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +1 na última semana
+              {brokersGrowth > 0 ? `+${brokersGrowth}` : "0"} na última semana
             </p>
           </CardContent>
         </Card>
@@ -132,9 +66,9 @@ const AdminDashboard = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">34</div>
+            <div className="text-2xl font-bold">{stats?.pendingLeads || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              +8 desde ontem
+              {leadsGrowth > 0 ? `+${leadsGrowth}` : "0"} desde ontem
             </p>
           </CardContent>
         </Card>
@@ -145,7 +79,7 @@ const AdminDashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24%</div>
+            <div className="text-2xl font-bold">{stats?.conversionRate || 0}%</div>
             <p className="text-xs text-muted-foreground mt-1">
               +2.5% este mês
             </p>
@@ -161,31 +95,34 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {mockProperties.slice(0, 3).map((property) => (
-                <div key={property.id} className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
-                    {property.images && property.images[0] && (
-                      <img 
-                        src={property.images[0].url} 
-                        alt={property.title} 
-                        className="w-full h-full object-cover"
-                      />
-                    )}
+              {stats?.recentProperties && stats.recentProperties.length > 0 ? (
+                stats.recentProperties.map((property) => (
+                  <div key={property.id} className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
+                      {property.image && (
+                        <img 
+                          src={property.image} 
+                          alt={property.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-grow">
+                      <h4 className="text-sm font-medium truncate">{property.title}</h4>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {property.neighborhood}, {property.city}
+                      </p>
+                    </div>
+                    <div className="text-sm font-medium whitespace-nowrap">
+                      {formatCurrency(property.price)}
+                    </div>
                   </div>
-                  <div className="flex-grow">
-                    <h4 className="text-sm font-medium truncate">{property.title}</h4>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {property.neighborhood}, {property.city}
-                    </p>
-                  </div>
-                  <div className="text-sm font-medium whitespace-nowrap">
-                    {new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL'
-                    }).format(property.price)}
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Nenhum imóvel cadastrado recentemente
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -197,35 +134,30 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
-                  <Users size={14} />
+              {stats?.recentActivities && stats.recentActivities.length > 0 ? (
+                stats.recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-4">
+                    <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
+                      {activity.icon === 'users' && <Users size={14} />}
+                      {activity.icon === 'building' && <Building size={14} />}
+                      {activity.icon === 'messageSquare' && <MessageSquare size={14} />}
+                    </div>
+                    <div className="flex-grow">
+                      <p className="text-sm">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' }).format(
+                          Math.round((activity.timestamp.getTime() - Date.now()) / (1000 * 60 * 60)), 
+                          'hour'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Nenhuma atividade recente
                 </div>
-                <div className="flex-grow">
-                  <p className="text-sm">Novo corretor cadastrado</p>
-                  <p className="text-xs text-muted-foreground">Há 2 horas</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
-                  <Building size={14} />
-                </div>
-                <div className="flex-grow">
-                  <p className="text-sm">Imóvel atualizado: Living Exclusive Morumbi</p>
-                  <p className="text-xs text-muted-foreground">Há 3 horas</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="rounded-full w-8 h-8 bg-primary/10 flex items-center justify-center text-primary">
-                  <MessageSquare size={14} />
-                </div>
-                <div className="flex-grow">
-                  <p className="text-sm">5 novos leads recebidos</p>
-                  <p className="text-xs text-muted-foreground">Há 4 horas</p>
-                </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>

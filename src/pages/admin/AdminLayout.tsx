@@ -15,7 +15,7 @@ const AdminLayout = () => {
   const { session, isAdmin, initialized } = useAuth();
   const [isVerifying, setIsVerifying] = useState(true);
   
-  // Improved session verification
+  // Improved session verification with better error handling
   useEffect(() => {
     const verifySession = async () => {
       try {
@@ -64,6 +64,21 @@ const AdminLayout = () => {
           toast.error("Acesso administrativo necessário");
           redirectToAuth();
           return;
+        }
+        
+        // Try to refresh the session token
+        try {
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.error("Error refreshing session:", refreshError);
+            // If refresh fails, we'll still proceed with the original session if it's valid
+          } else if (refreshData.session) {
+            console.log("Session refreshed successfully");
+            // The session listener should handle this refreshed session
+          }
+        } catch (refreshErr) {
+          console.error("Error during session refresh:", refreshErr);
         }
         
         // If we got here, we have a valid admin session

@@ -63,8 +63,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
             
             // Try to immediately refresh the token to ensure it stays valid
             try {
-              await supabase.auth.refreshSession();
-              console.log("Session refreshed after restoration");
+              const { data: refreshData } = await supabase.auth.refreshSession();
+              if (refreshData.session) {
+                console.log("Session refreshed after restoration");
+              }
             } catch (refreshError) {
               console.error("Error refreshing restored session:", refreshError);
             }
@@ -76,6 +78,19 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
           setIsLocallyVerifying(false);
         }
       } else {
+        // We have a session, check if it's still valid by refreshing
+        try {
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error("Error refreshing session in protected route:", error);
+            // Don't clear session here, let verification handle it
+          } else if (data.session) {
+            console.log("Session refreshed successfully in protected route");
+          }
+        } catch (refreshErr) {
+          console.error("Error during session refresh in protected route:", refreshErr);
+        }
+        
         setIsLocallyVerifying(false);
       }
     };
@@ -102,8 +117,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cyrela-red"></div>
-          <p className="text-sm text-cyrela-gray-dark">Verificando autenticação...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Verificando autenticação...</p>
         </div>
       </div>
     );
