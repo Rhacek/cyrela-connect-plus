@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface AdminStats {
   totalProperties: number;
@@ -165,7 +165,8 @@ export const getMonthlyGrowth = async (metric: 'properties' | 'brokers' | 'leads
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     
-    let table = '';
+    // Use type-safe table names instead of dynamically constructing them
+    let table: 'properties' | 'profiles' | 'leads';
     switch (metric) {
       case 'properties':
         table = 'properties';

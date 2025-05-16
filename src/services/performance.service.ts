@@ -1,5 +1,30 @@
-import { supabase } from '@/lib/supabase';
+
+import { supabase } from '@/integrations/supabase/client';
 import { Performance } from '@/types';
+
+// Type mapper functions
+const mapFromDbModel = (dbModel: any): Performance => ({
+  id: dbModel.id,
+  brokerId: dbModel.broker_id,
+  month: dbModel.month,
+  year: dbModel.year,
+  shares: dbModel.shares,
+  leads: dbModel.leads,
+  schedules: dbModel.schedules,
+  visits: dbModel.visits,
+  sales: dbModel.sales
+});
+
+const mapToDbModel = (model: Partial<Performance>) => ({
+  broker_id: model.brokerId,
+  month: model.month,
+  year: model.year,
+  shares: model.shares,
+  leads: model.leads,
+  schedules: model.schedules,
+  visits: model.visits,
+  sales: model.sales
+});
 
 export const performanceService = {
   async getCurrentMonthPerformance(brokerId: string): Promise<Performance | null> {
@@ -31,7 +56,7 @@ export const performanceService = {
       console.log('Performance data from Supabase:', data);
       
       // If no data exists, return null (the hook will handle this)
-      return data;
+      return data ? mapFromDbModel(data) : null;
     } catch (err) {
       console.error(`Unexpected error fetching performance:`, err);
       throw err;
@@ -60,7 +85,7 @@ export const performanceService = {
       }
 
       console.log(`Retrieved ${data?.length || 0} monthly performance records`);
-      return data || [];
+      return data ? data.map(mapFromDbModel) : [];
     } catch (err) {
       console.error(`Unexpected error in getMonthlyPerformance:`, err);
       return [];
@@ -93,11 +118,19 @@ export const performanceService = {
       throw checkError;
     }
 
+    const dbUpdates = {
+      shares: updates.shares,
+      leads: updates.leads,
+      schedules: updates.schedules,
+      visits: updates.visits,
+      sales: updates.sales,
+    };
+
     if (existingData) {
       // Update existing record
       const { data, error } = await supabase
         .from('performance')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', existingData.id)
         .select()
         .single();
@@ -107,7 +140,7 @@ export const performanceService = {
         throw error;
       }
 
-      return data as unknown as Performance;
+      return mapFromDbModel(data);
     } else {
       // Create new record
       const newPerformance = {
@@ -132,7 +165,7 @@ export const performanceService = {
         throw error;
       }
 
-      return data as unknown as Performance;
+      return mapFromDbModel(data);
     }
   },
 
@@ -150,7 +183,7 @@ export const performanceService = {
       const existingData = await this.getCurrentMonthPerformance(brokerId);
       
       if (existingData) {
-        return existingData as Performance;
+        return existingData;
       }
       
       // Create new performance record with zeros
@@ -177,7 +210,7 @@ export const performanceService = {
         throw error;
       }
 
-      return data as unknown as Performance;
+      return mapFromDbModel(data);
     } catch (err) {
       console.error(`Error in ensureCurrentMonthPerformance:`, err);
       throw err;
