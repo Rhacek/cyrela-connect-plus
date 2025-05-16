@@ -11,59 +11,124 @@ import { MetricsHeader } from "@/components/broker/metrics/metrics-header";
 import { MetricsFilter } from "@/components/broker/metrics/metrics-filter";
 import { MetricsOverview } from "@/components/broker/metrics/metrics-overview";
 import { MetricsCharts } from "@/components/broker/metrics/metrics-charts";
-import { mockPerformance } from "@/mocks/performance-data";
-import { mockTarget } from "@/mocks/target-data";
-import { mockHistoricalPerformance } from "@/mocks/performance-data";
 import { Performance, Target } from "@/types";
+import { useAuth } from "@/context/auth-context";
+import { performanceService } from "@/services/performance.service";
+import { targetsService } from "@/services/targets.service";
+import { toast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BrokerMetrics() {
   // Get current month and year
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
-  const [performance, setPerformance] = useState<Performance>(mockPerformance);
-  const [target, setTarget] = useState<Target>(mockTarget);
+  const [performance, setPerformance] = useState<Performance | null>(null);
+  const [target, setTarget] = useState<Target | null>(null);
+  const [isLoadingPerformance, setIsLoadingPerformance] = useState(false);
+  const [isLoadingTarget, setIsLoadingTarget] = useState(false);
+  const { session } = useAuth();
+  
+  // Default empty performance and target objects
+  const emptyPerformance: Performance = {
+    id: "",
+    brokerId: session?.id || "",
+    month: selectedMonth + 1,
+    year: selectedYear,
+    shares: 0,
+    leads: 0,
+    schedules: 0,
+    visits: 0,
+    sales: 0
+  };
+  
+  const emptyTarget: Target = {
+    id: "",
+    brokerId: session?.id || "",
+    month: selectedMonth + 1,
+    year: selectedYear,
+    shareTarget: 0,
+    leadTarget: 0,
+    scheduleTarget: 0,
+    visitTarget: 0,
+    saleTarget: 0
+  };
   
   // Update data when month or year changes
   useEffect(() => {
-    // In a real app, this would fetch data from an API based on month and year
-    console.log(`Fetch performance data for: ${selectedMonth}/${selectedYear}`);
+    const fetchData = async () => {
+      if (!session?.id) return;
+      
+      try {
+        console.log(`Fetching performance and target data for: ${selectedMonth+1}/${selectedYear} for broker ${session.id}`);
+        
+        // Fetch performance data
+        setIsLoadingPerformance(true);
+        let performanceData: Performance[] = [];
+        
+        try {
+          performanceData = await performanceService.getMonthlyPerformance(session.id, selectedYear);
+        } catch (error) {
+          console.error("Error fetching performance data:", error);
+          toast.error("Não foi possível carregar os dados de desempenho");
+        } finally {
+          setIsLoadingPerformance(false);
+        }
+        
+        // Find performance data for selected month, or use empty values
+        const monthPerformance = performanceData.find(p => p.month === selectedMonth + 1);
+        
+        if (monthPerformance) {
+          // Map database fields to frontend model
+          setPerformance({
+            ...monthPerformance,
+            brokerId: monthPerformance.broker_id
+          });
+        } else {
+          // No data found, use empty performance
+          setPerformance(emptyPerformance);
+        }
+        
+        // Fetch target data
+        setIsLoadingTarget(true);
+        let targetData: Target[] = [];
+        
+        try {
+          targetData = await targetsService.getMonthlyTargets(session.id, selectedYear);
+        } catch (error) {
+          console.error("Error fetching target data:", error);
+          toast.error("Não foi possível carregar os dados de metas");
+        } finally {
+          setIsLoadingTarget(false);
+        }
+        
+        // Find target data for selected month, or use empty values
+        const monthTarget = targetData.find(t => t.month === selectedMonth + 1);
+        
+        if (monthTarget) {
+          // Map database fields to frontend model
+          setTarget({
+            ...monthTarget,
+            brokerId: monthTarget.broker_id,
+            shareTarget: monthTarget.share_target,
+            leadTarget: monthTarget.lead_target, 
+            scheduleTarget: monthTarget.schedule_target,
+            visitTarget: monthTarget.visit_target,
+            saleTarget: monthTarget.sale_target
+          });
+        } else {
+          // No data found, use empty target
+          setTarget(emptyTarget);
+        }
+        
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Ocorreu um erro ao buscar os dados");
+      }
+    };
     
-    // Find historical performance data matching the selected month and year
-    const historicalData = mockHistoricalPerformance.find(
-      item => item.month === selectedMonth + 1 && item.year === selectedYear
-    );
-    
-    // Update performance if data is found
-    if (historicalData) {
-      setPerformance({
-        id: "perf-" + selectedMonth + "-" + selectedYear,
-        brokerId: "broker1",
-        month: selectedMonth + 1,
-        year: selectedYear,
-        shares: historicalData.shares,
-        leads: historicalData.leads,
-        schedules: historicalData.schedules,
-        visits: historicalData.visits,
-        sales: historicalData.sales
-      });
-    } else {
-      // Fallback to current data if no historical data found
-      setPerformance({
-        ...mockPerformance,
-        month: selectedMonth + 1,
-        year: selectedYear
-      });
-    }
-    
-    // For target data we'll use the same mockTarget for simplicity
-    // In a real app, you'd fetch the target data for the selected month as well
-    setTarget({
-      ...mockTarget,
-      month: selectedMonth + 1,
-      year: selectedYear
-    });
-  }, [selectedMonth, selectedYear]);
+    fetchData();
+  }, [selectedMonth, selectedYear, session?.id]);
 
   const handleMonthYearChange = (month: number, year: number) => {
     setSelectedMonth(month);
@@ -89,16 +154,26 @@ export default function BrokerMetrics() {
                   onMonthYearChange={handleMonthYearChange}
                 />
                 
-                <MetricsOverview 
-                  performance={performance}
-                  target={target}
-                />
+                {isLoadingPerformance || isLoadingTarget ? (
+                  <div className="space-y-6 mb-8">
+                    <Skeleton className="h-40 w-full" />
+                  </div>
+                ) : (
+                  <MetricsOverview 
+                    performance={performance || emptyPerformance}
+                    target={target || emptyTarget}
+                  />
+                )}
                 
-                <MetricsCharts 
-                  performance={performance}
-                  target={target}
-                  period={`${selectedMonth}_${selectedYear}`}
-                />
+                {isLoadingPerformance || isLoadingTarget ? (
+                  <Skeleton className="h-96 w-full" />
+                ) : (
+                  <MetricsCharts 
+                    performance={performance || emptyPerformance}
+                    target={target || emptyTarget}
+                    period={`${selectedMonth}_${selectedYear}`}
+                  />
+                )}
               </div>
             </ScrollArea>
           </SidebarInset>

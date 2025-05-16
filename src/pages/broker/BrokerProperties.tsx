@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -10,17 +10,46 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockProperties } from "@/mocks/property-data";
 import { Button } from "@/components/ui/button";
 import { Building, Eye, MapPin, Plus, Search } from "lucide-react";
 import { SidebarNavigation } from "@/components/broker/sidebar/sidebar-navigation";
 import { SidebarFooter as BrokerSidebarFooter } from "@/components/broker/sidebar/sidebar-footer";
 import { SidebarLogo } from "@/components/broker/sidebar/sidebar-logo";
+import { useAuth } from "@/context/auth-context";
+import { propertiesService } from "@/services/properties.service";
+import { Property } from "@/types";
+import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 export default function BrokerProperties() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { session } = useAuth();
   
-  const filteredProperties = mockProperties.filter(property => 
+  // Fetch broker properties
+  useEffect(() => {
+    const fetchProperties = async () => {
+      if (!session?.id) return;
+      
+      try {
+        setIsLoading(true);
+        const data = await propertiesService.getBrokerProperties(session.id);
+        setProperties(data);
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        toast.error("Não foi possível carregar seus imóveis.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProperties();
+  }, [session?.id]);
+  
+  // Filter properties based on search term
+  const filteredProperties = properties.filter(property => 
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.neighborhood.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.city.toLowerCase().includes(searchTerm.toLowerCase())
@@ -85,64 +114,72 @@ export default function BrokerProperties() {
                   </Button>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Empreendimento</TableHead>
-                        <TableHead>Endereço</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProperties.length === 0 ? (
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-6">
-                            Nenhum imóvel encontrado
-                          </TableCell>
+                          <TableHead>Empreendimento</TableHead>
+                          <TableHead>Endereço</TableHead>
+                          <TableHead>Valor</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
-                      ) : (
-                        filteredProperties.map((property) => (
-                          <TableRow key={property.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-cyrela-gray-lighter rounded-md flex items-center justify-center">
-                                  <Building size={18} className="text-primary" />
-                                </div>
-                                <div>
-                                  <div className="font-medium">{property.title}</div>
-                                  <div className="text-xs text-cyrela-gray-dark">{property.type}</div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-start gap-1">
-                                <MapPin size={14} className="text-cyrela-gray-dark shrink-0 mt-0.5" />
-                                <span>
-                                  {property.neighborhood}, {property.city}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {property.price.toLocaleString('pt-BR', {
-                                style: 'currency',
-                                currency: 'BRL',
-                                maximumFractionDigits: 0,
-                              })}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="sm">
-                                <Eye size={16} className="mr-1" />
-                                Detalhes
-                              </Button>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredProperties.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-6">
+                              Nenhum imóvel encontrado
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ) : (
+                          filteredProperties.map((property) => (
+                            <TableRow key={property.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-cyrela-gray-lighter rounded-md flex items-center justify-center">
+                                    <Building size={18} className="text-primary" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{property.title}</div>
+                                    <div className="text-xs text-cyrela-gray-dark">{property.type}</div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-start gap-1">
+                                  <MapPin size={14} className="text-cyrela-gray-dark shrink-0 mt-0.5" />
+                                  <span>
+                                    {property.neighborhood}, {property.city}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {property.price.toLocaleString('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL',
+                                  maximumFractionDigits: 0,
+                                })}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="sm">
+                                  <Eye size={16} className="mr-1" />
+                                  Detalhes
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             </div>
           </SidebarInset>
