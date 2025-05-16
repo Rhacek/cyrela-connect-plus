@@ -15,6 +15,7 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isBroker: () => boolean;
   isClient: () => boolean;
+  setSession: (session: UserSession | null) => void; // Add this line to expose setSession
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin: checkIsAdmin,
         isBroker: checkIsBroker,
         isClient: checkIsClient,
+        setSession, // Add this line to expose setSession in the context
       }}
     >
       {children}
