@@ -75,7 +75,8 @@ const AuthPage = () => {
     if (userRole === UserRole.BROKER) {
       navigate("/broker/dashboard", { replace: true });
     } else if (userRole === UserRole.ADMIN) {
-      navigate("/admin", { replace: true });
+      // Update: direct to /admin/ with trailing slash to ensure index route is loaded
+      navigate("/admin/", { replace: true });
     } else if (userRole === UserRole.CLIENT) {
       navigate("/client/welcome", { replace: true });
     } else {

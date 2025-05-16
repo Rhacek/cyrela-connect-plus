@@ -12,10 +12,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { useAuth } from "@/context/auth-context";
 
 export function AdminHeader() {
   const sidebar = useSidebar();
   const isCollapsed = sidebar.state === "collapsed";
+  const { signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b">
@@ -30,7 +40,7 @@ export function AdminHeader() {
             <Menu className="h-6 w-6" />
             <span className="sr-only">Toggle menu</span>
           </Button>
-          <Link to="/admin/dashboard" className="flex items-center text-xl font-semibold">
+          <Link to="/admin" className="flex items-center text-xl font-semibold">
             Admin Portal
           </Link>
         </div>
@@ -58,8 +68,8 @@ export function AdminHeader() {
               <DropdownMenuItem>
                 <Link to="/admin/settings" className="w-full">Configurações</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/auth" className="w-full">Sair</Link>
+              <DropdownMenuItem onClick={handleSignOut}>
+                Sair
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

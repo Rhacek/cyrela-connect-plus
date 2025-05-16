@@ -142,7 +142,12 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
+              {/* Add explicit index route */}
               <Route index element={<AdminDashboard />} />
+              
+              {/* Add explicit dashboard route for direct navigation */}
+              <Route path="dashboard" element={<AdminDashboard />} />
+              
               <Route path="properties" element={<AdminProperties />} />
               <Route path="properties/new" element={<AdminPropertyForm />} />
               <Route path="properties/:id/edit" element={<AdminPropertyForm />} />
