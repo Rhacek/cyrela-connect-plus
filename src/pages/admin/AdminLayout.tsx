@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
@@ -8,54 +8,100 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { supabase, verifyAdminAccess } from "@/utils/auth-redirect";
+import { supabase } from "@/lib/supabase";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
-  const { session, isAdmin } = useAuth();
+  const { session, isAdmin, initialized } = useAuth();
+  const [isVerifying, setIsVerifying] = useState(true);
   
-  // Verify admin access whenever this component mounts
+  // Improved session verification
   useEffect(() => {
-    console.log("AdminLayout mounted, checking admin session:", {
-      hasSession: !!session,
-      sessionId: session?.id,
-      userMetadata: session?.user_metadata,
-      userRole: session?.user_metadata?.role,
-      isAdmin: isAdmin()
-    });
-    
-    // Double verification process for admin access
     const verifySession = async () => {
       try {
-        // First, check context session
-        if (session && isAdmin()) {
-          console.log("Admin session verified from context");
+        // Wait for auth context to initialize first
+        if (!initialized) {
+          console.log("Auth context not initialized yet, waiting...");
           return;
         }
         
-        // If context check fails, verify directly with Supabase
-        const hasAdminAccess = await verifyAdminAccess();
+        console.log("AdminLayout - Verifying admin session:", {
+          hasSession: !!session,
+          sessionId: session?.id,
+          userMetadata: session?.user_metadata,
+          userRole: session?.user_metadata?.role,
+          isAdmin: isAdmin(),
+          initialized
+        });
         
-        if (!hasAdminAccess) {
-          console.log("No valid admin session found, redirecting to auth");
-          toast.error("Acesso administrativo necessário");
-          navigate("/auth?redirect=/admin/", { replace: true });
+        // First, check if we have a valid admin session in context
+        if (session && isAdmin()) {
+          console.log("Admin session verified from context");
+          setIsVerifying(false);
+          return;
         }
+        
+        // If not, verify directly with Supabase
+        console.log("Verifying admin session directly with Supabase");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting Supabase session:", error);
+          redirectToAuth();
+          return;
+        }
+        
+        if (!data.session) {
+          console.log("No valid session found in Supabase");
+          redirectToAuth();
+          return;
+        }
+        
+        // Check if the user has admin role
+        const userRole = data.session.user.user_metadata?.role;
+        if (userRole !== UserRole.ADMIN) {
+          console.log("User is not an admin:", userRole);
+          toast.error("Acesso administrativo necessário");
+          redirectToAuth();
+          return;
+        }
+        
+        // If we got here, we have a valid admin session
+        console.log("Admin session verified with Supabase");
+        setIsVerifying(false);
       } catch (error) {
         console.error("Error in admin session verification:", error);
-        navigate("/auth?redirect=/admin/", { replace: true });
+        redirectToAuth();
       }
     };
     
     verifySession();
     
-    // Set up a periodic verification for long admin sessions
-    const intervalId = setInterval(verifySession, 5 * 60 * 1000); // Every 5 minutes
+    // Set up periodic verification for long admin sessions (every 5 minutes)
+    const intervalId = setInterval(verifySession, 5 * 60 * 1000);
     
     return () => {
       clearInterval(intervalId);
     };
-  }, [navigate, session, isAdmin]);
+  }, [navigate, session, isAdmin, initialized]);
+  
+  // Helper function to ensure consistent redirect with parameters
+  const redirectToAuth = () => {
+    toast.error("Acesso administrativo necessário");
+    navigate("/auth?redirect=/admin/", { replace: true });
+  };
+  
+  // Show loading state while verifying session
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Verificando acesso administrativo...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <SidebarProvider defaultOpen={true}>

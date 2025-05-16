@@ -1,12 +1,12 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSessionVerification } from "@/hooks/use-session-verification";
 import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/utils/auth-redirect";
+import { supabase } from "@/lib/supabase";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +18,8 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
-  const { session, setSession } = useAuth();
+  const { session, setSession, initialized } = useAuth();
+  const [isLocallyVerifying, setIsLocallyVerifying] = useState(true);
   
   // Use the custom hook for session verification
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
@@ -26,33 +27,67 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   // Setup periodic session check for authenticated users
   usePeriodicSessionCheck(isAuthorized);
   
-  // Effect to check for session directly when entering protected routes
+  // Direct verification for session - runs even before useSessionVerification
   useEffect(() => {
+    // Skip if useSessionVerification is ready or if we already have a session
+    if (!isVerifying && !isLocallyVerifying) return;
+    if (session && !isVerifying) {
+      setIsLocallyVerifying(false);
+      return;
+    }
+    
     const verifySessionDirectly = async () => {
+      // If auth context isn't initialized yet, wait
+      if (!initialized) {
+        console.log("Auth context not initialized yet, waiting...");
+        return;
+      }
+      
       if (!session) {
         console.log("Protected route accessed without session, checking with Supabase directly");
         try {
-          const { data } = await supabase.auth.getSession();
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Error checking session:", error);
+            setIsLocallyVerifying(false);
+            return;
+          }
+          
           if (data.session) {
             console.log("Found session directly from Supabase:", data.session.user.id);
-            // Update auth context
+            // Update auth context with transformed user data
             const { transformUserData } = await import('@/utils/auth-utils');
-            setSession(transformUserData(data.session.user));
+            const userSession = transformUserData(data.session.user);
+            setSession(userSession);
+            
+            // Try to immediately refresh the token to ensure it stays valid
+            try {
+              await supabase.auth.refreshSession();
+              console.log("Session refreshed after restoration");
+            } catch (refreshError) {
+              console.error("Error refreshing restored session:", refreshError);
+            }
           }
+          
+          setIsLocallyVerifying(false);
         } catch (error) {
           console.error("Error checking direct session:", error);
+          setIsLocallyVerifying(false);
         }
+      } else {
+        setIsLocallyVerifying(false);
       }
     };
     
     verifySessionDirectly();
-  }, [session, setSession]);
+  }, [session, setSession, initialized, isVerifying, isLocallyVerifying]);
   
   // Effect to log protected route access
   useEffect(() => {
     console.log(`Protected route accessed: ${location.pathname}`);
     console.log(`Session exists: ${!!session}, ID: ${session?.id}`);
-    console.log(`Auth status: authorized=${isAuthorized}, verifying=${isVerifying}`);
+    console.log(`Auth status: authorized=${isAuthorized}, verifying=${isVerifying || isLocallyVerifying}`);
     
     // Special logging for admin routes
     if (location.pathname.startsWith('/admin')) {
@@ -60,10 +95,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       console.log('User role:', session?.user_metadata?.role);
       console.log('Allowed roles:', allowedRoles);
     }
-  }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles]);
+  }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles, isLocallyVerifying]);
   
   // Show loading state while verifying
-  if (isVerifying) {
+  if (isVerifying || isLocallyVerifying) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -84,7 +119,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     });
     
     // Save the current location so we can redirect back after login
-    // Using URLSearchParams for better compatibility
     const searchParams = new URLSearchParams();
     searchParams.set('redirect', location.pathname);
     

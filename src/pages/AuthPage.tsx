@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
-import { supabase, forceSessionRestore } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 
 const AuthPage = () => {
@@ -19,7 +19,12 @@ const AuthPage = () => {
   useEffect(() => {
     // First, verify if we have a local session
     const checkAuth = async () => {
-      console.log("AuthPage - Checking authentication. Session exists:", !!session, "Loading:", loading, "Initialized:", initialized);
+      console.log("AuthPage - Checking authentication:", {
+        hasSession: !!session,
+        loading,
+        initialized,
+        redirectPath
+      });
       
       if (session && !loading) {
         console.log("AuthPage - Found session in context:", session.id);
@@ -38,18 +43,44 @@ const AuthPage = () => {
         try {
           console.log("AuthPage - No session in context, checking with Supabase directly");
           
-          // Try to force session restoration
-          const forcedSession = await forceSessionRestore();
-          if (forcedSession) {
-            console.log("AuthPage - Found forced session:", forcedSession.user.id);
+          // Check for existing session
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error("Error checking Supabase session:", error);
+            setIsVerifyingAuth(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log("AuthPage - Found session from Supabase:", data.session.user.id);
             
-            // Transform user data to our expected format
-            const userSession = transformUserData(forcedSession.user);
+            // Try to refresh the token to ensure it stays valid
+            try {
+              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+              
+              if (refreshError) {
+                console.error("Error refreshing session:", refreshError);
+              } else if (refreshData.session) {
+                console.log("Session refreshed successfully");
+                
+                // Transform user data to our expected format
+                const userSession = transformUserData(refreshData.session.user);
+                
+                // Update the auth context with the restored session
+                setSession(userSession);
+                
+                // Use the session directly instead of waiting for context update
+                redirectBasedOnRole(userSession, redirectPath);
+                return;
+              }
+            } catch (refreshErr) {
+              console.error("Error refreshing session:", refreshErr);
+            }
             
-            // Update the auth context with the restored session
+            // Fall back to original session if refresh failed
+            const userSession = transformUserData(data.session.user);
             setSession(userSession);
-            
-            // Use the session directly instead of waiting for context update
             redirectBasedOnRole(userSession, redirectPath);
             return;
           }

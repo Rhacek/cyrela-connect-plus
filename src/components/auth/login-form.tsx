@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/utils/auth-redirect";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 
 interface LoginFormProps {
@@ -17,9 +17,14 @@ interface LoginFormProps {
 export function LoginForm({ onLoginAttempt }: LoginFormProps) {
   const { setSession } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  
+  // Get redirect path from URL query parameter
+  const searchParams = new URLSearchParams(location.search);
+  const redirectPath = searchParams.get('redirect') || '';
   
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -31,7 +36,6 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       // Signal that login was attempted
       onLoginAttempt();
       
-      // No need to sign out first - this was causing session loss
       // Use the consolidated Supabase client for login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
@@ -57,7 +61,7 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       // Transform user data to our expected format
       const userSession = transformUserData(data.session.user);
       
-      // Explicitly set the session in auth context
+      // Set the session in auth context
       setSession(userSession);
       
       toast.success("Login realizado com sucesso!");
@@ -68,16 +72,20 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
         role: userSession.user_metadata.role
       });
       
-      // Immediately redirect based on role without waiting for effect
+      // Handle redirection based on role or redirect parameter
       const userRole = userSession.user_metadata.role;
       
-      if (userRole === UserRole.ADMIN) {
-        console.log("Admin login successful, redirecting to /admin/");
-        navigate("/admin/", { replace: true });
-      } else if (userRole === UserRole.BROKER) {
-        navigate("/broker/dashboard", { replace: true });
+      if (redirectPath) {
+        console.log(`Redirecting to specified path: ${redirectPath}`);
+        // Only redirect to admin paths if user is admin
+        if (redirectPath.startsWith('/admin') && userRole !== UserRole.ADMIN) {
+          console.log("Attempt to redirect to admin path, but user is not admin");
+          redirectBasedOnRole(userRole);
+        } else {
+          navigate(redirectPath, { replace: true });
+        }
       } else {
-        navigate("/client/welcome", { replace: true });
+        redirectBasedOnRole(userRole);
       }
       
     } catch (error: any) {
@@ -87,6 +95,18 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Helper function to redirect based on user role
+  const redirectBasedOnRole = (userRole: UserRole) => {
+    if (userRole === UserRole.ADMIN) {
+      console.log("Admin login successful, redirecting to /admin/");
+      navigate("/admin/", { replace: true });
+    } else if (userRole === UserRole.BROKER) {
+      navigate("/broker/dashboard", { replace: true });
+    } else {
+      navigate("/client/welcome", { replace: true });
     }
   };
 

@@ -19,6 +19,25 @@ export const verifyAdminAccess = async () => {
       return false;
     }
     
+    // Try to refresh the token to ensure it stays valid
+    try {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error("Error refreshing session in verifyAdminAccess:", refreshError);
+        // Continue with original session if refresh fails
+      } else if (refreshData.session) {
+        console.log("Session refreshed successfully in verifyAdminAccess");
+        // Use the refreshed session data instead
+        return refreshData.session && 
+          refreshData.session.user && 
+          refreshData.session.user.user_metadata?.role === 'ADMIN';
+      }
+    } catch (refreshErr) {
+      console.error("Error refreshing session in verifyAdminAccess:", refreshErr);
+      // Continue with original session if refresh fails
+    }
+    
     return data.session && 
       data.session.user && 
       data.session.user.user_metadata?.role === 'ADMIN';

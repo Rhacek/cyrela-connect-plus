@@ -1,33 +1,96 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Users, MessageSquare, TrendingUp } from "lucide-react";
 import { mockProperties } from "@/mocks/property-data";
 import { useAuth } from "@/context/auth-context";
 import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const AdminDashboard = () => {
-  const { session, isAdmin } = useAuth();
+  const { session, isAdmin, initialized } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Verify admin access on dashboard page load
+  // More comprehensive session verification
   useEffect(() => {
-    console.log("AdminDashboard mounted, verifying admin session:", {
-      hasSession: !!session,
-      sessionId: session?.id,
-      userRole: session?.user_metadata?.role,
-      isAdmin: isAdmin()
-    });
+    const verifyAdminAccess = async () => {
+      try {
+        // Wait for auth context to be initialized
+        if (!initialized) {
+          console.log("Auth context not initialized yet, waiting...");
+          return; // Will re-run when initialized changes
+        }
+        
+        console.log("AdminDashboard - Verifying admin session:", {
+          hasSession: !!session,
+          sessionId: session?.id,
+          userRole: session?.user_metadata?.role,
+          isAdmin: isAdmin(),
+          initialized
+        });
+        
+        // If session exists in context and is admin, proceed
+        if (session && isAdmin()) {
+          console.log("Admin access confirmed via context");
+          setIsLoading(false);
+          return;
+        }
+        
+        // Direct verification with Supabase if context doesn't have session
+        console.log("Verifying admin access directly with Supabase");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error fetching session:", error);
+          redirectToAuth();
+          return;
+        }
+        
+        if (!data.session) {
+          console.log("No valid session found");
+          redirectToAuth();
+          return;
+        }
+        
+        // Check if user has admin role
+        const userRole = data.session.user.user_metadata?.role;
+        if (userRole !== UserRole.ADMIN) {
+          console.log("User is not an admin:", userRole);
+          toast.error("Acesso administrativo necessário");
+          redirectToAuth();
+          return;
+        }
+        
+        console.log("Admin access confirmed via direct check");
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in admin verification:", error);
+        redirectToAuth();
+      }
+    };
     
-    // Double-check admin role
-    if (!session || !isAdmin()) {
-      console.log("Non-admin access attempted for dashboard, redirecting");
-      navigate("/auth", { replace: true });
-      return;
-    }
-    
-    console.log("Admin access confirmed for dashboard");
-  }, [session, isAdmin, navigate]);
+    verifyAdminAccess();
+  }, [session, isAdmin, navigate, initialized]);
+  
+  // Helper function to ensure consistent redirect with parameters
+  const redirectToAuth = () => {
+    navigate("/auth?redirect=/admin/", { replace: true });
+  };
+
+  // Show loading state while verifying
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Verificando acesso administrativo...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

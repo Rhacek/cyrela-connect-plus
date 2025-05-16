@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/utils/auth-redirect";
+import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
@@ -23,9 +23,9 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     let checkTimeout: number | null = null;
 
     // Function to verify session directly with Supabase
-    const verifySessionWithSupabase = async () => {
+    const verifySessionWithSupabase = async (retryCount = 0) => {
       try {
-        console.log("Verifying session with Supabase directly");
+        console.log(`Verifying session with Supabase directly (attempt ${retryCount + 1})`);
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -36,15 +36,34 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (data.session) {
           console.log("Session verified with Supabase:", data.session.user.id);
           
-          // If the session exists but not in our context, update the context
-          if (!session && isMounted) {
-            const userSession = transformUserData(data.session.user);
-            setSession(userSession);
+          // Try to refresh the token to ensure it stays valid
+          try {
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData.session) {
+              console.log("Session refreshed successfully in verification");
+              
+              // If the session exists but not in our context, update the context
+              if (!session && isMounted) {
+                const userSession = transformUserData(refreshData.session.user);
+                setSession(userSession);
+                return userSession;
+              }
+            }
+          } catch (refreshError) {
+            console.error("Error refreshing session in verification:", refreshError);
           }
           
           return transformUserData(data.session.user);
         } else {
           console.log("No session found with Supabase direct check");
+          
+          // If no session but we have retries left, retry
+          if (retryCount < 2) {
+            console.log(`Will retry session verification (${retryCount + 1}/2)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return verifySessionWithSupabase(retryCount + 1);
+          }
+          
           return null;
         }
       } catch (err) {
@@ -94,21 +113,6 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
           setIsVerifying(false);
         }
         return;
-      }
-      
-      // Try session refresh to ensure we have a fresh token
-      try {
-        const { data: refreshData } = await supabase.auth.refreshSession();
-        if (refreshData.session) {
-          console.log("Session refreshed successfully");
-          const refreshedSession = transformUserData(refreshData.session.user);
-          if (isMounted) {
-            setSession(refreshedSession);
-          }
-          currentSession = refreshedSession;
-        }
-      } catch (refreshError) {
-        console.error("Error refreshing session:", refreshError);
       }
       
       // If we have a session but no allowed roles, it's protected but open to all authenticated
