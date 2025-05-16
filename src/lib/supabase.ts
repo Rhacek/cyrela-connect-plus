@@ -6,6 +6,9 @@ import { Database } from '@/types/supabase';
 const supabaseUrl = "https://cbdytpkwalaoshbvxxri.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHl0cGt3YWxhb3NoYnZ4eHJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNzM5MjcsImV4cCI6MjA2Mjg0OTkyN30.bXu9Bi6kSxgCnY8uD64Ez_dRash8UT6ar0J_-UP4fVI";
 
+// Explicitly set storage key and ensure proper session handling
+const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
+
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -13,7 +16,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: localStorage,
     detectSessionInUrl: true,
     flowType: 'implicit',
-    storageKey: 'sb-cbdytpkwalaoshbvxxri-auth-token' // Explicitly set the storage key
+    storageKey: storageKey
   }
 });
 
@@ -39,7 +42,7 @@ export const getCurrentUser = async () => {
   }
 };
 
-// Force restoration of session from localStorage on app load
+// Improved session restore function with additional checks
 export const forceSessionRestore = async () => {
   try {
     console.log("Attempting to restore session...");
@@ -61,7 +64,6 @@ export const forceSessionRestore = async () => {
     
     // Attempt to recover session from localStorage manually
     try {
-      const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
       const storedSession = localStorage.getItem(storageKey);
       
       if (storedSession) {
@@ -98,6 +100,18 @@ export const forceSessionRestore = async () => {
       }
     } catch (e) {
       console.error("Error parsing localStorage session:", e);
+    }
+    
+    // Try one last resort - refresh token
+    try {
+      console.log("Attempting token refresh as last resort");
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      if (refreshData.session) {
+        console.log("Session refreshed successfully");
+        return refreshData.session;
+      }
+    } catch (refreshErr) {
+      console.error("Error refreshing session:", refreshErr);
     }
     
     return null;

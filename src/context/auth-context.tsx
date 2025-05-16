@@ -15,7 +15,7 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isBroker: () => boolean;
   isClient: () => boolean;
-  setSession: (session: UserSession | null) => void; // Add this line to expose setSession
+  setSession: (session: UserSession | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,7 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session, 
     setSession, 
     loading, 
-    setLoading 
+    setLoading, 
+    initialized 
   } = useSessionInit();
   
   const { 
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin: checkIsAdmin,
         isBroker: checkIsBroker,
         isClient: checkIsClient,
-        setSession, // Add this line to expose setSession in the context
+        setSession, // Expose setSession to allow direct session updates
       }}
     >
       {children}

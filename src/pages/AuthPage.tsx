@@ -7,14 +7,17 @@ import { UserRole } from "@/types";
 import { supabase, forceSessionRestore } from "@/lib/supabase";
 
 const AuthPage = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, setSession } = useAuth();
   const navigate = useNavigate();
   const [isVerifyingAuth, setIsVerifyingAuth] = useState(true);
   
   useEffect(() => {
     // First, verify if we have a local session
     const checkAuth = async () => {
+      console.log("AuthPage - Checking authentication. Session exists:", !!session, "Loading:", loading);
+      
       if (session && !loading) {
+        console.log("AuthPage - Found session in context:", session.id);
         redirectBasedOnRole(session);
         return;
       }
@@ -22,18 +25,24 @@ const AuthPage = () => {
       // If no session in context, try checking with Supabase directly
       if (!session && !loading) {
         try {
-          console.log("AuthPage checking session with Supabase directly");
+          console.log("AuthPage - No session in context, checking with Supabase directly");
           
           // Try to force session restoration
           const forcedSession = await forceSessionRestore();
           if (forcedSession) {
-            console.log("AuthPage found forced session:", forcedSession.user.id);
-            // Use the session directly instead of waiting for context update
-            redirectBasedOnRole({
+            console.log("AuthPage - Found forced session:", forcedSession.user.id);
+            
+            // Update the auth context with the restored session
+            const userSession = {
               id: forcedSession.user.id,
               email: forcedSession.user.email || '',
               user_metadata: forcedSession.user.user_metadata
-            });
+            };
+            
+            setSession(userSession);
+            
+            // Use the session directly instead of waiting for context update
+            redirectBasedOnRole(userSession);
             return;
           }
           
@@ -47,17 +56,24 @@ const AuthPage = () => {
           }
           
           if (data.session) {
-            console.log("AuthPage found session directly from Supabase");
-            // Use the session directly instead of waiting for auth context update
-            redirectBasedOnRole({
+            console.log("AuthPage - Found session directly from Supabase:", data.session.user.id);
+            
+            // Update the auth context with the found session
+            const userSession = {
               id: data.session.user.id,
               email: data.session.user.email || '',
               user_metadata: data.session.user.user_metadata
-            });
+            };
+            
+            setSession(userSession);
+            
+            // Use the session directly 
+            redirectBasedOnRole(userSession);
             return;
           }
           
           // No session found anywhere
+          console.log("AuthPage - No valid session found after all checks");
           setIsVerifyingAuth(false);
         } catch (err) {
           console.error("Unexpected error verifying session:", err);
@@ -67,24 +83,30 @@ const AuthPage = () => {
     };
     
     checkAuth();
-  }, [session, loading, navigate]);
+  }, [session, loading, navigate, setSession]);
   
   const redirectBasedOnRole = (userSession: any) => {
-    console.log("Auth page detected existing session, redirecting");
+    console.log("Auth page detected existing session, redirecting based on role");
     
     const userRole = 'user' in userSession 
       ? userSession.user.user_metadata.role 
       : userSession.user_metadata.role;
     
+    console.log("User role detected:", userRole);
+    
     if (userRole === UserRole.BROKER) {
+      console.log("Redirecting to broker dashboard");
       navigate("/broker/dashboard", { replace: true });
     } else if (userRole === UserRole.ADMIN) {
       // Always redirect admins to /admin/ with trailing slash
+      console.log("Redirecting to admin dashboard with trailing slash");
       navigate("/admin/", { replace: true });
     } else if (userRole === UserRole.CLIENT) {
+      console.log("Redirecting to client welcome page");
       navigate("/client/welcome", { replace: true });
     } else {
       // Fallback for unknown roles
+      console.log("Unknown role, redirecting to home page");
       navigate("/", { replace: true });
     }
   };

@@ -12,7 +12,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onLoginAttempt }: LoginFormProps) {
-  const { signIn } = useAuth();
+  const { signIn, setSession } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -27,24 +27,43 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       // Signal that login was attempted
       onLoginAttempt();
       
-      // Sign in with Auth context (this will update the session in context)
-      await signIn(loginEmail, loginPassword);
+      // Use direct Supabase login for more reliable session handling
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
       
-      // Additional verification for debugging
-      console.log("Login function completed");
-      const { data: sessionCheck } = await supabase.auth.getSession();
-      
-      if (sessionCheck.session) {
-        console.log("Session verified after login:", sessionCheck.session.user.id);
-        // Auth context will handle redirection in parent components
-      } else {
-        console.warn("Session not found immediately after login");
-        toast.warning("Sessão não detectada. Tente novamente.");
+      if (error) {
+        throw error;
       }
-    } catch (error) {
+      
+      if (data.session) {
+        console.log("Login successful, session established:", data.session.user.id);
+        
+        // Explicitly set the session in auth context
+        await setSession({
+          id: data.session.user.id,
+          email: data.session.user.email || '',
+          user_metadata: data.session.user.user_metadata
+        });
+        
+        // Additional verification for debugging
+        const { data: sessionCheck } = await supabase.auth.getSession();
+        if (sessionCheck.session) {
+          console.log("Session confirmed after login:", sessionCheck.session.user.id);
+          toast.success("Login realizado com sucesso!");
+        } else {
+          console.warn("Session not found immediately after login");
+          toast.warning("Sessão não detectada. Tente novamente.");
+        }
+      } else {
+        console.warn("No session returned from login");
+        toast.warning("Falha no login. Nenhuma sessão retornada.");
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 
-        description: "Verifique seu email e senha e tente novamente." 
+        description: error.message || "Verifique seu email e senha e tente novamente." 
       });
     } finally {
       setLoading(false);

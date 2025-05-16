@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,17 +13,42 @@ import {
 import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/auth-context";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export function AdminHeader() {
   const sidebar = useSidebar();
   const isCollapsed = sidebar.state === "collapsed";
-  const { signOut } = useAuth();
+  const { signOut, setSession } = useAuth();
+  const navigate = useNavigate();
   
   const handleSignOut = async () => {
     try {
-      await signOut();
+      console.log("Starting sign out process");
+      
+      // First clear session in the auth context to prevent redirection issues
+      setSession(null);
+      
+      // Then perform Supabase signout
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+        toast.error('Erro ao sair', {
+          description: error.message,
+        });
+        return;
+      }
+      
+      toast.success('Você saiu com sucesso');
+      
+      // Force redirect to login page
+      console.log("Sign out successful, redirecting to login page");
+      navigate("/auth", { replace: true });
+      
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Erro ao sair');
     }
   };
   

@@ -33,6 +33,12 @@ export const useAuthActions = (
         console.log("Transformed user:", transformedUser);
         setSession(transformedUser);
         toast.success('Login realizado com sucesso!');
+
+        // Verify session immediately after login for debugging
+        setTimeout(async () => {
+          const { data: sessionCheck } = await supabase.auth.getSession();
+          console.log("Session check after login:", sessionCheck.session?.user.id);
+        }, 500);
       }
     } catch (error) {
       console.error('Error signing in:', error);
@@ -116,6 +122,12 @@ export const useAuthActions = (
   const signOut = async () => {
     try {
       setLoading(true);
+      console.log("Starting sign out process in useAuthActions");
+      
+      // First clear the local session to prevent redirection issues
+      setSession(null);
+      
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -126,7 +138,10 @@ export const useAuthActions = (
       }
       
       toast.success('Você saiu com sucesso');
-      setSession(null);
+      
+      // Clear local storage for complete signout
+      localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
+      
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Erro ao sair');

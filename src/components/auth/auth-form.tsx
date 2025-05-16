@@ -7,12 +7,36 @@ import { useNavigate } from "react-router-dom";
 import { LoginForm } from "./login-form";
 import { RegisterForm } from "./register-form";
 import { UserRole } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 export function AuthForm() {
-  const { session } = useAuth();
+  const { session, setSession } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const navigate = useNavigate();
   const [loginAttempted, setLoginAttempted] = useState(false);
+  
+  // Perform a direct session check to ensure we're not missing a valid session
+  useEffect(() => {
+    const checkSessionDirectly = async () => {
+      if (!session) {
+        console.log("Auth form directly checking for session");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (!error && data.session) {
+          console.log("Auth form found session directly:", data.session.user.id);
+          
+          // Update the auth context with the session
+          setSession({
+            id: data.session.user.id,
+            email: data.session.user.email || '',
+            user_metadata: data.session.user.user_metadata
+          });
+        }
+      }
+    };
+    
+    checkSessionDirectly();
+  }, [session, setSession]);
   
   // Redirect if session exists (user is already logged in)
   useEffect(() => {
@@ -23,11 +47,11 @@ export function AuthForm() {
       const userRole = session.user_metadata.role;
       let redirectPath = '/';
       
-      if (userRole === 'BROKER') {
+      if (userRole === UserRole.BROKER) {
         redirectPath = '/broker/dashboard';
-      } else if (userRole === 'ADMIN') {
+      } else if (userRole === UserRole.ADMIN) {
         redirectPath = '/admin/'; // Always use trailing slash for admin
-      } else if (userRole === 'CLIENT') {
+      } else if (userRole === UserRole.CLIENT) {
         redirectPath = '/client/welcome';
       }
       
