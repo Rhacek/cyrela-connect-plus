@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types";
 
@@ -169,16 +170,18 @@ export const brokersService = {
       const tempPassword = Math.random().toString(36).substring(2, 12);
 
       // Create the user in Supabase Auth
-      const { data: userData, error: authError } = await supabase.auth.admin.createUser({
+      // Using auth.signUp instead of auth.admin.createUser which requires admin privileges
+      const { data: userData, error: authError } = await supabase.auth.signUp({
         email: brokerData.email,
         password: tempPassword,
-        email_confirm: true, // Auto-confirm the email
-        user_metadata: {
-          name: brokerData.name,
-          role: UserRole.BROKER,
-          brokerCode: brokerData.brokerCode,
-          brokerage: brokerData.brokerage,
-          creci: brokerData.creci
+        options: {
+          data: {
+            name: brokerData.name,
+            role: UserRole.BROKER,
+            brokerCode: brokerData.brokerCode,
+            brokerage: brokerData.brokerage,
+            creci: brokerData.creci
+          }
         }
       });
 
@@ -195,6 +198,23 @@ export const brokersService = {
       // The handle_new_user trigger in Supabase will automatically create the profile
       // But we need to wait a moment for it to happen
       await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Update the profile directly to ensure all data is saved correctly
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          phone: brokerData.phone,
+          broker_code: brokerData.brokerCode,
+          brokerage: brokerData.brokerage,
+          creci: brokerData.creci,
+          role: UserRole.BROKER
+        })
+        .eq("id", userData.user.id);
+
+      if (profileError) {
+        console.error("Error updating broker profile:", profileError);
+        throw profileError;
+      }
 
       // Return the new broker
       return {

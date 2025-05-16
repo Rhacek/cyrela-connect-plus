@@ -24,6 +24,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { brokersService, Broker } from "@/services/brokers.service";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
@@ -108,11 +109,10 @@ const AdminBrokerForm = () => {
           phone: values.phone,
           brokerCode: values.brokerCode,
           brokerage: values.brokerage,
-          status: values.status,
           creci: values.creci,
         });
         
-        toast.success("Corretor cadastrado com sucesso!");
+        toast.success("Corretor cadastrado com sucesso! Uma senha temporária foi gerada.");
       }
       
       navigate("/admin/brokers");
@@ -120,14 +120,14 @@ const AdminBrokerForm = () => {
       console.error("Error saving broker:", error);
       
       // Handle common error messages
-      if (error.message?.includes("already exists")) {
+      if (error.message?.includes("User already registered")) {
         toast.error("Email já cadastrado no sistema");
       } else if (error.message?.includes("password")) {
         toast.error("Problema com a senha temporária");
       } else {
         toast.error(isEditing 
           ? "Erro ao atualizar corretor" 
-          : "Erro ao cadastrar corretor"
+          : "Erro ao cadastrar corretor: " + (error.message || "Erro desconhecido")
         );
       }
     } finally {
@@ -284,7 +284,14 @@ const AdminBrokerForm = () => {
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Processando...' : isEditing ? "Atualizar Corretor" : "Cadastrar Corretor"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditing ? "Atualizando..." : "Cadastrando..."}
+                </>
+              ) : (
+                isEditing ? "Atualizar Corretor" : "Cadastrar Corretor"
+              )}
             </Button>
           </div>
         </form>
