@@ -24,8 +24,8 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
       
-      // Limpar qualquer sessão antiga que possa estar em um estado inconsistente
-      localStorage.removeItem('supabase.auth.token');
+      // Clear any existing session data first
+      localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
       
       // Sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -42,34 +42,38 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
         console.log("Login successful, session obtained:", data.session.user.id);
         
         // Explicitly store session in local storage for extra reliability
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
-          currentSession: data.session,
-          expiresAt: Math.floor(Date.now() / 1000) + data.session.expires_in
+        localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_at: Math.floor(new Date(data.session.expires_at).getTime() / 1000)
         }));
         
-        // Verifique se a sessão foi realmente armazenada
-        const storedSessionStr = localStorage.getItem('supabase.auth.token');
+        // Verify the session was stored
+        const storedSessionStr = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
         if (storedSessionStr) {
           console.log("Session successfully stored in localStorage");
         } else {
           console.error("Failed to store session in localStorage");
         }
         
+        // Update Auth context
         await signIn(loginEmail, loginPassword);
+        
+        // Immediately verify session was set
+        const { data: sessionCheck } = await supabase.auth.getSession();
+        if (sessionCheck.session) {
+          console.log("Session verified after login:", sessionCheck.session.user.id);
+        } else {
+          console.warn("Session not found immediately after login, retrying...");
+          // Try to refresh the session
+          await supabase.auth.refreshSession();
+        }
+        
         onLoginAttempt(); // Signal to parent that login was attempted
         toast.success("Login bem-sucedido!");
-      }
-      
-      // Verify session directly
-      const sessionCheck = await supabase.auth.getSession();
-      console.log("Session verification after login:", sessionCheck.data.session ? "Session found" : "No session");
-      
-      // Force a token refresh to ensure it's valid
-      if (sessionCheck.data.session) {
-        const { data: refreshData } = await supabase.auth.refreshSession();
-        if (refreshData.session) {
-          console.log("Session refreshed successfully");
-        }
+      } else {
+        console.error("No session returned after successful login");
+        toast.error("Erro no login: Sessão não foi criada");
       }
       
     } catch (error) {

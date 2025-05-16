@@ -33,11 +33,12 @@ export const useSessionInit = () => {
               if (isMounted) {
                 setSession(transformUserData(currentSession.user));
                 
-                // Store for extra reliability, only if this isn't a token refresh
-                if (event !== 'TOKEN_REFRESHED') {
-                  localStorage.setItem('supabase.auth.token', JSON.stringify({
-                    currentSession: currentSession,
-                    expiresAt: Math.floor(Date.now() / 1000) + currentSession.expires_in
+                // Store session data in localStorage for extra reliability
+                if (event === 'SIGNED_IN') {
+                  localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
+                    access_token: currentSession.access_token,
+                    refresh_token: currentSession.refresh_token,
+                    expires_at: Math.floor(new Date(currentSession.expires_at).getTime() / 1000)
                   }));
                 }
               }
@@ -45,7 +46,7 @@ export const useSessionInit = () => {
               console.log("User signed out, clearing session");
               if (isMounted) {
                 setSession(null);
-                localStorage.removeItem('supabase.auth.token');
+                localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
               }
             }
             
@@ -74,9 +75,10 @@ export const useSessionInit = () => {
             setSession(transformUserData(supabaseSession.user));
             
             // Store session data in localStorage for backup recovery
-            localStorage.setItem('supabase.auth.token', JSON.stringify({
-              currentSession: supabaseSession,
-              expiresAt: Math.floor(Date.now() / 1000) + supabaseSession.expires_in
+            localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
+              access_token: supabaseSession.access_token,
+              refresh_token: supabaseSession.refresh_token,
+              expires_at: Math.floor(new Date(supabaseSession.expires_at).getTime() / 1000)
             }));
           }
         } else {
@@ -84,21 +86,24 @@ export const useSessionInit = () => {
           
           // Try to recover session from localStorage as a backup
           try {
-            const sessionStr = localStorage.getItem('supabase.auth.token');
+            const sessionStr = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
             if (sessionStr) {
               const localSession = JSON.parse(sessionStr);
-              if (localSession?.currentSession?.user && 
-                  localSession.expiresAt > Math.floor(Date.now() / 1000)) {
+              if (localSession?.access_token && 
+                  localSession.expires_at > Math.floor(Date.now() / 1000)) {
                 console.log("Recovered session from localStorage");
-                if (isMounted) {
-                  setSession(transformUserData(localSession.currentSession.user));
-                  
-                  // Attempt to refresh the token to ensure it's valid
-                  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-                  if (!refreshError && refreshData.session) {
-                    console.log("Session refreshed successfully");
-                    setSession(transformUserData(refreshData.session.user));
-                  }
+                
+                // Try to set the session manually and refresh
+                await supabase.auth.setSession({
+                  access_token: localSession.access_token,
+                  refresh_token: localSession.refresh_token
+                });
+                
+                // Get the session after setting it
+                const { data: refreshData } = await supabase.auth.getSession();
+                if (refreshData.session?.user && isMounted) {
+                  console.log("Session refreshed successfully");
+                  setSession(transformUserData(refreshData.session.user));
                 }
               }
             }

@@ -38,14 +38,16 @@ export const getCurrentUser = async () => {
   }
 };
 
-// Clear any expired sessions
+// Clear any expired sessions on load
 export const cleanupExpiredSessions = () => {
   try {
-    const sessionString = localStorage.getItem('supabase.auth.token');
+    // Check if there's a session in localStorage and if it's expired
+    const sessionString = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
     if (sessionString) {
       const session = JSON.parse(sessionString);
-      if (session.expiresAt && session.expiresAt < Math.floor(Date.now() / 1000)) {
-        localStorage.removeItem('supabase.auth.token');
+      if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
+        // Session expired, remove it
+        localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
         console.log("Removed expired session token");
       }
     }
@@ -70,32 +72,38 @@ export const forceSessionRestore = async () => {
     if (!data.session) {
       console.log("No session found through getSession, trying localStorage");
       
-      // Attempt direct localStorage recovery
+      // Attempt direct localStorage recovery - using the correct Supabase storage key
       try {
-        const storedSession = localStorage.getItem('supabase.auth.token');
+        const storedSession = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
         if (storedSession) {
           const parsedSession = JSON.parse(storedSession);
+          
           if (parsedSession && 
-              parsedSession.currentSession && 
-              parsedSession.expiresAt && 
-              parsedSession.expiresAt > Math.floor(Date.now() / 1000)) {
+              parsedSession.access_token && 
+              parsedSession.expires_at && 
+              new Date(parsedSession.expires_at * 1000) > new Date()) {
             
             console.log("Found valid session in localStorage, attempting to restore");
             
-            // Try to refresh the session
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            // Try to set the session manually and refresh
+            await supabase.auth.setSession({
+              access_token: parsedSession.access_token,
+              refresh_token: parsedSession.refresh_token
+            });
             
-            if (refreshError) {
-              console.error("Error refreshing session:", refreshError);
-            } else if (refreshData.session) {
-              console.log("Session successfully restored from refresh");
-              return refreshData.session;
+            // Get the session after setting it
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData.session) {
+              console.log("Session successfully restored manually");
+              return sessionData.session;
             }
           }
         }
       } catch (e) {
         console.error("Error parsing localStorage session:", e);
       }
+    } else {
+      console.log("Session found through getSession:", data.session.user.id);
     }
     
     return data.session;
