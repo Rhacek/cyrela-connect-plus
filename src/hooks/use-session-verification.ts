@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/lib/supabase";
-import { transformUserData } from "@/utils/auth-utils";
+import { refreshSession } from "@/lib/supabase";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,7 @@ interface SessionVerificationResult {
 }
 
 export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerificationResult {
-  const { session, loading, setSession, initialized } = useAuth();
+  const { session, loading, initialized } = useAuth();
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
@@ -21,56 +20,6 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
   useEffect(() => {
     let isMounted = true;
     let checkTimeout: number | null = null;
-
-    // Function to verify session directly with Supabase
-    const verifySessionWithSupabase = async (retryCount = 0) => {
-      try {
-        console.log(`Verifying session with Supabase directly (attempt ${retryCount + 1})`);
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error verifying session with Supabase:", error);
-          return null;
-        }
-        
-        if (data.session) {
-          console.log("Session verified with Supabase:", data.session.user.id);
-          
-          // Try to refresh the token to ensure it stays valid
-          try {
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            if (refreshData.session) {
-              console.log("Session refreshed successfully in verification");
-              
-              // If the session exists but not in our context, update the context
-              if (!session && isMounted) {
-                const userSession = transformUserData(refreshData.session.user);
-                setSession(userSession);
-                return userSession;
-              }
-            }
-          } catch (refreshError) {
-            console.error("Error refreshing session in verification:", refreshError);
-          }
-          
-          return transformUserData(data.session.user);
-        } else {
-          console.log("No session found with Supabase direct check");
-          
-          // If no session but we have retries left, retry
-          if (retryCount < 2) {
-            console.log(`Will retry session verification (${retryCount + 1}/2)`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return verifySessionWithSupabase(retryCount + 1);
-          }
-          
-          return null;
-        }
-      } catch (err) {
-        console.error("Unexpected error verifying session:", err);
-        return null;
-      }
-    };
 
     // Main check for authorization with retries
     const checkAuthorization = async (retryCount = 0) => {
@@ -97,26 +46,33 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         userRole: session?.user_metadata?.role,
       });
       
-      // If no session in context, verify with Supabase directly
+      // If no session in context, try refresh once
       let currentSession = session;
       
       if (!currentSession) {
-        console.log("No session in context, verifying with Supabase directly");
-        const verifiedSession = await verifySessionWithSupabase();
-        currentSession = verifiedSession;
-      }
-      
-      if (!currentSession) {
-        console.log("No valid session found after verification");
-        if (isMounted) {
-          setIsAuthorized(false);
-          setIsVerifying(false);
+        console.log("No session in context, attempting refresh");
+        
+        const refreshedSession = await refreshSession();
+        
+        if (!refreshedSession) {
+          console.log("No valid session found after refresh attempt");
+          if (isMounted) {
+            setIsAuthorized(false);
+            setIsVerifying(false);
+          }
+          return;
+        } else {
+          // Session refresh will be handled by auth listeners
+          console.log("Session refreshed in verification");
+          
+          // Wait briefly for auth context to update
+          await new Promise(resolve => setTimeout(resolve, 500));
+          currentSession = session;
         }
-        return;
       }
       
       // If we have a session but no allowed roles, it's protected but open to all authenticated
-      if (!allowedRoles) {
+      if (!allowedRoles && currentSession) {
         console.log("Route is protected but open to all authenticated users");
         if (isMounted) {
           setIsAuthorized(true);
@@ -125,9 +81,19 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         return;
       }
       
+      // If we don't have a session after refresh attempts, not authorized
+      if (!currentSession) {
+        console.log("No valid session found after all checks");
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
       // Check if user has permission based on role
       const userRole = currentSession.user_metadata.role;
-      const hasPermission = allowedRoles.includes(userRole);
+      const hasPermission = allowedRoles ? allowedRoles.includes(userRole) : true;
       
       console.log("Checking authorization:", {
         userRole,
@@ -176,7 +142,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         clearTimeout(checkTimeout);
       }
     };
-  }, [session, loading, allowedRoles, navigate, setSession, initialized]);
+  }, [session, loading, allowedRoles, navigate, initialized]);
 
   return { isAuthorized, isVerifying };
 }

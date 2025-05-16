@@ -1,5 +1,5 @@
 
-import { supabase } from './client';
+import { supabase, storageKey, emitSessionUpdate } from './client';
 import { getCurrentSession } from './auth-helpers';
 
 // Enhanced session restore with additional checks and retries
@@ -17,6 +17,7 @@ export const forceSessionRestore = async (retryCount = 0) => {
     
     if (data.session) {
       console.log("Session found through getSession:", data.session.user.id);
+      emitSessionUpdate(data.session);
       return data.session;
     }
     
@@ -24,7 +25,7 @@ export const forceSessionRestore = async (retryCount = 0) => {
     
     // Attempt to recover session from localStorage manually
     try {
-      const storedSession = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
+      const storedSession = localStorage.getItem(storageKey);
       
       if (storedSession) {
         const parsedSession = JSON.parse(storedSession);
@@ -47,7 +48,7 @@ export const forceSessionRestore = async (retryCount = 0) => {
             // If the tokens are expired, try to clear them to avoid future errors
             if (setSessionError.message.includes("token is expired")) {
               console.log("Tokens expired, clearing localStorage");
-              localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
+              localStorage.removeItem(storageKey);
             }
             
             return null;
@@ -55,6 +56,7 @@ export const forceSessionRestore = async (retryCount = 0) => {
           
           if (sessionData.session) {
             console.log("Session successfully restored manually");
+            emitSessionUpdate(sessionData.session);
             return sessionData.session;
           }
         } else {
@@ -65,24 +67,6 @@ export const forceSessionRestore = async (retryCount = 0) => {
       }
     } catch (e) {
       console.error("Error parsing localStorage session:", e);
-    }
-    
-    // Try token refresh as last resort
-    try {
-      console.log("Attempting token refresh as last resort");
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      
-      if (refreshError) {
-        console.error("Error refreshing session:", refreshError);
-        return null;
-      }
-      
-      if (refreshData.session) {
-        console.log("Session refreshed successfully");
-        return refreshData.session;
-      }
-    } catch (refreshErr) {
-      console.error("Error refreshing session:", refreshErr);
     }
     
     // If we've retried less than 2 times and still failed, try again

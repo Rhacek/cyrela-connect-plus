@@ -1,12 +1,8 @@
 
-// This file provides a redirection layer to ensure we use the same Supabase client everywhere
-import { supabase } from '@/lib/supabase';
+import { supabase, refreshSession } from '@/lib/supabase';
 
 // Re-export the main client for use by components importing from this location
 export { supabase };
-
-// Add a debugging note to identify this import being used
-console.log("Auth redirect layer: Using the consolidated Supabase client");
 
 // Export a helper function to verify admin access with the consolidated client
 export const verifyAdminAccess = async () => {
@@ -19,23 +15,16 @@ export const verifyAdminAccess = async () => {
       return false;
     }
     
-    // Try to refresh the token to ensure it stays valid
-    try {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    if (!data.session) {
+      // Try to refresh the token if no session is found
+      const refreshedSession = await refreshSession();
       
-      if (refreshError) {
-        console.error("Error refreshing session in verifyAdminAccess:", refreshError);
-        // Continue with original session if refresh fails
-      } else if (refreshData.session) {
-        console.log("Session refreshed successfully in verifyAdminAccess");
-        // Use the refreshed session data instead
-        return refreshData.session && 
-          refreshData.session.user && 
-          refreshData.session.user.user_metadata?.role === 'ADMIN';
+      if (!refreshedSession) {
+        return false;
       }
-    } catch (refreshErr) {
-      console.error("Error refreshing session in verifyAdminAccess:", refreshErr);
-      // Continue with original session if refresh fails
+      
+      // Check if the refreshed session has admin role
+      return refreshedSession.user.user_metadata?.role === 'ADMIN';
     }
     
     return data.session && 

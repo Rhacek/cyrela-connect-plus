@@ -1,5 +1,5 @@
 
-import { supabase, storageKey } from './client';
+import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate } from './client';
 
 // Helper to log auth state for debugging
 export const logAuthState = async () => {
@@ -43,7 +43,6 @@ export const verifySession = async (session: any) => {
     }
     
     if (data.user) {
-      console.log("Session verified with valid user");
       return true;
     }
     
@@ -69,11 +68,23 @@ export const signOutAndCleanup = async () => {
     // Manually clear localStorage regardless of the signOut result
     localStorage.removeItem(storageKey);
     
+    // Emit session removal event
+    emitSessionRemoval();
+    
     // Check if we successfully cleared everything
     const sessionCheck = await getCurrentSession();
     if (sessionCheck) {
       console.warn("Session still exists after logout, forcing removal");
-      localStorage.clear(); // More aggressive cleanup
+      // More targeted cleanup
+      try {
+        const parsedSession = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        if (parsedSession && Object.keys(parsedSession).length > 0) {
+          localStorage.removeItem(storageKey);
+        }
+      } catch (e) {
+        // If parsing fails, clear the item anyway
+        localStorage.removeItem(storageKey);
+      }
     } else {
       console.log("Signout successful, no session remains");
     }
@@ -85,6 +96,7 @@ export const signOutAndCleanup = async () => {
     // Even if there's an error, try to clear localStorage
     try {
       localStorage.removeItem(storageKey);
+      emitSessionRemoval();
     } catch (e) {
       console.error("Error clearing localStorage:", e);
     }

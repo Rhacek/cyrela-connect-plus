@@ -4,7 +4,7 @@ import { UserSession } from '@/types/auth';
 import { useSessionRestore } from './use-session-restore';
 import { useAuthListener } from './use-auth-listener';
 import { useCurrentSession } from './use-current-session';
-import { supabase, verifySession, signOutAndCleanup } from '@/lib/supabase';
+import { supabase, refreshSession, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase';
 
 export const useSessionInit = () => {
   const [session, setSession] = useState<UserSession | null>(null);
@@ -18,15 +18,17 @@ export const useSessionInit = () => {
 
   // For debugging
   useEffect(() => {
-    console.log("useSessionInit status:", {
-      isRestoring,
-      isListening,
-      isChecking,
-      hasRestoredSession: !!restoredSession,
-      hasEventSession: !!sessionFromEvent,
-      hasCurrentSession: !!currentSession,
-      sessionId: session?.id
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log("useSessionInit status:", {
+        isRestoring,
+        isListening,
+        isChecking,
+        hasRestoredSession: !!restoredSession,
+        hasEventSession: !!sessionFromEvent,
+        hasCurrentSession: !!currentSession,
+        sessionId: session?.id
+      });
+    }
   }, [
     isRestoring,
     isListening,
@@ -72,19 +74,14 @@ export const useSessionInit = () => {
       const sessionToUse = sessionFromEvent || currentSession || restoredSession;
       
       if (sessionToUse !== null) {
-        console.log("Potential session found from source, validating...", sessionToUse.id);
-        
         // Extra validation step
         const isValid = await validateSession(sessionToUse);
         
         if (isValid && isMounted) {
-          console.log("Session validated, setting in state:", sessionToUse.id);
           setSession(sessionToUse);
         } else if (!isValid && isMounted) {
           console.warn("Session failed validation, clearing...");
           setSession(null);
-          // Clean up any invalid sessions that might remain
-          await signOutAndCleanup();
         }
       } else if (!isRestoring && !isChecking && isListening && isMounted) {
         // If all checks are complete and we don't have a session, clear it
@@ -102,8 +99,30 @@ export const useSessionInit = () => {
     
     processSessions();
     
+    // Listen for session events
+    const handleSessionUpdate = (event: any) => {
+      if (isMounted && event.detail?.session) {
+        console.log("Session context received session update event");
+        const { transformUserData } = require('@/utils/auth-utils');
+        const userSession = transformUserData(event.detail.session.user);
+        setSession(userSession);
+      }
+    };
+    
+    const handleSessionRemoval = () => {
+      if (isMounted) {
+        console.log("Session context received session removal event");
+        setSession(null);
+      }
+    };
+    
+    sessionEvent.addEventListener(SESSION_UPDATED, handleSessionUpdate);
+    sessionEvent.addEventListener(SESSION_REMOVED, handleSessionRemoval);
+    
     return () => {
       isMounted = false;
+      sessionEvent.removeEventListener(SESSION_UPDATED, handleSessionUpdate);
+      sessionEvent.removeEventListener(SESSION_REMOVED, handleSessionRemoval);
     };
   }, [
     restoredSession, isRestoring,
@@ -112,13 +131,13 @@ export const useSessionInit = () => {
     validateSession
   ]);
 
-  // Periodic session verification to ensure it's still valid
+  // Periodic session verification with reduced frequency
   useEffect(() => {
     let isMounted = true;
     let intervalId: number | null = null;
     
     if (initialized && session) {
-      // Verify session every 5 minutes
+      // Verify session every 15 minutes instead of 5
       intervalId = window.setInterval(async () => {
         if (!isMounted) return;
         
@@ -130,20 +149,14 @@ export const useSessionInit = () => {
           if (error || !data.session) {
             console.warn("Periodic check: Session invalid, attempting to refresh");
             
-            // Try to refresh the session
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            // Use the centralized refresh function
+            const refreshedSession = await refreshSession();
             
-            if (refreshError || !refreshData.session) {
-              console.warn("Session refresh failed, clearing session");
-              
-              if (isMounted) {
-                setSession(null);
-                // Ensure we actually clean up
-                await signOutAndCleanup();
-              }
-            } else if (isMounted) {
-              console.log("Session refreshed successfully in periodic check");
-              // We don't need to update the session here as the auth listener will handle this
+            if (!refreshedSession && isMounted) {
+              // Only clear the session after a delay to avoid race conditions
+              setTimeout(() => {
+                if (isMounted) setSession(null);
+              }, 2000);
             }
           } else {
             console.log("Periodic check: Session still valid");
@@ -151,7 +164,7 @@ export const useSessionInit = () => {
         } catch (err) {
           console.error("Error during periodic session check:", err);
         }
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 15 * 60 * 1000); // 15 minutes instead of 5
     }
     
     return () => {

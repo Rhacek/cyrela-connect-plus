@@ -6,7 +6,7 @@ import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { supabase } from "@/lib/supabase";
+import { refreshSession } from "@/lib/supabase";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -44,53 +44,23 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       }
       
       if (!session) {
-        console.log("Protected route accessed without session, checking with Supabase directly");
-        try {
-          const { data, error } = await supabase.auth.getSession();
+        console.log("Protected route accessed without session, attempting refresh");
+        
+        const refreshedSession = await refreshSession();
+        
+        if (refreshedSession) {
+          console.log("Session refreshed successfully in protected route");
           
-          if (error) {
-            console.error("Error checking session:", error);
-            setIsLocallyVerifying(false);
-            return;
-          }
-          
-          if (data.session) {
-            console.log("Found session directly from Supabase:", data.session.user.id);
-            // Update auth context with transformed user data
-            const { transformUserData } = await import('@/utils/auth-utils');
-            const userSession = transformUserData(data.session.user);
-            setSession(userSession);
-            
-            // Try to immediately refresh the token to ensure it stays valid
-            try {
-              const { data: refreshData } = await supabase.auth.refreshSession();
-              if (refreshData.session) {
-                console.log("Session refreshed after restoration");
-              }
-            } catch (refreshError) {
-              console.error("Error refreshing restored session:", refreshError);
-            }
-          }
-          
+          // Set local verification as complete
           setIsLocallyVerifying(false);
-        } catch (error) {
-          console.error("Error checking direct session:", error);
+          
+          // Session update will happen through the auth listener
+        } else {
+          console.log("No session could be refreshed");
           setIsLocallyVerifying(false);
         }
       } else {
-        // We have a session, check if it's still valid by refreshing
-        try {
-          const { data, error } = await supabase.auth.refreshSession();
-          if (error) {
-            console.error("Error refreshing session in protected route:", error);
-            // Don't clear session here, let verification handle it
-          } else if (data.session) {
-            console.log("Session refreshed successfully in protected route");
-          }
-        } catch (refreshErr) {
-          console.error("Error during session refresh in protected route:", refreshErr);
-        }
-        
+        // We have a session, verification is complete
         setIsLocallyVerifying(false);
       }
     };
@@ -103,13 +73,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     console.log(`Protected route accessed: ${location.pathname}`);
     console.log(`Session exists: ${!!session}, ID: ${session?.id}`);
     console.log(`Auth status: authorized=${isAuthorized}, verifying=${isVerifying || isLocallyVerifying}`);
-    
-    // Special logging for admin routes
-    if (location.pathname.startsWith('/admin')) {
-      console.log('Accessing admin route with session:', session);
-      console.log('User role:', session?.user_metadata?.role);
-      console.log('Allowed roles:', allowedRoles);
-    }
   }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles, isLocallyVerifying]);
   
   // Show loading state while verifying

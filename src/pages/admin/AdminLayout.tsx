@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { refreshSession } from "@/lib/supabase";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -41,49 +41,44 @@ const AdminLayout = () => {
           return;
         }
         
-        // If not, verify directly with Supabase
-        console.log("Verifying admin session directly with Supabase");
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting Supabase session:", error);
-          redirectToAuth();
+        // If no session, try to refresh once
+        if (!session) {
+          console.log("No session in context, attempting refresh");
+          const refreshedSession = await refreshSession();
+          
+          if (!refreshedSession) {
+            console.log("Session refresh failed, redirecting to auth");
+            redirectToAuth();
+            return;
+          }
+          
+          // Wait for the auth context to update with the refreshed session
+          setTimeout(() => {
+            if (session && isAdmin()) {
+              console.log("Admin session verified after refresh");
+              setIsVerifying(false);
+            } else {
+              console.log("Not an admin after refresh, redirecting");
+              redirectToAuth();
+            }
+          }, 1000);
           return;
         }
         
-        if (!data.session) {
-          console.log("No valid session found in Supabase");
-          redirectToAuth();
-          return;
-        }
-        
-        // Check if the user has admin role
-        const userRole = data.session.user.user_metadata?.role;
-        if (userRole !== UserRole.ADMIN) {
-          console.log("User is not an admin:", userRole);
+        // If we have a session but not admin, redirect
+        if (session && !isAdmin()) {
+          console.log("User is not an admin:", session.user_metadata.role);
           toast.error("Acesso administrativo necessário");
           redirectToAuth();
           return;
         }
         
-        // Try to refresh the session token
-        try {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error("Error refreshing session:", refreshError);
-            // If refresh fails, we'll still proceed with the original session if it's valid
-          } else if (refreshData.session) {
-            console.log("Session refreshed successfully");
-            // The session listener should handle this refreshed session
-          }
-        } catch (refreshErr) {
-          console.error("Error during session refresh:", refreshErr);
+        // If we got here with a session but still verifying, stop verifying
+        if (session) {
+          setIsVerifying(false);
+        } else {
+          redirectToAuth();
         }
-        
-        // If we got here, we have a valid admin session
-        console.log("Admin session verified with Supabase");
-        setIsVerifying(false);
       } catch (error) {
         console.error("Error in admin session verification:", error);
         redirectToAuth();
@@ -91,13 +86,6 @@ const AdminLayout = () => {
     };
     
     verifySession();
-    
-    // Set up periodic verification for long admin sessions (every 5 minutes)
-    const intervalId = setInterval(verifySession, 5 * 60 * 1000);
-    
-    return () => {
-      clearInterval(intervalId);
-    };
   }, [navigate, session, isAdmin, initialized]);
   
   // Helper function to ensure consistent redirect with parameters

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase/client';
 import { transformUserData } from '@/utils/auth-utils';
 import { UserSession } from '@/types/auth';
 
@@ -25,12 +25,6 @@ export function useAuthListener() {
           // Transform the user data to our UserSession format
           const userSession = transformUserData(session.user);
           setSessionFromEvent(userSession);
-          
-          // Store session metadata if needed
-          const metadata = session.user.user_metadata;
-          if (metadata) {
-            console.log("Updating session with metadata:", metadata);
-          }
         }
       } else if (event === 'SIGNED_OUT') {
         if (isMounted) {
@@ -40,6 +34,25 @@ export function useAuthListener() {
       }
     });
     
+    // Subscribe to custom session events
+    const handleSessionUpdate = (event: any) => {
+      if (isMounted && event.detail?.session) {
+        console.log("Received session update event");
+        const userSession = transformUserData(event.detail.session.user);
+        setSessionFromEvent(userSession);
+      }
+    };
+    
+    const handleSessionRemoval = () => {
+      if (isMounted) {
+        console.log("Received session removal event");
+        setSessionFromEvent(null);
+      }
+    };
+    
+    sessionEvent.addEventListener(SESSION_UPDATED, handleSessionUpdate);
+    sessionEvent.addEventListener(SESSION_REMOVED, handleSessionRemoval);
+    
     setIsListening(true);
     
     // Cleanup subscription
@@ -47,6 +60,8 @@ export function useAuthListener() {
       console.log("Cleaning up auth state change listener");
       isMounted = false;
       subscription.unsubscribe();
+      sessionEvent.removeEventListener(SESSION_UPDATED, handleSessionUpdate);
+      sessionEvent.removeEventListener(SESSION_REMOVED, handleSessionRemoval);
       setIsListening(false);
     };
   }, []);
