@@ -340,6 +340,33 @@ export type Database = {
           },
         ]
       }
+      settings: {
+        Row: {
+          category: Database["public"]["Enums"]["settings_category"]
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["settings_category"]
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["settings_category"]
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       shares: {
         Row: {
           broker_id: string
@@ -474,6 +501,7 @@ export type Database = {
       }
     }
     Enums: {
+      settings_category: "general" | "email" | "features"
       user_role: "ADMIN" | "BROKER" | "CLIENT"
     }
     CompositeTypes: {
@@ -590,6 +618,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      settings_category: ["general", "email", "features"],
       user_role: ["ADMIN", "BROKER", "CLIENT"],
     },
   },

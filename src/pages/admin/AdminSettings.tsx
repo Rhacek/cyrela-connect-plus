@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,7 +18,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { 
+  settingsService, 
+  GeneralSettings, 
+  EmailSettings, 
+  FeatureSettings 
+} from "@/services/settings.service";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const generalFormSchema = z.object({
   siteName: z.string().min(2, "O nome do site é obrigatório"),
@@ -46,26 +54,34 @@ const featuresFormSchema = z.object({
 });
 
 const AdminSettings = () => {
+  const [loading, setLoading] = useState({
+    general: true,
+    email: true,
+    features: true
+  });
+  
+  const [activeTab, setActiveTab] = useState("general");
+
   const generalForm = useForm<z.infer<typeof generalFormSchema>>({
     resolver: zodResolver(generalFormSchema),
     defaultValues: {
-      siteName: "Cyrela Imóveis",
-      siteDescription: "Portal de imóveis de alto padrão",
-      contactEmail: "contato@cyrela.com.br",
-      contactPhone: "(11) 3045-5000",
-      address: "Av. Paulista, 1000 - São Paulo, SP",
+      siteName: "",
+      siteDescription: "",
+      contactEmail: "",
+      contactPhone: "",
+      address: "",
     },
   });
 
   const emailForm = useForm<z.infer<typeof emailFormSchema>>({
     resolver: zodResolver(emailFormSchema),
     defaultValues: {
-      smtpServer: "smtp.cyrela.com.br",
+      smtpServer: "",
       smtpPort: 587,
-      smtpUser: "no-reply@cyrela.com.br",
-      smtpPassword: "********",
-      senderEmail: "no-reply@cyrela.com.br",
-      senderName: "Cyrela Imóveis",
+      smtpUser: "",
+      smtpPassword: "",
+      senderEmail: "",
+      senderName: "",
     },
   });
 
@@ -81,19 +97,85 @@ const AdminSettings = () => {
     },
   });
 
-  const onGeneralSubmit = (values: z.infer<typeof generalFormSchema>) => {
-    console.log(values);
-    toast.success("Configurações gerais atualizadas com sucesso!");
+  useEffect(() => {
+    const loadGeneralSettings = async () => {
+      try {
+        setLoading((prev) => ({ ...prev, general: true }));
+        const generalSettings = await settingsService.getGeneralSettings();
+        generalForm.reset(generalSettings);
+      } catch (error) {
+        console.error("Erro ao carregar configurações gerais:", error);
+        toast.error("Erro ao carregar configurações gerais");
+      } finally {
+        setLoading((prev) => ({ ...prev, general: false }));
+      }
+    };
+
+    loadGeneralSettings();
+  }, [generalForm]);
+
+  useEffect(() => {
+    const loadEmailSettings = async () => {
+      try {
+        setLoading((prev) => ({ ...prev, email: true }));
+        const emailSettings = await settingsService.getEmailSettings();
+        emailForm.reset(emailSettings);
+      } catch (error) {
+        console.error("Erro ao carregar configurações de email:", error);
+        toast.error("Erro ao carregar configurações de email");
+      } finally {
+        setLoading((prev) => ({ ...prev, email: false }));
+      }
+    };
+
+    loadEmailSettings();
+  }, [emailForm]);
+
+  useEffect(() => {
+    const loadFeatureSettings = async () => {
+      try {
+        setLoading((prev) => ({ ...prev, features: true }));
+        const featureSettings = await settingsService.getFeatureSettings();
+        featuresForm.reset(featureSettings);
+      } catch (error) {
+        console.error("Erro ao carregar configurações de funcionalidades:", error);
+        toast.error("Erro ao carregar configurações de funcionalidades");
+      } finally {
+        setLoading((prev) => ({ ...prev, features: false }));
+      }
+    };
+
+    loadFeatureSettings();
+  }, [featuresForm]);
+
+  const onGeneralSubmit = async (values: z.infer<typeof generalFormSchema>) => {
+    try {
+      await settingsService.updateGeneralSettings(values);
+      toast.success("Configurações gerais atualizadas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar configurações gerais:", error);
+      toast.error("Erro ao atualizar configurações gerais");
+    }
   };
 
-  const onEmailSubmit = (values: z.infer<typeof emailFormSchema>) => {
-    console.log(values);
-    toast.success("Configurações de email atualizadas com sucesso!");
+  const onEmailSubmit = async (values: z.infer<typeof emailFormSchema>) => {
+    try {
+      await settingsService.updateEmailSettings(values);
+      toast.success("Configurações de email atualizadas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar configurações de email:", error);
+      toast.error("Erro ao atualizar configurações de email");
+    }
   };
 
-  const onFeaturesSubmit = (values: z.infer<typeof featuresFormSchema>) => {
-    console.log(values);
-    toast.success("Configurações de funcionalidades atualizadas com sucesso!");
+  const onFeaturesSubmit = async (values: z.infer<typeof featuresFormSchema>) => {
+    try {
+      await settingsService.updateFeatureSettings(values);
+      toast.success("Configurações de funcionalidades atualizadas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar configurações de funcionalidades:", error);
+      toast.error("Erro ao atualizar configurações de funcionalidades");
+    }
   };
 
   return (
@@ -105,7 +187,12 @@ const AdminSettings = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs 
+        defaultValue="general" 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
         <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
@@ -118,55 +205,35 @@ const AdminSettings = () => {
               <CardTitle>Configurações Gerais</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...generalForm}>
-                <form 
-                  onSubmit={generalForm.handleSubmit(onGeneralSubmit)} 
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={generalForm.control}
-                    name="siteName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Site</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Nome que aparecerá no título do navegador e cabeçalhos
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={generalForm.control}
-                    name="siteDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Descrição do Site</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} rows={3} />
-                        </FormControl>
-                        <FormDescription>
-                          Breve descrição do site para SEO
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+              {loading.general ? (
+                <div className="space-y-4">
+                  <Skeleton className="w-full h-10" />
+                  <Skeleton className="w-full h-20" />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
+                  </div>
+                  <Skeleton className="w-full h-10" />
+                  <Skeleton className="w-1/4 h-10 ml-auto" />
+                </div>
+              ) : (
+                <Form {...generalForm}>
+                  <form 
+                    onSubmit={generalForm.handleSubmit(onGeneralSubmit)} 
+                    className="space-y-4"
+                  >
                     <FormField
                       control={generalForm.control}
-                      name="contactEmail"
+                      name="siteName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email de Contato</FormLabel>
+                          <FormLabel>Nome do Site</FormLabel>
                           <FormControl>
-                            <Input {...field} type="email" />
+                            <Input {...field} />
                           </FormControl>
+                          <FormDescription>
+                            Nome que aparecerá no título do navegador e cabeçalhos
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -174,10 +241,57 @@ const AdminSettings = () => {
 
                     <FormField
                       control={generalForm.control}
-                      name="contactPhone"
+                      name="siteDescription"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Telefone de Contato</FormLabel>
+                          <FormLabel>Descrição do Site</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} />
+                          </FormControl>
+                          <FormDescription>
+                            Breve descrição do site para SEO
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={generalForm.control}
+                        name="contactEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email de Contato</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={generalForm.control}
+                        name="contactPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone de Contato</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={generalForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Endereço</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -185,27 +299,13 @@ const AdminSettings = () => {
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <FormField
-                    control={generalForm.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex justify-end">
-                    <Button type="submit">Salvar Configurações</Button>
-                  </div>
-                </form>
-              </Form>
+                    <div className="flex justify-end">
+                      <Button type="submit">Salvar Configurações</Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -216,106 +316,124 @@ const AdminSettings = () => {
               <CardTitle>Configurações de Email</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...emailForm}>
-                <form 
-                  onSubmit={emailForm.handleSubmit(onEmailSubmit)} 
-                  className="space-y-4"
-                >
+              {loading.email ? (
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={emailForm.control}
-                      name="smtpServer"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Servidor SMTP</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={emailForm.control}
-                      name="smtpPort"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Porta SMTP</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={emailForm.control}
-                      name="smtpUser"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Usuário SMTP</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={emailForm.control}
-                      name="smtpPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha SMTP</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="password" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={emailForm.control}
-                      name="senderEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email do Remetente</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={emailForm.control}
-                      name="senderName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome do Remetente</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
                   </div>
+                  <Skeleton className="w-1/4 h-10 ml-auto" />
+                </div>
+              ) : (
+                <Form {...emailForm}>
+                  <form 
+                    onSubmit={emailForm.handleSubmit(onEmailSubmit)} 
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={emailForm.control}
+                        name="smtpServer"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Servidor SMTP</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className="flex justify-end">
-                    <Button type="submit">Salvar Configurações</Button>
-                  </div>
-                </form>
-              </Form>
+                      <FormField
+                        control={emailForm.control}
+                        name="smtpPort"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Porta SMTP</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="number" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={emailForm.control}
+                        name="smtpUser"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Usuário SMTP</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={emailForm.control}
+                        name="smtpPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha SMTP</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="password" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={emailForm.control}
+                        name="senderEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email do Remetente</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={emailForm.control}
+                        name="senderName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome do Remetente</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button type="submit">Salvar Configurações</Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -326,142 +444,151 @@ const AdminSettings = () => {
               <CardTitle>Funcionalidades do Sistema</CardTitle>
             </CardHeader>
             <CardContent>
-              <Form {...featuresForm}>
-                <form 
-                  onSubmit={featuresForm.handleSubmit(onFeaturesSubmit)} 
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={featuresForm.control}
-                    name="enablePropertyComparisons"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Comparação de Imóveis</FormLabel>
-                          <FormDescription>
-                            Permitir que usuários comparem imóveis lado a lado
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+              {loading.features ? (
+                <div className="space-y-4">
+                  {[1, 2, 3, 4, 5, 6].map((index) => (
+                    <Skeleton key={index} className="w-full h-20" />
+                  ))}
+                  <Skeleton className="w-1/4 h-10 ml-auto" />
+                </div>
+              ) : (
+                <Form {...featuresForm}>
+                  <form 
+                    onSubmit={featuresForm.handleSubmit(onFeaturesSubmit)} 
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={featuresForm.control}
+                      name="enablePropertyComparisons"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Comparação de Imóveis</FormLabel>
+                            <FormDescription>
+                              Permitir que usuários comparem imóveis lado a lado
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={featuresForm.control}
-                    name="enableFavorites"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Favoritos</FormLabel>
-                          <FormDescription>
-                            Permitir que usuários adicionem imóveis aos favoritos
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={featuresForm.control}
+                      name="enableFavorites"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Favoritos</FormLabel>
+                            <FormDescription>
+                              Permitir que usuários adicionem imóveis aos favoritos
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={featuresForm.control}
-                    name="enableReviews"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Avaliações</FormLabel>
-                          <FormDescription>
-                            Permitir que usuários avaliem imóveis e corretores
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={featuresForm.control}
+                      name="enableReviews"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Avaliações</FormLabel>
+                            <FormDescription>
+                              Permitir que usuários avaliem imóveis e corretores
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={featuresForm.control}
-                    name="enableShareFeature"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Compartilhamento</FormLabel>
-                          <FormDescription>
-                            Permitir compartilhamento de imóveis em redes sociais
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={featuresForm.control}
+                      name="enableShareFeature"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Compartilhamento</FormLabel>
+                            <FormDescription>
+                              Permitir compartilhamento de imóveis em redes sociais
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={featuresForm.control}
-                    name="enableBrokerProfiles"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Perfis de Corretores</FormLabel>
-                          <FormDescription>
-                            Exibir perfis públicos de corretores
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={featuresForm.control}
+                      name="enableBrokerProfiles"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Perfis de Corretores</FormLabel>
+                            <FormDescription>
+                              Exibir perfis públicos de corretores
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={featuresForm.control}
-                    name="enableScheduleAppointment"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Agendamento de Visitas</FormLabel>
-                          <FormDescription>
-                            Permitir agendamento online de visitas aos imóveis
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={featuresForm.control}
+                      name="enableScheduleAppointment"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Agendamento de Visitas</FormLabel>
+                            <FormDescription>
+                              Permitir agendamento online de visitas aos imóveis
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                  <div className="flex justify-end">
-                    <Button type="submit">Salvar Configurações</Button>
-                  </div>
-                </form>
-              </Form>
+                    <div className="flex justify-end">
+                      <Button type="submit">Salvar Configurações</Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
