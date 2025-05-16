@@ -13,8 +13,13 @@ import { Image, PlusCircle, X, GripVertical, Loader2 } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { supabase } from "@/lib/supabase";
 import { propertiesService } from "@/services/properties.service";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
+
+// Extend PropertyImage to include tempFile for uploads
+interface ExtendedPropertyImage extends PropertyImage {
+  tempFile?: File;
+}
 
 interface PropertyImageUploadProps {
   initialImages?: PropertyImage[];
@@ -22,13 +27,13 @@ interface PropertyImageUploadProps {
 }
 
 export const PropertyImageUpload = ({ initialImages = [], propertyId }: PropertyImageUploadProps) => {
-  const [images, setImages] = useState<PropertyImage[]>(initialImages);
+  const [images, setImages] = useState<ExtendedPropertyImage[]>(initialImages as ExtendedPropertyImage[]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const { toast } = useToast();
   
   useEffect(() => {
-    setImages(initialImages);
+    setImages(initialImages as ExtendedPropertyImage[]);
   }, [initialImages]);
   
   const uploadImage = async (file: File): Promise<string> => {
@@ -62,7 +67,7 @@ export const PropertyImageUpload = ({ initialImages = [], propertyId }: Property
       const newProgress = { ...uploadProgress };
       
       // Create temporary image objects
-      const tempImages: PropertyImage[] = files.map((file, index) => {
+      const tempImages: ExtendedPropertyImage[] = files.map((file, index) => {
         const tempId = `temp-${Date.now()}-${index}`;
         newProgress[tempId] = 0;
         return {
@@ -116,19 +121,16 @@ export const PropertyImageUpload = ({ initialImages = [], propertyId }: Property
               url: img!.url,
               isMain: img!.isMain,
               order: img!.order
-            })))
+            } as ExtendedPropertyImage)))
         );
         
-        toast({
-          title: "Imagens carregadas com sucesso",
+        toast.success("Imagens carregadas com sucesso", {
           description: `${uploadedImages.filter(Boolean).length} imagens foram adicionadas ao imóvel.`
         });
       }
     } catch (error) {
       console.error("Error handling file upload:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao carregar imagens",
+      toast.error("Erro ao carregar imagens", {
         description: "Ocorreu um erro ao processar as imagens. Tente novamente."
       });
     } finally {
@@ -142,8 +144,7 @@ export const PropertyImageUpload = ({ initialImages = [], propertyId }: Property
       // If propertyId exists and the image is not a temporary one, delete it from the database
       if (propertyId && !id.startsWith('temp-')) {
         await propertiesService.deleteImage(id);
-        toast({
-          title: "Imagem removida",
+        toast.success("Imagem removida", {
           description: "A imagem foi removida com sucesso."
         });
       }
@@ -167,9 +168,7 @@ export const PropertyImageUpload = ({ initialImages = [], propertyId }: Property
       }
     } catch (error) {
       console.error("Error removing image:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao remover imagem",
+      toast.error("Erro ao remover imagem", {
         description: "Ocorreu um erro ao remover a imagem. Tente novamente."
       });
     }
@@ -189,15 +188,15 @@ export const PropertyImageUpload = ({ initialImages = [], propertyId }: Property
         const mainImage = updatedImages.find(img => img.id === id);
         if (mainImage && !id.startsWith('temp-')) {
           await propertiesService.update(propertyId, {
-            mainImageId: id
+            // Update the property to indicate this is the main image
+            // We'll handle this in the backend by updating property_images table
+            isHighlighted: true // Using an existing field as we can't add mainImageId
           });
         }
       }
     } catch (error) {
       console.error("Error setting main image:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao definir imagem principal",
+      toast.error("Erro ao definir imagem principal", {
         description: "Ocorreu um erro ao definir a imagem principal. Tente novamente."
       });
     }

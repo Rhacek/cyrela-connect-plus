@@ -8,6 +8,7 @@ import { PropertyImageUpload } from "@/components/admin/PropertyImageUpload";
 import { PropertyImage } from "@/types";
 import { useEffect, useState } from "react";
 import { propertiesService } from "@/services/properties.service";
+import { useToast } from "@/hooks/use-toast";
 
 interface MediaTabProps {
   form: UseFormReturn<PropertyFormValues>;
@@ -17,6 +18,7 @@ interface MediaTabProps {
 
 export const MediaTab = ({ form, initialImages = [], propertyId }: MediaTabProps) => {
   const [images, setImages] = useState<PropertyImage[]>(initialImages);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (propertyId) {
@@ -29,12 +31,15 @@ export const MediaTab = ({ form, initialImages = [], propertyId }: MediaTabProps
           }
         } catch (error) {
           console.error("Error fetching property images:", error);
+          toast.error("Erro ao carregar imagens", {
+            description: "Não foi possível carregar as imagens do imóvel."
+          });
         }
       };
       
       fetchImages();
     }
-  }, [propertyId]);
+  }, [propertyId, toast]);
 
   return (
     <Card className="w-full">

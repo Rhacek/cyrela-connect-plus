@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
 import { BasicInfoTab } from "@/components/admin/property-form/BasicInfoTab";
 import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
@@ -15,11 +14,13 @@ import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@
 import { propertiesService } from "@/services/properties.service";
 import { useAuth } from "@/context/auth-context";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminPropertyForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { toast } = useToast();
   const isEditing = Boolean(id);
   const [currentTab, setCurrentTab] = useState("basic");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,18 +63,14 @@ const AdminPropertyForm = () => {
               commission: property.commission || 0
             });
           } else {
-            toast({
-              variant: "destructive",
-              title: "Imóvel não encontrado",
+            toast.error("Imóvel não encontrado", {
               description: "O imóvel que você está tentando editar não foi encontrado."
             });
             navigate("/admin/properties");
           }
         } catch (error) {
           console.error("Error fetching property:", error);
-          toast({
-            variant: "destructive",
-            title: "Erro ao carregar imóvel",
+          toast.error("Erro ao carregar imóvel", {
             description: "Ocorreu um erro ao carregar as informações do imóvel."
           });
           navigate("/admin/properties");
@@ -84,13 +81,11 @@ const AdminPropertyForm = () => {
       
       fetchProperty();
     }
-  }, [id, isEditing, form, navigate]);
+  }, [id, isEditing, form, navigate, toast]);
   
   const onSubmit = async (values: PropertyFormValues) => {
     if (!session) {
-      toast({
-        variant: "destructive",
-        title: "Não autenticado",
+      toast.error("Não autenticado", {
         description: "Você precisa estar logado para cadastrar um imóvel."
       });
       return;
@@ -106,19 +101,20 @@ const AdminPropertyForm = () => {
           createdById: session.id
         });
         
-        toast({
-          title: "Imóvel atualizado com sucesso!",
+        toast.success("Imóvel atualizado com sucesso!", {
           description: "As informações foram salvas no sistema."
         });
       } else {
         // Create new property
         const newProperty = await propertiesService.create({
           ...values,
-          createdById: session.id
+          createdById: session.id,
+          isActive: true,
+          viewCount: 0,
+          shareCount: 0
         });
         
-        toast({
-          title: "Imóvel cadastrado com sucesso!",
+        toast.success("Imóvel cadastrado com sucesso!", {
           description: "O novo imóvel foi adicionado ao sistema."
         });
       }
@@ -126,9 +122,7 @@ const AdminPropertyForm = () => {
       navigate("/admin/properties");
     } catch (error) {
       console.error("Error saving property:", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar imóvel",
+      toast.error("Erro ao salvar imóvel", {
         description: "Ocorreu um erro ao salvar as informações do imóvel. Tente novamente."
       });
     } finally {
