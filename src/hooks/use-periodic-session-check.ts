@@ -33,7 +33,7 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null) {
         // Add some jitter to prevent all clients from checking at the same time
         interval += Math.random() * 60000; // Add up to 1 minute of random jitter
         
-        checkIntervalRef.current = window.setTimeout(performSessionCheck, interval);
+        checkIntervalRef.current = setTimeout(performSessionCheck, interval);
         console.log(`Next session check scheduled in ${Math.round(interval/60000)} minutes`);
       };
       
