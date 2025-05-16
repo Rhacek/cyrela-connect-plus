@@ -5,139 +5,200 @@ import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Session } from "@supabase/supabase-js";
-import { UserSession } from "@/types/auth";
 import { transformUserData } from "@/utils/auth-utils";
+import { DashboardLoading } from "@/components/broker/dashboard/dashboard-loading";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles?: UserRole[];
 }
 
-// Type guard to check if session is a Supabase Session
-const isSupabaseSession = (session: Session | UserSession): session is Session => {
-  return 'user' in session;
-};
-
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { session, loading } = useAuth();
+  const { session, loading, setSession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isVerifying, setIsVerifying] = useState(true);
   
   useEffect(() => {
-    console.log("Protected route component mounting. Path:", location.pathname);
-    console.log("Protected route: session =", session?.id, "loading =", loading, "allowedRoles =", allowedRoles);
+    console.log("Protected route mounting. Path:", location.pathname);
+    console.log("Auth state:", { 
+      sessionExists: !!session, 
+      loading, 
+      allowedRoles 
+    });
+    
+    let isMounted = true;
     
     // Function to verify session directly with Supabase
     const verifySessionWithSupabase = async () => {
       try {
+        console.log("Verifying session with Supabase directly");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error verifying session with Supabase:", error);
-          setIsAuthorized(false);
           return null;
         }
         
         if (data.session) {
           console.log("Session verified with Supabase:", data.session.user.id);
-          // Transform the Supabase session to our UserSession format
-          const userSession = transformUserData(data.session.user);
-          return userSession;
+          
+          // If the session exists but not in our context, update the context
+          if (!session && isMounted) {
+            const userSession = transformUserData(data.session.user);
+            setSession(userSession);
+          }
+          
+          return transformUserData(data.session.user);
         } else {
           console.log("No session found with Supabase direct check");
-          setIsAuthorized(false);
+          
+          // Try session refresh as a last resort
+          try {
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData.session) {
+              console.log("Session refreshed successfully");
+              return transformUserData(refreshData.session.user);
+            }
+          } catch (refreshErr) {
+            console.error("Error refreshing session:", refreshErr);
+          }
+          
           return null;
         }
       } catch (err) {
         console.error("Unexpected error verifying session:", err);
-        setIsAuthorized(false);
         return null;
       }
     };
     
     // Main check for authorization
     const checkAuthorization = async () => {
+      // If already loading in auth context, wait
       if (loading) {
-        return; // Wait until loading is complete
+        console.log("Auth context is still loading, waiting...");
+        return;
       }
       
       // If no session in context, verify with Supabase directly
       let currentSession = session;
+      let verifiedWithSupabase = false;
       
       if (!currentSession) {
         console.log("No session in context, verifying with Supabase directly");
-        currentSession = await verifySessionWithSupabase();
+        const verifiedSession = await verifySessionWithSupabase();
+        currentSession = verifiedSession;
+        verifiedWithSupabase = true;
       }
       
       if (!currentSession) {
-        console.log("No valid session found, user will be redirected to /auth");
-        setIsAuthorized(false);
+        console.log("No valid session found after verification");
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
         return;
       }
       
-      // If we have a session but no allowed roles, it's a protected route but open to all roles
+      // If we have a session but no allowed roles, it's protected but open to all
       if (!allowedRoles) {
         console.log("Route is protected but open to all authenticated users");
-        setIsAuthorized(true);
+        if (isMounted) {
+          setIsAuthorized(true);
+          setIsVerifying(false);
+        }
         return;
       }
       
-      // If we have a session and allowed roles, check if user has permission
-      // Handle different session types correctly
-      let userRole: UserRole;
-      
-      if (isSupabaseSession(currentSession)) {
-        // This is a Supabase Session, transform it to our UserSession format
-        const userSession = transformUserData(currentSession.user);
-        userRole = userSession.user_metadata.role;
-      } else {
-        // This is our custom UserSession
-        userRole = currentSession.user_metadata.role;
-      }
-      
+      // Check if user has permission based on role
+      const userRole = currentSession.user_metadata.role;
       const hasPermission = allowedRoles.includes(userRole);
-      console.log("User role:", userRole, "Has permission:", hasPermission);
+      
+      console.log("Checking authorization:", {
+        userRole,
+        allowedRoles,
+        hasPermission
+      });
       
       if (!hasPermission) {
-        console.log("Role not allowed:", userRole, "Allowed roles:", allowedRoles);
-        toast.error("Você não tem permissão para acessar esta página");
+        console.log("User role not allowed, redirecting");
         
-        // Redirect based on role
-        switch (userRole) {
-          case UserRole.ADMIN:
-            navigate("/admin", { replace: true });
-            break;
-          case UserRole.BROKER:
-            navigate("/broker/dashboard", { replace: true });
-            break;
-          case UserRole.CLIENT:
-            navigate("/client/welcome", { replace: true });
-            break;
-          default:
-            navigate("/auth", { replace: true });
-            break;
+        if (isMounted) {
+          toast.error("Você não tem permissão para acessar esta página");
+          
+          // Redirect based on role
+          switch (userRole) {
+            case UserRole.ADMIN:
+              navigate("/admin", { replace: true });
+              break;
+            case UserRole.BROKER:
+              navigate("/broker/dashboard", { replace: true });
+              break;
+            case UserRole.CLIENT:
+              navigate("/client/welcome", { replace: true });
+              break;
+            default:
+              navigate("/auth", { replace: true });
+              break;
+          }
+          
+          setIsAuthorized(false);
+          setIsVerifying(false);
         }
-        setIsAuthorized(false);
       } else {
-        setIsAuthorized(true);
+        if (isMounted) {
+          setIsAuthorized(true);
+          setIsVerifying(false);
+        }
       }
     };
     
     checkAuthorization();
-  }, [session, loading, allowedRoles, navigate, location.pathname]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [session, loading, allowedRoles, navigate, location.pathname, setSession]);
+
+  // Periodic verification of session while on protected routes
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId: number | null = null;
+    
+    if (isAuthorized) {
+      // Verify session every 5 minutes
+      intervalId = window.setInterval(async () => {
+        if (!isMounted) return;
+        
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error || !data.session) {
+            console.warn("Protected route: Session lost during periodic check");
+            
+            if (isMounted) {
+              toast.error("Sua sessão expirou. Redirecionando para login...");
+              navigate("/auth", { replace: true });
+            }
+          }
+        } catch (err) {
+          console.error("Error during periodic session check in protected route:", err);
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+    
+    return () => {
+      isMounted = false;
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isAuthorized, navigate]);
 
   // Show loading screen while checking auth or determining authorization
-  if (loading || isAuthorized === null) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyrela-red"></div>
-          <p className="text-cyrela-gray-dark">Verificando autorização...</p>
-        </div>
-      </div>
-    );
+  if (loading || isVerifying || isAuthorized === null) {
+    return <DashboardLoading />;
   }
 
   // If not authorized or no session, redirect to auth page

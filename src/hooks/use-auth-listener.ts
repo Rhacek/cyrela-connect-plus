@@ -16,43 +16,35 @@ export const useAuthListener = () => {
     
     const setupAuthListener = async () => {
       try {
+        console.log("Setting up auth state listener...");
+        
         // Set up the auth state listener
         const { data } = await supabase.auth.onAuthStateChange(
-          async (event, currentSession) => {
+          (event, currentSession) => {
             console.log("Auth state changed:", event);
             
+            if (!isMounted) return;
+            
             if (currentSession?.user) {
-              console.log("Setting session from auth state change:", currentSession.user.id);
-              if (isMounted) {
-                setSessionFromEvent(transformUserData(currentSession.user));
-                
-                // Store session data in localStorage for extra reliability
-                if (event === 'SIGNED_IN') {
-                  localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
-                    access_token: currentSession.access_token,
-                    refresh_token: currentSession.refresh_token,
-                    expires_at: Math.floor(new Date(currentSession.expires_at).getTime() / 1000)
-                  }));
-                }
-              }
+              console.log("Auth event with session, user:", currentSession.user.id);
+              setSessionFromEvent(transformUserData(currentSession.user));
             } else if (event === 'SIGNED_OUT') {
               console.log("User signed out, clearing session");
-              if (isMounted) {
-                setSessionFromEvent(null);
-                localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-              }
+              setSessionFromEvent(null);
+            } else {
+              console.log(`Auth event '${event}' without valid session`);
             }
             
-            if (isMounted) {
-              setIsListening(true);
-            }
+            setIsListening(true);
           }
         );
 
         return data.subscription;
       } catch (err) {
         console.error("Error setting up auth listener:", err);
-        setIsListening(true);
+        if (isMounted) {
+          setIsListening(true);
+        }
         return null;
       }
     };

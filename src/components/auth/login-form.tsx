@@ -24,9 +24,6 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       setLoading(true);
       console.log("Attempting login with:", loginEmail);
       
-      // Clear any existing session data first
-      localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-      
       // Sign in with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
@@ -41,32 +38,22 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       if (data.session) {
         console.log("Login successful, session obtained:", data.session.user.id);
         
-        // Explicitly store session in local storage for extra reliability
-        localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-          expires_at: Math.floor(new Date(data.session.expires_at).getTime() / 1000)
-        }));
-        
-        // Verify the session was stored
-        const storedSessionStr = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-        if (storedSessionStr) {
-          console.log("Session successfully stored in localStorage");
-        } else {
-          console.error("Failed to store session in localStorage");
-        }
-        
         // Update Auth context
         await signIn(loginEmail, loginPassword);
         
-        // Immediately verify session was set
+        // Verify session was set
         const { data: sessionCheck } = await supabase.auth.getSession();
         if (sessionCheck.session) {
           console.log("Session verified after login:", sessionCheck.session.user.id);
         } else {
-          console.warn("Session not found immediately after login, retrying...");
+          console.warn("Session not found immediately after login");
           // Try to refresh the session
-          await supabase.auth.refreshSession();
+          const { data: refreshData } = await supabase.auth.refreshSession();
+          if (refreshData.session) {
+            console.log("Session refreshed successfully");
+          } else {
+            console.warn("Session refresh failed");
+          }
         }
         
         onLoginAttempt(); // Signal to parent that login was attempted

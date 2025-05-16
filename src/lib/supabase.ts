@@ -12,7 +12,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     storage: localStorage,
     detectSessionInUrl: true,
-    flowType: 'implicit'
+    flowType: 'implicit',
+    storageKey: 'sb-cbdytpkwalaoshbvxxri-auth-token' // Explicitly set the storage key
   }
 });
 
@@ -38,30 +39,12 @@ export const getCurrentUser = async () => {
   }
 };
 
-// Clear any expired sessions on load
-export const cleanupExpiredSessions = () => {
-  try {
-    // Check if there's a session in localStorage and if it's expired
-    const sessionString = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-    if (sessionString) {
-      const session = JSON.parse(sessionString);
-      if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
-        // Session expired, remove it
-        localStorage.removeItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-        console.log("Removed expired session token");
-      }
-    }
-  } catch (e) {
-    console.error("Error cleaning up expired sessions:", e);
-  }
-};
-
-// Initialize auth cleanup
-cleanupExpiredSessions();
-
 // Force restoration of session from localStorage on app load
 export const forceSessionRestore = async () => {
   try {
+    console.log("Attempting to restore session...");
+    
+    // First try the standard getSession method
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
@@ -69,46 +52,72 @@ export const forceSessionRestore = async () => {
       return null;
     }
     
-    if (!data.session) {
-      console.log("No session found through getSession, trying localStorage");
-      
-      // Attempt direct localStorage recovery - using the correct Supabase storage key
-      try {
-        const storedSession = localStorage.getItem('sb-cbdytpkwalaoshbvxxri-auth-token');
-        if (storedSession) {
-          const parsedSession = JSON.parse(storedSession);
-          
-          if (parsedSession && 
-              parsedSession.access_token && 
-              parsedSession.expires_at && 
-              new Date(parsedSession.expires_at * 1000) > new Date()) {
-            
-            console.log("Found valid session in localStorage, attempting to restore");
-            
-            // Try to set the session manually and refresh
-            await supabase.auth.setSession({
-              access_token: parsedSession.access_token,
-              refresh_token: parsedSession.refresh_token
-            });
-            
-            // Get the session after setting it
-            const { data: sessionData } = await supabase.auth.getSession();
-            if (sessionData.session) {
-              console.log("Session successfully restored manually");
-              return sessionData.session;
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error parsing localStorage session:", e);
-      }
-    } else {
+    if (data.session) {
       console.log("Session found through getSession:", data.session.user.id);
+      return data.session;
     }
     
-    return data.session;
+    console.log("No session found through getSession, trying manual recovery");
+    
+    // Attempt to recover session from localStorage manually
+    try {
+      const storageKey = 'sb-cbdytpkwalaoshbvxxri-auth-token';
+      const storedSession = localStorage.getItem(storageKey);
+      
+      if (storedSession) {
+        const parsedSession = JSON.parse(storedSession);
+        
+        if (parsedSession && 
+            parsedSession.access_token && 
+            parsedSession.refresh_token && 
+            parsedSession.expires_at && 
+            new Date(parsedSession.expires_at * 1000) > new Date()) {
+          
+          console.log("Found valid session in localStorage, attempting to restore");
+          
+          // Try to set the session manually and refresh
+          const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
+            access_token: parsedSession.access_token,
+            refresh_token: parsedSession.refresh_token
+          });
+          
+          if (setSessionError) {
+            console.error("Error setting session manually:", setSessionError);
+            return null;
+          }
+          
+          if (sessionData.session) {
+            console.log("Session successfully restored manually");
+            return sessionData.session;
+          }
+        } else {
+          console.log("Stored session is invalid or expired");
+        }
+      } else {
+        console.log("No session found in localStorage");
+      }
+    } catch (e) {
+      console.error("Error parsing localStorage session:", e);
+    }
+    
+    return null;
   } catch (e) {
     console.error("Error in forceSessionRestore:", e);
     return null;
   }
 };
+
+// Initialize session on module load
+export const initializeSession = async () => {
+  const session = await forceSessionRestore();
+  if (session) {
+    console.log("Session initialized on module load");
+  } else {
+    console.log("No session found during initialization");
+  }
+};
+
+// Call initialization
+initializeSession().catch(err => {
+  console.error("Error during session initialization:", err);
+});

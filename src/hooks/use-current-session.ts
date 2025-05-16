@@ -16,8 +16,9 @@ export const useCurrentSession = () => {
     
     const checkCurrentSession = async () => {
       try {
+        console.log("Checking for current session...");
         // Check for existing session
-        const { data: { session: supabaseSession }, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
@@ -27,20 +28,29 @@ export const useCurrentSession = () => {
           return;
         }
 
-        if (supabaseSession?.user) {
-          console.log("Found existing session:", supabaseSession.user.id);
+        if (data.session?.user) {
+          console.log("Found existing session for user:", data.session.user.id);
           if (isMounted) {
-            setCurrentSession(transformUserData(supabaseSession.user));
-            
-            // Store session data in localStorage for backup recovery
-            localStorage.setItem('sb-cbdytpkwalaoshbvxxri-auth-token', JSON.stringify({
-              access_token: supabaseSession.access_token,
-              refresh_token: supabaseSession.refresh_token,
-              expires_at: Math.floor(new Date(supabaseSession.expires_at).getTime() / 1000)
-            }));
+            setCurrentSession(transformUserData(data.session.user));
           }
         } else {
-          console.log("No existing session found");
+          console.log("No existing session found via getSession");
+          
+          // Optionally try to refresh session
+          try {
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.log("Session refresh failed:", refreshError.message);
+            } else if (refreshData.session) {
+              console.log("Session refreshed successfully");
+              if (isMounted) {
+                setCurrentSession(transformUserData(refreshData.session.user));
+              }
+            }
+          } catch (refreshErr) {
+            console.error("Error refreshing session:", refreshErr);
+          }
         }
         
         if (isMounted) {
