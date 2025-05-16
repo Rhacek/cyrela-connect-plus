@@ -105,9 +105,29 @@ const AdminPropertyForm = () => {
           description: "As informações foram salvas no sistema."
         });
       } else {
-        // Create new property
+        // Create new property - ensure all required fields are present
         const newProperty = await propertiesService.create({
-          ...values,
+          title: values.title,
+          description: values.description,
+          developmentName: values.developmentName || "",
+          type: values.type,
+          price: values.price,
+          promotionalPrice: values.promotionalPrice,
+          area: values.area,
+          bedrooms: values.bedrooms,
+          bathrooms: values.bathrooms,
+          suites: values.suites,
+          parkingSpaces: values.parkingSpaces,
+          address: values.address,
+          neighborhood: values.neighborhood,
+          city: values.city,
+          state: values.state,
+          zipCode: values.zipCode,
+          constructionStage: values.constructionStage || "",
+          youtubeUrl: values.youtubeUrl || "",
+          isHighlighted: values.isHighlighted,
+          brokerNotes: values.brokerNotes || "",
+          commission: values.commission || 0,
           createdById: session.id,
           isActive: true,
           viewCount: 0,
