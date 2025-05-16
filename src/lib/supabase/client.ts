@@ -25,8 +25,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: localStorage,
     detectSessionInUrl: true,
     flowType: 'implicit',
-    storageKey: storageKey,
-    debug: false // Disable debug mode to reduce noise
+    storageKey: storageKey
   }
 });
 
