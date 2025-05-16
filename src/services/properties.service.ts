@@ -39,11 +39,18 @@ export const propertiesService = {
   },
 
   async create(property: Omit<Property, 'id' | 'createdAt' | 'updatedAt' | 'images'>): Promise<Property> {
+    // Make sure we have default values for required fields that might not be present in the form
     const newProperty = {
       ...property,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      viewCount: 0,
+      shareCount: 0,
+      isActive: true,
+      isHighlighted: property.isHighlighted || false,
     };
+
+    console.log('Creating property:', newProperty);
 
     const { data, error } = await supabase
       .from('properties')
@@ -81,6 +88,13 @@ export const propertiesService = {
   },
 
   async delete(id: string): Promise<void> {
+    // First, get all images for this property to delete them from storage later
+    const { data: images } = await supabase
+      .from('property_images')
+      .select('*')
+      .eq('propertyId', id);
+
+    // Delete the property (this will cascade delete the property_images entries)
     const { error } = await supabase
       .from('properties')
       .delete()
@@ -89,6 +103,28 @@ export const propertiesService = {
     if (error) {
       console.error(`Error deleting property with id ${id}:`, error);
       throw error;
+    }
+
+    // Delete images from storage if there were any
+    if (images && images.length > 0) {
+      // Extract filenames from URLs
+      const filePaths = images.map(image => {
+        const url = image.url;
+        const storageUrl = supabase.storage.from('properties').getPublicUrl('').data.publicUrl;
+        return url.replace(storageUrl, '');
+      });
+
+      // Delete files from storage
+      if (filePaths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from('properties')
+          .remove(filePaths);
+
+        if (storageError) {
+          console.error('Error deleting property images from storage:', storageError);
+          // We don't throw here as the property was deleted successfully
+        }
+      }
     }
   },
 
@@ -126,6 +162,19 @@ export const propertiesService = {
   },
 
   async deleteImage(imageId: string): Promise<void> {
+    // First get the image to find its URL
+    const { data: image, error: fetchError } = await supabase
+      .from('property_images')
+      .select('*')
+      .eq('id', imageId)
+      .single();
+
+    if (fetchError) {
+      console.error(`Error fetching image with id ${imageId}:`, fetchError);
+      throw fetchError;
+    }
+
+    // Delete the image from the database
     const { error } = await supabase
       .from('property_images')
       .delete()
@@ -134,6 +183,22 @@ export const propertiesService = {
     if (error) {
       console.error(`Error deleting property image with id ${imageId}:`, error);
       throw error;
+    }
+
+    // Delete the image from storage
+    if (image && image.url) {
+      // Extract filename from URL
+      const storageUrl = supabase.storage.from('properties').getPublicUrl('').data.publicUrl;
+      const filePath = image.url.replace(storageUrl, '');
+
+      const { error: storageError } = await supabase.storage
+        .from('properties')
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error(`Error deleting image from storage:`, storageError);
+        // We don't throw here as the database record was deleted successfully
+      }
     }
   },
 

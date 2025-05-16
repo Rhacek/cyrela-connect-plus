@@ -6,13 +6,36 @@ import { UseFormReturn } from "react-hook-form";
 import { PropertyFormValues } from "./PropertyFormSchema";
 import { PropertyImageUpload } from "@/components/admin/PropertyImageUpload";
 import { PropertyImage } from "@/types";
+import { useEffect, useState } from "react";
+import { propertiesService } from "@/services/properties.service";
 
 interface MediaTabProps {
   form: UseFormReturn<PropertyFormValues>;
   initialImages?: PropertyImage[];
+  propertyId?: string;
 }
 
-export const MediaTab = ({ form, initialImages = [] }: MediaTabProps) => {
+export const MediaTab = ({ form, initialImages = [], propertyId }: MediaTabProps) => {
+  const [images, setImages] = useState<PropertyImage[]>(initialImages);
+
+  useEffect(() => {
+    if (propertyId) {
+      // Fetch images if editing an existing property
+      const fetchImages = async () => {
+        try {
+          const property = await propertiesService.getById(propertyId);
+          if (property && property.images) {
+            setImages(property.images);
+          }
+        } catch (error) {
+          console.error("Error fetching property images:", error);
+        }
+      };
+      
+      fetchImages();
+    }
+  }, [propertyId]);
+
   return (
     <Card className="w-full">
       <CardContent className="pt-6 space-y-4">
@@ -41,7 +64,10 @@ export const MediaTab = ({ form, initialImages = [] }: MediaTabProps) => {
           )}
         />
         
-        <PropertyImageUpload initialImages={initialImages} />
+        <PropertyImageUpload 
+          initialImages={images} 
+          propertyId={propertyId}
+        />
       </CardContent>
     </Card>
   );

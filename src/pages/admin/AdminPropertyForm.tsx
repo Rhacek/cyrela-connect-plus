@@ -6,19 +6,24 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockProperties } from "@/mocks/property-data";
 import { toast } from "@/components/ui/use-toast";
 import { BasicInfoTab } from "@/components/admin/property-form/BasicInfoTab";
 import { DetailsTab } from "@/components/admin/property-form/DetailsTab";
 import { MediaTab } from "@/components/admin/property-form/MediaTab";
 import { BrokerInfoTab } from "@/components/admin/property-form/BrokerInfoTab";
 import { propertyFormSchema, PropertyFormValues, defaultPropertyValues } from "@/components/admin/property-form/PropertyFormSchema";
+import { propertiesService } from "@/services/properties.service";
+import { useAuth } from "@/context/auth-context";
+import { Loader2 } from "lucide-react";
 
 const AdminPropertyForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { session } = useAuth();
   const isEditing = Boolean(id);
   const [currentTab, setCurrentTab] = useState("basic");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing);
   
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
@@ -26,48 +31,119 @@ const AdminPropertyForm = () => {
   });
   
   useEffect(() => {
-    if (isEditing) {
-      const property = mockProperties.find(p => p.id === id);
-      if (property) {
-        form.reset({
-          title: property.title,
-          developmentName: property.developmentName || "",
-          description: property.description,
-          type: property.type,
-          price: property.price,
-          promotionalPrice: property.promotionalPrice,
-          area: property.area,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          suites: property.suites,
-          parkingSpaces: property.parkingSpaces,
-          address: property.address,
-          neighborhood: property.neighborhood,
-          city: property.city,
-          state: property.state,
-          zipCode: property.zipCode,
-          constructionStage: property.constructionStage || "",
-          youtubeUrl: property.youtubeUrl || "",
-          isHighlighted: property.isHighlighted,
-          brokerNotes: property.brokerNotes || "",
-          commission: property.commission || 0
-        });
-      } else {
-        toast.error("Imóvel não encontrado", {
-          description: "O imóvel que você está tentando editar não foi encontrado."
-        });
-        navigate("/admin/properties");
-      }
+    if (isEditing && id) {
+      const fetchProperty = async () => {
+        try {
+          setIsLoading(true);
+          const property = await propertiesService.getById(id);
+          
+          if (property) {
+            form.reset({
+              title: property.title,
+              developmentName: property.developmentName || "",
+              description: property.description,
+              type: property.type,
+              price: property.price,
+              promotionalPrice: property.promotionalPrice,
+              area: property.area,
+              bedrooms: property.bedrooms,
+              bathrooms: property.bathrooms,
+              suites: property.suites,
+              parkingSpaces: property.parkingSpaces,
+              address: property.address,
+              neighborhood: property.neighborhood,
+              city: property.city,
+              state: property.state,
+              zipCode: property.zipCode,
+              constructionStage: property.constructionStage || "",
+              youtubeUrl: property.youtubeUrl || "",
+              isHighlighted: property.isHighlighted,
+              brokerNotes: property.brokerNotes || "",
+              commission: property.commission || 0
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Imóvel não encontrado",
+              description: "O imóvel que você está tentando editar não foi encontrado."
+            });
+            navigate("/admin/properties");
+          }
+        } catch (error) {
+          console.error("Error fetching property:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao carregar imóvel",
+            description: "Ocorreu um erro ao carregar as informações do imóvel."
+          });
+          navigate("/admin/properties");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchProperty();
     }
   }, [id, isEditing, form, navigate]);
   
-  const onSubmit = (values: PropertyFormValues) => {
-    console.log(values);
-    toast.success(isEditing ? "Imóvel atualizado com sucesso!" : "Imóvel cadastrado com sucesso!", {
-      description: "As informações foram salvas no sistema."
-    });
-    navigate("/admin/properties");
+  const onSubmit = async (values: PropertyFormValues) => {
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Não autenticado",
+        description: "Você precisa estar logado para cadastrar um imóvel."
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      if (isEditing && id) {
+        // Update existing property
+        await propertiesService.update(id, {
+          ...values,
+          createdById: session.id
+        });
+        
+        toast({
+          title: "Imóvel atualizado com sucesso!",
+          description: "As informações foram salvas no sistema."
+        });
+      } else {
+        // Create new property
+        const newProperty = await propertiesService.create({
+          ...values,
+          createdById: session.id
+        });
+        
+        toast({
+          title: "Imóvel cadastrado com sucesso!",
+          description: "O novo imóvel foi adicionado ao sistema."
+        });
+      }
+      
+      navigate("/admin/properties");
+    } catch (error) {
+      console.error("Error saving property:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar imóvel",
+        description: "Ocorreu um erro ao salvar as informações do imóvel. Tente novamente."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] w-full">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+        <p className="text-muted-foreground">Carregando informações do imóvel...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6 w-full max-w-5xl mx-auto">
@@ -119,7 +195,11 @@ const AdminPropertyForm = () => {
             </TabsContent>
 
             <TabsContent value="media" className="w-full">
-              <MediaTab form={form} initialImages={isEditing ? mockProperties.find(p => p.id === id)?.images : []} />
+              <MediaTab 
+                form={form} 
+                initialImages={[]} 
+                propertyId={isEditing ? id : undefined}
+              />
             </TabsContent>
             
             <TabsContent value="broker" className="w-full">
@@ -127,11 +207,23 @@ const AdminPropertyForm = () => {
             </TabsContent>
 
             <div className="flex justify-end gap-4 mt-8">
-              <Button type="button" variant="outline" onClick={() => navigate("/admin/properties")}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate("/admin/properties")}
+                disabled={isSubmitting}
+              >
                 Cancelar
               </Button>
-              <Button type="submit">
-                {isEditing ? "Atualizar Imóvel" : "Cadastrar Imóvel"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isEditing ? "Atualizando..." : "Cadastrando..."}
+                  </>
+                ) : (
+                  isEditing ? "Atualizar Imóvel" : "Cadastrar Imóvel"
+                )}
               </Button>
             </div>
           </form>
