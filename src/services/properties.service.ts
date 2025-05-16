@@ -2,6 +2,51 @@
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/types';
 
+// Helper functions to convert between camelCase and snake_case
+const toCamelCase = (str: string) => {
+  return str.replace(/([-_][a-z])/g, (group) =>
+    group.toUpperCase().replace('-', '').replace('_', '')
+  );
+};
+
+const toSnakeCase = (str: string) => {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+};
+
+const toCamelCaseObject = (obj: any) => {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCaseObject(v));
+  }
+  
+  const camelCaseObj: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const camelCaseKey = toCamelCase(key);
+      camelCaseObj[camelCaseKey] = toCamelCaseObject(obj[key]);
+    }
+  }
+  return camelCaseObj;
+};
+
+const toSnakeCaseObject = (obj: any) => {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(v => toSnakeCaseObject(v));
+  }
+  
+  const snakeCaseObj: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const snakeCaseKey = toSnakeCase(key);
+      snakeCaseObj[snakeCaseKey] = toSnakeCaseObject(obj[key]);
+    }
+  }
+  return snakeCaseObj;
+};
+
 export const propertiesService = {
   async getAll(): Promise<Property[]> {
     const { data, error } = await supabase
@@ -10,14 +55,14 @@ export const propertiesService = {
         *,
         images:property_images(*)
       `)
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching properties:', error);
       throw error;
     }
 
-    return data as unknown as Property[];
+    return toCamelCaseObject(data) as Property[];
   },
 
   async getById(id: string): Promise<Property | null> {
@@ -35,19 +80,22 @@ export const propertiesService = {
       throw error;
     }
 
-    return data as unknown as Property;
+    return toCamelCaseObject(data) as Property;
   },
 
   async create(property: Omit<Property, 'id' | 'createdAt' | 'updatedAt' | 'images'>): Promise<Property> {
-    // Make sure we have default values for required fields that might not be present in the form
+    // Convert property from camelCase to snake_case
+    const snakeCaseProperty = toSnakeCaseObject(property);
+    
+    // Make sure we have default values for required fields
     const newProperty = {
-      ...property,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      viewCount: 0,
-      shareCount: 0,
-      isActive: true,
-      isHighlighted: property.isHighlighted || false,
+      ...snakeCaseProperty,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      view_count: 0,
+      share_count: 0,
+      is_active: true,
+      is_highlighted: snakeCaseProperty.is_highlighted || false,
     };
 
     console.log('Creating property:', newProperty);
@@ -63,13 +111,16 @@ export const propertiesService = {
       throw error;
     }
 
-    return data as unknown as Property;
+    return toCamelCaseObject(data) as Property;
   },
 
   async update(id: string, property: Partial<Property>): Promise<Property> {
+    // Convert property from camelCase to snake_case
+    const snakeCaseProperty = toSnakeCaseObject(property);
+    
     const updatedProperty = {
-      ...property,
-      updatedAt: new Date().toISOString(),
+      ...snakeCaseProperty,
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -84,7 +135,7 @@ export const propertiesService = {
       throw error;
     }
 
-    return data as unknown as Property;
+    return toCamelCaseObject(data) as Property;
   },
 
   async delete(id: string): Promise<void> {
@@ -92,7 +143,7 @@ export const propertiesService = {
     const { data: images } = await supabase
       .from('property_images')
       .select('*')
-      .eq('propertyId', id);
+      .eq('property_id', id);
 
     // Delete the property (this will cascade delete the property_images entries)
     const { error } = await supabase
@@ -135,21 +186,23 @@ export const propertiesService = {
         *,
         images:property_images(*)
       `)
-      .eq('createdById', brokerId)
-      .order('createdAt', { ascending: false });
+      .eq('created_by_id', brokerId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(`Error fetching properties for broker ${brokerId}:`, error);
       throw error;
     }
 
-    return data as unknown as Property[];
+    return toCamelCaseObject(data) as Property[];
   },
 
   async addImage(propertyImage: Omit<any, 'id'>): Promise<any> {
+    const snakeCaseImage = toSnakeCaseObject(propertyImage);
+    
     const { data, error } = await supabase
       .from('property_images')
-      .insert(propertyImage)
+      .insert(snakeCaseImage)
       .select()
       .single();
 
@@ -158,7 +211,7 @@ export const propertiesService = {
       throw error;
     }
 
-    return data;
+    return toCamelCaseObject(data);
   },
 
   async deleteImage(imageId: string): Promise<void> {

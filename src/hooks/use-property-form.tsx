@@ -33,6 +33,7 @@ export const usePropertyForm = ({ propertyId, userId }: UsePropertyFormProps) =>
           const property = await propertiesService.getById(propertyId);
           
           if (property) {
+            // The property is now already in camelCase thanks to our conversion utility
             form.reset({
               title: property.title,
               developmentName: property.developmentName || "",
@@ -100,7 +101,7 @@ export const usePropertyForm = ({ propertyId, userId }: UsePropertyFormProps) =>
         });
       } else {
         // Create new property - ensure all required fields are present
-        const newProperty = await propertiesService.create({
+        await propertiesService.create({
           title: values.title,
           description: values.description,
           developmentName: values.developmentName || "",
