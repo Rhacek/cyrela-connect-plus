@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase/client';
+import { supabase, sessionEvent, SESSION_UPDATED, SESSION_REMOVED } from '@/lib/supabase';
 import { transformUserData } from '@/utils/auth-utils';
 import { UserSession } from '@/types/auth';
 
