@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useQuery } from "@tanstack/react-query";
-import { performanceService } from "@/services/performance.service";
+import { getCurrentMonthPerformance, ensureCurrentMonthPerformance } from "@/services/performance.service";
 import { targetsService } from "@/services/targets.service";
-import { leadsService } from "@/services/leads.service";
+import { leadsService } from "@/services/leads.service"; // Updated import
 import { logAuthState } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import { Performance, Target } from "@/types";
