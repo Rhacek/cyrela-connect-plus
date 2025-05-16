@@ -80,6 +80,12 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         return;
       }
       
+      console.log("Checking authorization with session:", {
+        hasSession: !!session,
+        sessionId: session?.id,
+        userRole: session?.user_metadata?.role,
+      });
+      
       // If no session in context, verify with Supabase directly
       let currentSession = session;
       
@@ -94,8 +100,6 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           setIsAuthorized(false);
           setIsVerifying(false);
-          // Force navigation to auth page if we're on a protected route
-          navigate("/auth", { replace: true });
         }
         return;
       }

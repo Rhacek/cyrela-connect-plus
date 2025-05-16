@@ -1,9 +1,34 @@
-
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Users, MessageSquare, TrendingUp } from "lucide-react";
 import { mockProperties } from "@/mocks/property-data";
+import { useAuth } from "@/context/auth-context";
+import { useNavigate } from "react-router-dom";
+import { UserRole } from "@/types";
 
 const AdminDashboard = () => {
+  const { session, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  
+  // Verify admin access on dashboard page load
+  useEffect(() => {
+    console.log("AdminDashboard mounted, verifying admin session:", {
+      hasSession: !!session,
+      sessionId: session?.id,
+      userRole: session?.user_metadata?.role,
+      isAdmin: isAdmin()
+    });
+    
+    // Double-check admin role
+    if (!session || !isAdmin()) {
+      console.log("Non-admin access attempted for dashboard, redirecting");
+      navigate("/auth", { replace: true });
+      return;
+    }
+    
+    console.log("Admin access confirmed for dashboard");
+  }, [session, isAdmin, navigate]);
+
   return (
     <div className="space-y-6">
       <div>

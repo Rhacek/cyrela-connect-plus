@@ -135,7 +135,7 @@ const App = () => (
             
             {/* Admin routes - protected for admin role */}
             <Route 
-              path="/admin" 
+              path="/admin/*" 
               element={
                 <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                   <AdminLayout />
@@ -157,6 +157,9 @@ const App = () => (
               <Route path="settings" element={<AdminSettings />} />
               <Route path="plans" element={<AdminPlans />} />
             </Route>
+            
+            {/* Extra route to handle trailing slash redirect */}
+            <Route path="/admin" element={<Navigate to="/admin/" replace />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

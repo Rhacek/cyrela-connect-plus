@@ -5,5 +5,5 @@ import { supabase as mainSupabaseClient } from '@/lib/supabase';
 // Re-export the main client for use by components importing from this location
 export const supabase = mainSupabaseClient;
 
-// Add a console warning for debugging
-console.warn("Using the Supabase client through the redirect layer. This is expected behavior.");
+// Add a debugging note to identify this import being used
+console.log("Auth redirect layer: Using the consolidated Supabase client");

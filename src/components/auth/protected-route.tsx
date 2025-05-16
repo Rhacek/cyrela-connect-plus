@@ -5,6 +5,7 @@ import { useSessionVerification } from "@/hooks/use-session-verification";
 import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ interface ProtectedRouteProps {
  */
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const location = useLocation();
+  const { session } = useAuth();
   
   // Use the custom hook for session verification
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
@@ -25,8 +27,17 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   
   // Effect to log protected route access
   useEffect(() => {
-    console.log(`Protected route accessed: ${location.pathname}, authorized: ${isAuthorized}, verifying: ${isVerifying}`);
-  }, [location.pathname, isAuthorized, isVerifying]);
+    console.log(`Protected route accessed: ${location.pathname}`);
+    console.log(`Session exists: ${!!session}, ID: ${session?.id}`);
+    console.log(`Auth status: authorized=${isAuthorized}, verifying=${isVerifying}`);
+    
+    // Special logging for admin routes
+    if (location.pathname.startsWith('/admin')) {
+      console.log('Accessing admin route with session:', session);
+      console.log('User role:', session?.user_metadata?.role);
+      console.log('Allowed roles:', allowedRoles);
+    }
+  }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles]);
   
   // Show loading state while verifying
   if (isVerifying) {

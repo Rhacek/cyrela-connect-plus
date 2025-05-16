@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { UserRole } from "@/types";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
 
@@ -14,6 +16,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onLoginAttempt }: LoginFormProps) {
   const { setSession } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -27,6 +30,9 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       
       // Signal that login was attempted
       onLoginAttempt();
+      
+      // Clear any existing session first to avoid conflicts
+      await supabase.auth.signOut();
       
       // Use direct Supabase login for more reliable session handling
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -50,36 +56,26 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       
       console.log("Login successful, session established:", data.session.user.id);
       
-      // Ensure we wait for the session to be fully established
-      setTimeout(async () => {
-        try {
-          // Verify session is actually persisted
-          const { data: sessionCheck } = await supabase.auth.getSession();
-          
-          if (sessionCheck.session) {
-            console.log("Session confirmed after login:", sessionCheck.session.user.id);
-            
-            // Transform user data to our expected format
-            const userSession = transformUserData(sessionCheck.session.user);
-            
-            // Explicitly set the session in auth context
-            setSession(userSession);
-            
-            toast.success("Login realizado com sucesso!");
-          } else {
-            console.warn("Session not found after successful login and timeout");
-            
-            // Try one more time with a direct session from the login response
-            const userSession = transformUserData(data.session.user);
-            setSession(userSession);
-            
-            toast.success("Login realizado com sucesso!");
-          }
-        } catch (verifyError) {
-          console.error("Error verifying session after login:", verifyError);
-          toast.error("Erro ao verificar sessão após login");
-        }
-      }, 500); // Small delay to ensure session is established
+      // Transform user data to our expected format
+      const userSession = transformUserData(data.session.user);
+      
+      // Explicitly set the session in auth context
+      setSession(userSession);
+      
+      toast.success("Login realizado com sucesso!");
+      
+      // Immediately redirect based on role without waiting for effect
+      const userRole = userSession.user_metadata.role;
+      
+      if (userRole === UserRole.ADMIN) {
+        console.log("Admin login successful, redirecting to /admin/");
+        navigate("/admin/", { replace: true });
+      } else if (userRole === UserRole.BROKER) {
+        navigate("/broker/dashboard", { replace: true });
+      } else {
+        navigate("/client/welcome", { replace: true });
+      }
+      
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error("Falha no login", { 

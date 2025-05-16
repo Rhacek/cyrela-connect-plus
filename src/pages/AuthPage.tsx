@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { useAuth } from "@/context/auth-context";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { UserRole } from "@/types";
 import { supabase, forceSessionRestore } from "@/lib/supabase";
 import { transformUserData } from "@/utils/auth-utils";
@@ -10,7 +9,12 @@ import { transformUserData } from "@/utils/auth-utils";
 const AuthPage = () => {
   const { session, loading, setSession, initialized } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isVerifyingAuth, setIsVerifyingAuth] = useState(true);
+  
+  // Parse redirect parameter from URL
+  const searchParams = new URLSearchParams(location.search);
+  const redirectPath = searchParams.get('redirect');
   
   useEffect(() => {
     // First, verify if we have a local session
@@ -19,7 +23,7 @@ const AuthPage = () => {
       
       if (session && !loading) {
         console.log("AuthPage - Found session in context:", session.id);
-        redirectBasedOnRole(session);
+        redirectBasedOnRole(session, redirectPath);
         return;
       }
       
@@ -46,7 +50,7 @@ const AuthPage = () => {
             setSession(userSession);
             
             // Use the session directly instead of waiting for context update
-            redirectBasedOnRole(userSession);
+            redirectBasedOnRole(userSession, redirectPath);
             return;
           }
           
@@ -61,17 +65,17 @@ const AuthPage = () => {
     };
     
     checkAuth();
-  }, [session, loading, navigate, setSession, initialized]);
+  }, [session, loading, navigate, setSession, initialized, redirectPath]);
   
   // Separate useEffect to prevent redirection race conditions
   useEffect(() => {
     // If session changes, check for redirection
     if (session) {
-      redirectBasedOnRole(session);
+      redirectBasedOnRole(session, redirectPath);
     }
-  }, [session, navigate]);
+  }, [session, navigate, redirectPath]);
   
-  const redirectBasedOnRole = (userSession: any) => {
+  const redirectBasedOnRole = (userSession: any, redirectPath: string | null) => {
     console.log("Auth page detected existing session, redirecting based on role");
     
     // Get the role from the user_metadata
@@ -79,11 +83,30 @@ const AuthPage = () => {
     
     console.log("User role detected:", userRole);
     
+    // If there's a specific redirect path, use it unless it's admin path with wrong role
+    if (redirectPath) {
+      // Only redirect to admin paths if user is admin
+      if (redirectPath.startsWith('/admin') && userRole !== UserRole.ADMIN) {
+        console.log("Attempt to redirect to admin path, but user is not admin");
+        redirectToDefaultForRole(userRole);
+        return;
+      }
+      
+      console.log(`Redirecting to specified path: ${redirectPath}`);
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+    
+    // Otherwise redirect to role-specific default page
+    redirectToDefaultForRole(userRole);
+  };
+  
+  const redirectToDefaultForRole = (userRole: UserRole) => {
     if (userRole === UserRole.BROKER) {
       console.log("Redirecting to broker dashboard");
       navigate("/broker/dashboard", { replace: true });
     } else if (userRole === UserRole.ADMIN) {
-      // Always redirect admins to /admin/ with trailing slash
+      // Always redirect admins to /admin/ with trailing slash  
       console.log("Redirecting to admin dashboard with trailing slash");
       navigate("/admin/", { replace: true });
     } else if (userRole === UserRole.CLIENT) {
