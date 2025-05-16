@@ -13,3 +13,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storage: localStorage
   }
 });
+
+// Helper to log auth state for debugging
+export const logAuthState = async () => {
+  const { data } = await supabase.auth.getSession();
+  console.log("Current auth session:", data.session);
+  return data.session;
+};

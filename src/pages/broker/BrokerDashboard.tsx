@@ -20,20 +20,41 @@ import { performanceService } from "@/services/performance.service";
 import { targetsService } from "@/services/targets.service";
 import { leadsService } from "@/services/leads.service";
 import { toast } from "@/hooks/use-toast";
+import { logAuthState } from "@/lib/supabase";
 
 const BrokerDashboard = () => {
   const isMobile = useIsMobile();
   const { session } = useAuth();
+  const [hasInitializedQueries, setHasInitializedQueries] = useState(false);
   
   // Log user session for debugging
   useEffect(() => {
     console.log("BrokerDashboard: session =", session?.id);
-  }, [session]);
+    
+    // Check if session is available, but only run once
+    const initializeQueries = async () => {
+      if (session?.id && !hasInitializedQueries) {
+        console.log("Verifying auth state from Supabase directly...");
+        const currentSession = await logAuthState();
+        
+        if (currentSession) {
+          console.log("Session verified, initializing queries");
+          setHasInitializedQueries(true);
+        } else {
+          console.log("Session not verified, redirecting to auth");
+          toast.error("Sessão expirada. Faça login novamente.");
+          // This won't be needed since ProtectedRoute will handle the redirect
+        }
+      }
+    };
+    
+    initializeQueries();
+  }, [session, hasInitializedQueries]);
   
   // Default empty states for data
   const emptyPerformance = {
     id: "",
-    brokerId: session?.id || "",
+    broker_id: session?.id || "", // Fixed field name
     month: new Date().getMonth() + 1, // Current month
     year: new Date().getFullYear(),
     shares: 0,
@@ -45,14 +66,14 @@ const BrokerDashboard = () => {
   
   const emptyTarget = {
     id: "",
-    brokerId: session?.id || "",
+    broker_id: session?.id || "", // Fixed field name
     month: new Date().getMonth() + 1, // Current month
     year: new Date().getFullYear(),
-    shareTarget: 0,
-    leadTarget: 0,
-    scheduleTarget: 0,
-    visitTarget: 0,
-    saleTarget: 0
+    share_target: 0, // Fixed field name
+    lead_target: 0, // Fixed field name
+    schedule_target: 0, // Fixed field name
+    visit_target: 0, // Fixed field name
+    sale_target: 0 // Fixed field name
   };
   
   // Fetch current month's performance data
@@ -63,7 +84,7 @@ const BrokerDashboard = () => {
   } = useQuery({
     queryKey: ['brokerPerformance', session?.id],
     queryFn: () => performanceService.getCurrentMonthPerformance(session?.id || ""),
-    enabled: !!session?.id
+    enabled: !!session?.id && hasInitializedQueries
   });
   
   // Display toast if performance data fetch fails
@@ -82,7 +103,7 @@ const BrokerDashboard = () => {
   } = useQuery({
     queryKey: ['brokerTarget', session?.id],
     queryFn: () => targetsService.getCurrentMonthTarget(session?.id || ""),
-    enabled: !!session?.id
+    enabled: !!session?.id && hasInitializedQueries
   });
   
   // Display toast if target data fetch fails
@@ -101,7 +122,7 @@ const BrokerDashboard = () => {
   } = useQuery({
     queryKey: ['brokerLeads', session?.id],
     queryFn: () => leadsService.getBrokerLeads(session?.id || ""),
-    enabled: !!session?.id
+    enabled: !!session?.id && hasInitializedQueries
   });
   
   // Display toast if leads data fetch fails
@@ -118,13 +139,49 @@ const BrokerDashboard = () => {
     // Redirect or open modal logic would go here
   };
   
+  // Map database fields to our frontend models
+  const mapPerformanceData = (data: any) => {
+    if (!data) return emptyPerformance;
+    
+    return {
+      ...data,
+      brokerId: data.broker_id // Map for component usage
+    };
+  };
+  
+  const mapTargetData = (data: any) => {
+    if (!data) return emptyTarget;
+    
+    return {
+      ...data,
+      brokerId: data.broker_id, // Map for component usage
+      shareTarget: data.share_target,
+      leadTarget: data.lead_target,
+      scheduleTarget: data.schedule_target,
+      visitTarget: data.visit_target,
+      saleTarget: data.sale_target
+    };
+  };
+  
   // Use actual data or fallback to empty data if not available
-  const currentPerformance = performance || emptyPerformance;
-  const currentTarget = target || emptyTarget;
+  const currentPerformance = mapPerformanceData(performance);
+  const currentTarget = mapTargetData(target);
   const recentLeads = leads || [];
   
   // Get user name from session if available
   const userName = session?.user_metadata?.name || "";
+  
+  // Show a more informative loading state if we're still verifying auth
+  if (!hasInitializedQueries && session) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyrela-red"></div>
+          <p className="text-cyrela-gray-dark">Verificando sessão e carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <SidebarProvider>

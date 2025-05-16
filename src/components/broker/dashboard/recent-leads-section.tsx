@@ -25,6 +25,7 @@ export function RecentLeadsSection({ leads, className, isLoading = false }: Rece
           <div className="space-y-4">
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
           </div>
         ) : leads && leads.length > 0 ? (
           <div className="space-y-3">

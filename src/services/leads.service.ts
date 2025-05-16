@@ -7,7 +7,7 @@ export const leadsService = {
     const { data, error } = await supabase
       .from('leads')
       .select('*')
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching leads:', error);
@@ -35,8 +35,8 @@ export const leadsService = {
   async create(lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>): Promise<Lead> {
     const newLead = {
       ...lead,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -56,7 +56,7 @@ export const leadsService = {
   async update(id: string, lead: Partial<Lead>): Promise<Lead> {
     const updatedLead = {
       ...lead,
-      updatedAt: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     const { data, error } = await supabase
@@ -79,7 +79,7 @@ export const leadsService = {
       .from('leads')
       .update({
         status,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .eq('id', id)
       .select()
@@ -109,8 +109,8 @@ export const leadsService = {
     const { data, error } = await supabase
       .from('leads')
       .select('*')
-      .eq('assignedToId', brokerId)
-      .order('createdAt', { ascending: false });
+      .eq('assigned_to_id', brokerId) // Fixed: changed from assignedToId to assigned_to_id
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(`Error fetching leads for broker ${brokerId}:`, error);
@@ -125,7 +125,7 @@ export const leadsService = {
       .from('leads')
       .select('*')
       .eq('status', status)
-      .order('createdAt', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error(`Error fetching leads with status ${status}:`, error);

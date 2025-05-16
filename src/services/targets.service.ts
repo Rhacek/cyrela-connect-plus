@@ -11,7 +11,7 @@ export const targetsService = {
     const { data, error } = await supabase
       .from('targets')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -28,7 +28,7 @@ export const targetsService = {
     const { data, error } = await supabase
       .from('targets')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('year', year)
       .order('month', { ascending: true });
 
@@ -45,7 +45,7 @@ export const targetsService = {
     const { data: existingData, error: checkError } = await supabase
       .from('targets')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -73,14 +73,14 @@ export const targetsService = {
     } else {
       // Create new record
       const newTarget = {
-        brokerId,
+        broker_id: brokerId, // Fixed: changed from brokerId to broker_id
         month,
         year,
-        shareTarget: updates.shareTarget || 0,
-        leadTarget: updates.leadTarget || 0,
-        scheduleTarget: updates.scheduleTarget || 0,
-        visitTarget: updates.visitTarget || 0,
-        saleTarget: updates.saleTarget || 0,
+        share_target: updates.shareTarget || 0,
+        lead_target: updates.leadTarget || 0,
+        schedule_target: updates.scheduleTarget || 0,
+        visit_target: updates.visitTarget || 0,
+        sale_target: updates.saleTarget || 0,
       };
 
       const { data, error } = await supabase

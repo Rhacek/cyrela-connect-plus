@@ -11,7 +11,7 @@ export const performanceService = {
     const { data, error } = await supabase
       .from('performance')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -28,7 +28,7 @@ export const performanceService = {
     const { data, error } = await supabase
       .from('performance')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('year', year)
       .order('month', { ascending: true });
 
@@ -56,7 +56,7 @@ export const performanceService = {
     const { data: existingData, error: checkError } = await supabase
       .from('performance')
       .select('*')
-      .eq('brokerId', brokerId)
+      .eq('broker_id', brokerId) // Fixed: changed from brokerId to broker_id
       .eq('month', month)
       .eq('year', year)
       .single();
@@ -84,7 +84,7 @@ export const performanceService = {
     } else {
       // Create new record
       const newPerformance = {
-        brokerId,
+        broker_id: brokerId, // Fixed: changed from brokerId to broker_id
         month,
         year,
         shares: updates.shares || 0,
