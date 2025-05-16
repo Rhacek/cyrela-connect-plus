@@ -51,6 +51,9 @@ export const brokersService = {
           console.error("Error counting leads:", leadError);
         }
 
+        // Ensure status is strictly "active" or "inactive"
+        const status: "active" | "inactive" = broker.broker_code ? "active" : "inactive";
+
         return {
           id: broker.id,
           name: broker.name,
@@ -58,7 +61,7 @@ export const brokersService = {
           phone: broker.phone,
           brokerCode: broker.broker_code,
           brokerage: broker.brokerage,
-          status: broker.broker_code ? "active" : "inactive", // Consider a broker active if they have a broker code
+          status, // Now properly typed as "active" | "inactive"
           properties: propertyCount || 0,
           clients: leadCount || 0,
           creci: broker.creci
@@ -98,6 +101,9 @@ export const brokersService = {
       .select("id", { count: "exact", head: true })
       .eq("assigned_to_id", data.id);
 
+    // Ensure status is strictly "active" or "inactive"
+    const status: "active" | "inactive" = data.broker_code ? "active" : "inactive";
+
     return {
       id: data.id,
       name: data.name,
@@ -105,7 +111,7 @@ export const brokersService = {
       phone: data.phone,
       brokerCode: data.broker_code,
       brokerage: data.brokerage,
-      status: data.broker_code ? "active" : "inactive",
+      status,
       properties: propertyCount || 0,
       clients: leadCount || 0,
       creci: data.creci
