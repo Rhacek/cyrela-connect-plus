@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -83,7 +84,17 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       }
       
       // If we have a session and allowed roles, check if user has permission
-      const userRole = currentSession.user.user_metadata.role as UserRole;
+      // Handle different session types correctly
+      let userRole: UserRole;
+      
+      if ('user' in currentSession) {
+        // This is a Supabase Session
+        userRole = currentSession.user.user_metadata.role as UserRole;
+      } else {
+        // This is our custom UserSession
+        userRole = currentSession.user_metadata.role as UserRole;
+      }
+      
       const hasPermission = allowedRoles.includes(userRole);
       console.log("User role:", userRole, "Has permission:", hasPermission);
       
