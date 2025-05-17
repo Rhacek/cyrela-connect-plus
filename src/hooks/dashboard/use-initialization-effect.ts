@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { Performance, Target } from "@/types";
-import { ensureCurrentMonthPerformance } from "@/services/performance";
+import { ensureCurrentMonthPerformance } from "@/services/performance/performance-mutation.service";
 import { targetsService } from "@/services/targets.service";
 
 export const useInitializationEffect = (

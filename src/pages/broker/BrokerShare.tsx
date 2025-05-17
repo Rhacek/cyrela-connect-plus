@@ -9,6 +9,7 @@ import { CreateShareLinkDialog } from "@/components/broker/share/create-share-li
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { SharedLink } from "@/mocks/share-data"; // Using type only, data will be from Supabase
+import { Property } from "@/types";
 
 interface ShareStats {
   totalShares: number;
@@ -58,7 +59,29 @@ export default function BrokerShare() {
           property: {
             id: share.property_id,
             title: share.properties?.title || "Imóvel sem título",
-            developmentName: share.properties?.development_name || ""
+            developmentName: share.properties?.development_name || "",
+            // Add missing required Property fields with default values
+            description: "",
+            type: "",
+            price: 0,
+            area: 0,
+            bedrooms: 0,
+            bathrooms: 0,
+            suites: 0,
+            parkingSpaces: 0,
+            address: "",
+            neighborhood: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdById: "",
+            isActive: true,
+            isHighlighted: false,
+            viewCount: 0,
+            shareCount: 0,
+            images: []
           },
           code: share.code,
           url: share.url,
@@ -115,12 +138,19 @@ export default function BrokerShare() {
           };
         }
         
+        // Ensure the most_shared_property has the correct format
+        const mostShareProperty = data[0].most_shared_property ? {
+          id: String(data[0].most_shared_property.id || ''),
+          name: String(data[0].most_shared_property.name || ''),
+          count: Number(data[0].most_shared_property.count || 0)
+        } : null;
+        
         return {
           totalShares: data[0].total_shares || 0,
           totalClicks: data[0].total_clicks || 0,
           activeLinks: data[0].active_links || 0,
           averageClicksPerShare: data[0].average_clicks_per_share || 0,
-          mostSharedProperty: data[0].most_shared_property || null
+          mostSharedProperty: mostShareProperty
         };
       } catch (err) {
         console.error("Error fetching share stats:", err);

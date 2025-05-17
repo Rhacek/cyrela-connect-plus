@@ -1,140 +1,115 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Performance } from '@/types';
-import { mapFromDbModel, mapToDbModel } from './performance-mapper.service';
 
 /**
- * Updates or creates a performance record for a broker
+ * Ensures that a performance record exists for the current month for the given broker
  */
-export const updatePerformance = async (
-  brokerId: string, 
-  month: number, 
-  year: number, 
-  updates: Partial<Omit<Performance, 'id' | 'brokerId' | 'month' | 'year'>>
-): Promise<Performance> => {
-  // First check if a record exists
-  const { data: existingData, error: checkError } = await supabase
-    .from('performance')
-    .select('*')
-    .eq('broker_id', brokerId)
-    .eq('month', month)
-    .eq('year', year)
-    .single();
-
-  if (checkError && checkError.code !== 'PGRST116') {
-    console.error(`Error checking existing performance:`, checkError);
-    throw checkError;
-  }
-
-  const dbUpdates = {
-    shares: updates.shares,
-    leads: updates.leads,
-    schedules: updates.schedules,
-    visits: updates.visits,
-    sales: updates.sales,
-  };
-
-  if (existingData) {
-    // Update existing record
-    const { data, error } = await supabase
+export const ensureCurrentMonthPerformance = async (brokerId: string): Promise<Performance | null> => {
+  try {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const currentYear = currentDate.getFullYear();
+    
+    // Check if a record already exists for the current month
+    const { data: existingData, error: queryError } = await supabase
       .from('performance')
-      .update(dbUpdates)
-      .eq('id', existingData.id)
+      .select('*')
+      .eq('broker_id', brokerId)
+      .eq('month', currentMonth)
+      .eq('year', currentYear)
+      .single();
+    
+    if (queryError && queryError.code !== 'PGRST116') { // Not "No rows returned" error
+      console.error('Error checking existing performance:', queryError);
+      return null;
+    }
+    
+    // If record exists, return it
+    if (existingData) {
+      return {
+        id: existingData.id,
+        brokerId: existingData.broker_id,
+        month: existingData.month,
+        year: existingData.year,
+        sales: existingData.sales,
+        visits: existingData.visits,
+        schedules: existingData.schedules,
+        leads: existingData.leads,
+        shares: existingData.shares
+      };
+    }
+    
+    // Create a new record for the current month
+    const { data: newData, error: insertError } = await supabase
+      .from('performance')
+      .insert({
+        broker_id: brokerId,
+        month: currentMonth,
+        year: currentYear,
+        sales: 0,
+        visits: 0,
+        schedules: 0,
+        leads: 0,
+        shares: 0
+      })
       .select()
       .single();
-
-    if (error) {
-      console.error(`Error updating performance:`, error);
-      throw error;
+    
+    if (insertError) {
+      console.error('Error creating performance record:', insertError);
+      return null;
     }
-
-    return mapFromDbModel(data);
-  } else {
-    // Create new record
-    const newPerformance = {
-      broker_id: brokerId,
-      month,
-      year,
-      shares: updates.shares || 0,
-      leads: updates.leads || 0,
-      schedules: updates.schedules || 0,
-      visits: updates.visits || 0,
-      sales: updates.sales || 0,
+    
+    return {
+      id: newData.id,
+      brokerId: newData.broker_id,
+      month: newData.month,
+      year: newData.year,
+      sales: newData.sales,
+      visits: newData.visits,
+      schedules: newData.schedules,
+      leads: newData.leads,
+      shares: newData.shares
     };
-
-    const { data, error } = await supabase
-      .from('performance')
-      .insert(newPerformance)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error creating performance:`, error);
-      throw error;
-    }
-
-    return mapFromDbModel(data);
+  } catch (error) {
+    console.error('Error in ensureCurrentMonthPerformance:', error);
+    return null;
   }
 };
 
 /**
- * Ensures a performance record exists for the current month
+ * Increments a specific metric for the current month's performance
  */
-export const ensureCurrentMonthPerformance = async (brokerId: string): Promise<Performance> => {
-  if (!brokerId) {
-    throw new Error('Cannot ensure performance: No broker ID provided');
-  }
-
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-
+export const incrementPerformanceMetric = async (
+  brokerId: string,
+  metric: 'sales' | 'visits' | 'schedules' | 'leads' | 'shares'
+): Promise<boolean> => {
   try {
-    // First check if a record exists
-    const { data: existingData, error: checkError } = await supabase
-      .from('performance')
-      .select('*')
-      .eq('broker_id', brokerId)
-      .eq('month', month)
-      .eq('year', year)
-      .maybeSingle();
+    // Ensure a record exists for the current month
+    const performance = await ensureCurrentMonthPerformance(brokerId);
     
-    if (checkError) {
-      console.error(`Error checking existing performance:`, checkError);
-      throw checkError;
+    if (!performance) {
+      return false;
     }
     
-    if (existingData) {
-      return mapFromDbModel(existingData);
-    }
+    // Update the specified metric
+    const updateData: Record<string, number> = {};
+    updateData[metric] = performance[metric] + 1;
     
-    // Create new performance record with zeros
-    console.log(`Creating new performance record for ${brokerId} (${month}/${year})`);
-    const newPerformance = {
-      broker_id: brokerId,
-      month,
-      year,
-      shares: 0,
-      leads: 0,
-      schedules: 0,
-      visits: 0,
-      sales: 0
-    };
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('performance')
-      .insert(newPerformance)
-      .select()
-      .single();
-
+      .update(updateData)
+      .eq('id', performance.id);
+    
     if (error) {
-      console.error(`Error creating initial performance:`, error);
-      throw error;
+      console.error(`Error incrementing ${metric}:`, error);
+      return false;
     }
-
-    return mapFromDbModel(data);
-  } catch (err) {
-    console.error(`Error in ensureCurrentMonthPerformance:`, err);
-    throw err;
+    
+    return true;
+  } catch (error) {
+    console.error(`Error in incrementPerformanceMetric (${metric}):`, error);
+    return false;
   }
 };

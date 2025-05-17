@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentMonthPerformance, getMonthlyPerformance, getYearlyPerformance } from "@/services/performance";
+import { getCurrentMonthPerformance } from "@/services/performance/performance-query.service";
+import { getMonthlyPerformance, getYearlyPerformance } from "@/services/performance/performance-query.service";
 import { targetsService } from "@/services/targets.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
