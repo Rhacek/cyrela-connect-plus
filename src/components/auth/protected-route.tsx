@@ -37,9 +37,6 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
       
       // Redirect brokers to broker dashboard - but only if not already there
       if (session?.user_metadata?.role === UserRole.BROKER) {
-        if (location.pathname !== "/broker/dashboard") {
-          return <Navigate to="/broker/dashboard" replace />;
-        }
         return <Navigate to="/auth" replace />;
       }
       
@@ -50,11 +47,6 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
       
       // Redirect other users to auth
       return <Navigate to="/auth" replace />;
-    }
-    
-    // Only redirect to broker dashboard if at root broker path
-    if (location.pathname === "/broker" && session?.user_metadata?.role === UserRole.BROKER) {
-      return <Navigate to="/broker/dashboard" replace />;
     }
     
     // Default redirect to auth page

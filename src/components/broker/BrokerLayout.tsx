@@ -1,6 +1,6 @@
 
-import React, { memo, useRef } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import React, { memo, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { BrokerSidebar } from "@/components/broker/sidebar/broker-sidebar";
@@ -10,17 +10,37 @@ import { useAuth } from "@/context/auth-context";
  * Layout component for the Broker section
  */
 const BrokerLayout = memo(() => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
-  const renderCount = useRef(0);
+  const navigate = useNavigate();
+  const pathname = location.pathname;
   
-  // Increment render count for debugging
-  renderCount.current++;
+  const isBrokerRoute = pathname.startsWith("/broker");
   
-  console.log(`BrokerLayout render #${renderCount.current}, path: ${location.pathname}`);
+  // Only redirect from the root broker path to dashboard
+  useEffect(() => {
+    if (!loading) {
+      // Redirect to auth if no session and on broker route
+      if (!session && isBrokerRoute) {
+        navigate("/auth", { replace: true });
+      }
+      
+      // Only redirect to dashboard if exactly at /broker path
+      if (session && pathname === "/broker") {
+        navigate("/broker/dashboard", { replace: true });
+      }
+    }
+  }, [session, pathname, navigate, loading, isBrokerRoute]);
   
-  // No session checking or redirection here - this should be handled by ProtectedRoute
-  // This component should only render the layout and outlet
+  // Show nothing while checking auth
+  if (loading) {
+    return null;
+  }
+  
+  // Show nothing if not authenticated on broker route
+  if (!session && isBrokerRoute) {
+    return null;
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>
