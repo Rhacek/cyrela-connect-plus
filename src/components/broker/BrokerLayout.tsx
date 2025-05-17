@@ -7,6 +7,7 @@ import { BrokerSidebar } from "@/components/broker/sidebar/broker-sidebar";
 import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { useAuth } from "@/context/auth-context";
 import { useLocation } from "react-router-dom";
+import { SidebarInset } from "@/components/ui/sidebar/sidebar-inset";
 
 /**
  * Layout component for the Broker section
@@ -22,11 +23,11 @@ const BrokerLayout = () => {
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-slate-50 overflow-x-hidden w-full">
         <BrokerSidebar />
-        <main className="flex-1 transition-all duration-300 overflow-y-auto overflow-x-hidden">
-          <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
+        <SidebarInset className="p-0 bg-slate-50">
+          <div className="max-w-7xl mx-auto w-full p-4 sm:p-6">
             <Outlet />
           </div>
-        </main>
+        </SidebarInset>
         <Toaster />
       </div>
     </SidebarProvider>

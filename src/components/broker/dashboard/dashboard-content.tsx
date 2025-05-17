@@ -7,6 +7,7 @@ import { RecentLeadsSection } from "@/components/broker/dashboard/recent-leads-s
 import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface DashboardContentProps {
   userName: string;
@@ -30,9 +31,10 @@ export function DashboardContent({
   onAddLead
 }: DashboardContentProps) {
   const isMobile = useIsMobile();
+  const { state } = useSidebar();
   
   return (
-    <div className="w-full">
+    <div className="w-full transition-all duration-300">
       <DashboardHeader 
         title="Dashboard" 
         description={`Bem-vindo de volta${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}

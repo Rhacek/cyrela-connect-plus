@@ -25,7 +25,7 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
   };
   
   return (
-    <div className="p-4 border-t border-cyrela-gray-light">
+    <div className="p-4 border-t border-cyrela-gray-light transition-all duration-300">
       {!isCollapsed && (
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-10 h-10 rounded-full bg-cyrela-gray-lighter flex items-center justify-center">
@@ -40,13 +40,13 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
             )}
           </div>
           <div>
-            <p className="font-medium text-sm font-poppins">{userName}</p>
-            <p className="text-xs text-cyrela-gray-dark font-inter">{userRole}</p>
+            <p className="font-medium text-sm font-poppins truncate max-w-[140px]">{userName}</p>
+            <p className="text-xs text-cyrela-gray-dark font-inter truncate max-w-[140px]">{userRole}</p>
           </div>
         </div>
       )}
       
-      <div className="mt-4">
+      <div className="mt-4 transition-all duration-300">
         {isCollapsed ? (
           <a href="/settings" className="block p-3 hover:bg-cyrela-gray-lighter rounded-full mx-auto w-fit">
             <Settings size={20} className="text-cyrela-gray-dark" />
@@ -61,7 +61,7 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
       </div>
       
       {/* Logout button */}
-      <div className="mt-4">
+      <div className="mt-4 transition-all duration-300">
         {isCollapsed ? (
           <button 
             onClick={handleLogout}
@@ -80,11 +80,11 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
         )}
       </div>
       
-      <div className="mt-4">
+      <div className="mt-4 transition-all duration-300">
         <button
           onClick={handleToggleCollapse}
           className={cn(
-            "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-primary font-inter",
+            "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-primary font-inter transition-all duration-300",
             isCollapsed ? "mx-auto" : ""
           )}
         >

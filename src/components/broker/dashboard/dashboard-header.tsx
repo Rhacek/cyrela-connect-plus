@@ -1,6 +1,7 @@
 
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface DashboardHeaderProps {
   title: string;
@@ -15,8 +16,11 @@ export function DashboardHeader({
   buttonLabel,
   onButtonClick
 }: DashboardHeaderProps) {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 transition-all duration-300 ${isCollapsed ? 'pl-0' : 'pl-0'}`}>
       <div className="max-w-2xl">
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-cyrela-blue truncate">{title}</h1>
         <p className="text-cyrela-gray-dark text-xs sm:text-sm md:text-base line-clamp-2">
