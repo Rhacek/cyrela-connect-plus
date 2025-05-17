@@ -18,25 +18,23 @@ export default function BrokerProperties() {
   const { session } = useAuth();
   const navigate = useNavigate();
   
-  // Fetch broker properties
+  // Fetch all active properties instead of just broker properties
   useEffect(() => {
     const fetchProperties = async () => {
-      if (!session?.id) return;
-      
       try {
         setIsLoading(true);
-        const data = await propertiesService.getBrokerProperties(session.id);
+        const data = await propertiesService.getAllActiveProperties();
         setProperties(data);
       } catch (error) {
         console.error("Error fetching properties:", error);
-        toast.error("Não foi possível carregar seus imóveis.");
+        toast.error("Não foi possível carregar os imóveis.");
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchProperties();
-  }, [session?.id]);
+  }, []);
   
   // Check if user is admin
   const isAdmin = session?.user_metadata?.role === UserRole.ADMIN;
@@ -55,7 +53,7 @@ export default function BrokerProperties() {
 
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-bold mb-6">Meus Imóveis</h1>
+      <h1 className="text-2xl font-bold mb-6">Imóveis Disponíveis</h1>
       
       <div className="bg-white rounded-lg shadow-sm border border-cyrela-gray-lighter p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -103,7 +101,7 @@ export default function BrokerProperties() {
                 {filteredProperties.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-6">
-                      Nenhum imóvel encontrado
+                      Nenhum imóvel disponível no momento
                     </TableCell>
                   </TableRow>
                 ) : (

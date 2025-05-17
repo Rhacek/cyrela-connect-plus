@@ -46,6 +46,55 @@ const mapPropertyFromDb = (dbModel: any, images: PropertyImage[] = []): Property
 });
 
 export const propertiesService = {
+  // New method to get all active properties
+  async getAllActiveProperties(): Promise<Property[]> {
+    try {
+      // Fetch all active properties
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching active properties:', error);
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        return [];
+      }
+      
+      // Get property IDs to fetch images
+      const propertyIds = data.map(property => property.id);
+      
+      // Fetch all images for these properties
+      const { data: imagesData, error: imagesError } = await supabase
+        .from('property_images')
+        .select('*')
+        .in('property_id', propertyIds)
+        .order('order', { ascending: true });
+      
+      if (imagesError) {
+        console.error('Error fetching property images:', imagesError);
+      }
+      
+      const imagesById = (imagesData || []).reduce((acc: Record<string, PropertyImage[]>, img) => {
+        if (!acc[img.property_id]) {
+          acc[img.property_id] = [];
+        }
+        acc[img.property_id].push(mapImageFromDb(img));
+        return acc;
+      }, {});
+      
+      // Map properties with their images
+      return data.map(property => mapPropertyFromDb(property, imagesById[property.id] || []));
+    } catch (err) {
+      console.error('Error in getAllActiveProperties:', err);
+      return [];
+    }
+  },
+
   async getBrokerProperties(brokerId: string): Promise<Property[]> {
     try {
       // Fetch properties created by this broker
