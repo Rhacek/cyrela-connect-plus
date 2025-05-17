@@ -10,7 +10,11 @@ interface SidebarFooterProps {
 }
 
 export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFooterProps) {
-  const { signOut } = useAuth();
+  const { signOut, session } = useAuth();
+  
+  // Extract user information from session
+  const userName = session?.user_metadata?.name || "Não informado";
+  const userRole = session?.user_metadata?.role === "ADMIN" ? "Administrador" : "Corretor PRO";
   
   const handleLogout = async () => {
     try {
@@ -25,11 +29,19 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
       {!isCollapsed && (
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-10 h-10 rounded-full bg-cyrela-gray-lighter flex items-center justify-center">
-            <User size={20} className="text-cyrela-gray-dark" />
+            {session?.user_metadata?.profile_image ? (
+              <img 
+                src={session.user_metadata.profile_image} 
+                alt={userName}
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <User size={20} className="text-cyrela-gray-dark" />
+            )}
           </div>
           <div>
-            <p className="font-medium text-sm font-poppins">Ana Silva</p>
-            <p className="text-xs text-cyrela-gray-dark font-inter">Corretor PRO</p>
+            <p className="font-medium text-sm font-poppins">{userName}</p>
+            <p className="text-xs text-cyrela-gray-dark font-inter">{userRole}</p>
           </div>
         </div>
       )}

@@ -225,71 +225,88 @@ export const propertiesService = {
     }
   },
 
-  async create(propertyData: Partial<Property>): Promise<Property | null> {
+  async create(propertyData: Partial<Property>, createdById: string): Promise<Property | null> {
     try {
-      // Create the base property object with required fields
-      const propertyValues: Record<string, any> = {
-        title: propertyData.title || "",
-        description: propertyData.description || "",
-        type: propertyData.type || "",
+      // Format property data for Supabase
+      const formattedData = {
+        title: propertyData.title || '',
+        description: propertyData.description || '',
+        type: propertyData.type || '',
         price: propertyData.price || 0,
         area: propertyData.area || 0,
         bedrooms: propertyData.bedrooms || 0,
         bathrooms: propertyData.bathrooms || 0,
         suites: propertyData.suites || 0,
         parking_spaces: propertyData.parkingSpaces || 0,
-        address: propertyData.address || "",
-        neighborhood: propertyData.neighborhood || "",
-        city: propertyData.city || "",
-        state: propertyData.state || "",
-        zip_code: propertyData.zipCode || "",
-        created_by_id: propertyData.createdById || "",
-        is_active: propertyData.isActive !== undefined ? propertyData.isActive : true,
-        is_highlighted: propertyData.isHighlighted || false,
-        view_count: 0,
-        share_count: 0
+        address: propertyData.address || '',
+        neighborhood: propertyData.neighborhood || '',
+        city: propertyData.city || '',
+        state: propertyData.state || '',
+        zip_code: propertyData.zipCode || '',
+        development_name: propertyData.developmentName,
+        promotional_price: propertyData.promotionalPrice,
+        latitude: propertyData.latitude,
+        longitude: propertyData.longitude,
+        construction_stage: propertyData.constructionStage,
+        broker_notes: propertyData.brokerNotes,
+        youtube_url: propertyData.youtubeUrl,
+        commission: propertyData.commission,
+        created_by_id: createdById,
+        is_active: true,
+        is_highlighted: propertyData.isHighlighted || false
       };
-      
-      // Add optional fields if provided
-      if (propertyData.developmentName !== undefined) {
-        propertyValues.development_name = propertyData.developmentName;
-      }
-      if (propertyData.promotionalPrice !== undefined) {
-        propertyValues.promotional_price = propertyData.promotionalPrice;
-      }
-      if (propertyData.latitude !== undefined) {
-        propertyValues.latitude = propertyData.latitude;
-      }
-      if (propertyData.longitude !== undefined) {
-        propertyValues.longitude = propertyData.longitude;
-      }
-      if (propertyData.constructionStage !== undefined) {
-        propertyValues.construction_stage = propertyData.constructionStage;
-      }
-      if (propertyData.youtubeUrl !== undefined) {
-        propertyValues.youtube_url = propertyData.youtubeUrl;
-      }
-      if (propertyData.commission !== undefined) {
-        propertyValues.commission = propertyData.commission;
-      }
-      if (propertyData.brokerNotes !== undefined) {
-        propertyValues.broker_notes = propertyData.brokerNotes;
-      }
-      
+
       const { data, error } = await supabase
         .from('properties')
-        .insert(propertyValues)
-        .select()
+        .insert(formattedData)
+        .select('*')
         .single();
-      
+
       if (error) {
         console.error('Error creating property:', error);
         return null;
       }
-      
-      return mapPropertyFromDb(data);
+
+      if (!data) {
+        return null;
+      }
+
+      // Convert to Property type
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        price: data.price,
+        promotionalPrice: data.promotional_price,
+        area: data.area,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        suites: data.suites,
+        parkingSpaces: data.parking_spaces,
+        address: data.address,
+        neighborhood: data.neighborhood,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zip_code,
+        developmentName: data.development_name,
+        constructionStage: data.construction_stage,
+        youtubeUrl: data.youtube_url,
+        brokerNotes: data.broker_notes,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        commission: data.commission,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+        createdById: data.created_by_id,
+        isActive: data.is_active,
+        isHighlighted: data.is_highlighted,
+        viewCount: data.view_count,
+        shareCount: data.share_count,
+        images: [] // Images will be added separately
+      };
     } catch (err) {
-      console.error('Error in create:', err);
+      console.error('Error in create property:', err);
       return null;
     }
   },

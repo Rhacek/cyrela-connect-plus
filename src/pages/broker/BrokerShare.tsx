@@ -144,12 +144,24 @@ export default function BrokerShare() {
         }
         
         // Cast the most_shared_property to the correct type with proper type checking
-        const mostSharedProperty = data[0].most_shared_property ? 
-          (typeof data[0].most_shared_property === 'object' ? {
-            id: String(data[0].most_shared_property.id || ''),
-            name: String(data[0].most_shared_property.name || ''),
-            count: Number(data[0].most_shared_property.count || 0)
-          } : null) : null;
+        let mostSharedProperty = null;
+        
+        // Safely handle the most_shared_property which can be of different types
+        if (data[0].most_shared_property) {
+          const msProperty = data[0].most_shared_property;
+          
+          // Check if it's an object with the expected properties
+          if (typeof msProperty === 'object' && msProperty !== null) {
+            // Type guard to check if the object has the expected properties
+            if ('id' in msProperty && 'name' in msProperty && 'count' in msProperty) {
+              mostSharedProperty = {
+                id: String(msProperty.id || ''),
+                name: String(msProperty.name || ''),
+                count: Number(msProperty.count || 0)
+              };
+            }
+          }
+        }
         
         return {
           totalShares: data[0].total_shares || 0,
