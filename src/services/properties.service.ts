@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Property, PropertyImage, PropertyStatus } from '@/types';
 
@@ -228,8 +227,8 @@ export const propertiesService = {
 
   async create(propertyData: Partial<Property>): Promise<Property | null> {
     try {
-      // Provide all required fields for the database model
-      const propertyValues = {
+      // Create the base property object with required fields
+      const propertyValues: Record<string, any> = {
         title: propertyData.title || "",
         description: propertyData.description || "",
         type: propertyData.type || "",
@@ -251,15 +250,31 @@ export const propertiesService = {
         share_count: 0
       };
       
-      // Add optional fields if they exist
-      if (propertyData.developmentName !== undefined) propertyValues.development_name = propertyData.developmentName;
-      if (propertyData.promotionalPrice !== undefined) propertyValues.promotional_price = propertyData.promotionalPrice;
-      if (propertyData.latitude !== undefined) propertyValues.latitude = propertyData.latitude;
-      if (propertyData.longitude !== undefined) propertyValues.longitude = propertyData.longitude;
-      if (propertyData.constructionStage !== undefined) propertyValues.construction_stage = propertyData.constructionStage;
-      if (propertyData.youtubeUrl !== undefined) propertyValues.youtube_url = propertyData.youtubeUrl;
-      if (propertyData.commission !== undefined) propertyValues.commission = propertyData.commission;
-      if (propertyData.brokerNotes !== undefined) propertyValues.broker_notes = propertyData.brokerNotes;
+      // Add optional fields if provided
+      if (propertyData.developmentName !== undefined) {
+        propertyValues.development_name = propertyData.developmentName;
+      }
+      if (propertyData.promotionalPrice !== undefined) {
+        propertyValues.promotional_price = propertyData.promotionalPrice;
+      }
+      if (propertyData.latitude !== undefined) {
+        propertyValues.latitude = propertyData.latitude;
+      }
+      if (propertyData.longitude !== undefined) {
+        propertyValues.longitude = propertyData.longitude;
+      }
+      if (propertyData.constructionStage !== undefined) {
+        propertyValues.construction_stage = propertyData.constructionStage;
+      }
+      if (propertyData.youtubeUrl !== undefined) {
+        propertyValues.youtube_url = propertyData.youtubeUrl;
+      }
+      if (propertyData.commission !== undefined) {
+        propertyValues.commission = propertyData.commission;
+      }
+      if (propertyData.brokerNotes !== undefined) {
+        propertyValues.broker_notes = propertyData.brokerNotes;
+      }
       
       const { data, error } = await supabase
         .from('properties')

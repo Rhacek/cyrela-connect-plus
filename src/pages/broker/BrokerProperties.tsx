@@ -8,12 +8,15 @@ import { propertiesService } from "@/services/properties.service";
 import { Property } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { UserRole } from "@/types";
 
 export default function BrokerProperties() {
   const [searchTerm, setSearchTerm] = useState("");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
+  const navigate = useNavigate();
   
   // Fetch broker properties
   useEffect(() => {
@@ -34,6 +37,14 @@ export default function BrokerProperties() {
     
     fetchProperties();
   }, [session?.id]);
+  
+  // Check if user is admin
+  const isAdmin = session?.user_metadata?.role === UserRole.ADMIN;
+  
+  // Navigate to property details
+  const handleViewDetails = (propertyId: string) => {
+    navigate(`/broker/properties/${propertyId}`);
+  };
   
   // Filter properties based on search term
   const filteredProperties = properties.filter(property => 
@@ -59,10 +70,16 @@ export default function BrokerProperties() {
             />
           </div>
           
-          <Button className="w-full md:w-auto">
-            <Plus size={16} className="mr-2" />
-            Novo Imóvel
-          </Button>
+          {/* Only show "Novo Imóvel" button for admin users */}
+          {isAdmin && (
+            <Button 
+              className="w-full md:w-auto"
+              onClick={() => navigate("/admin/properties/new/")}
+            >
+              <Plus size={16} className="mr-2" />
+              Novo Imóvel
+            </Button>
+          )}
         </div>
         
         {isLoading ? (
@@ -119,7 +136,11 @@ export default function BrokerProperties() {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewDetails(property.id)}
+                        >
                           <Eye size={16} className="mr-1" />
                           Detalhes
                         </Button>

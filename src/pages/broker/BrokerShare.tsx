@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +20,12 @@ interface ShareStats {
     name: string;
     count: number;
   } | null;
+}
+
+interface MostSharedProperty {
+  id: string;
+  name: string;
+  count: number;
 }
 
 export default function BrokerShare() {
