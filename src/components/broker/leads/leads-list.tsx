@@ -1,6 +1,7 @@
 
 import { LeadCard } from "@/components/broker/dashboard/lead-card";
 import { Lead } from "@/types";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface LeadsListProps {
   leads: Lead[];

@@ -5,9 +5,10 @@ import { Property } from "@/types";
 
 interface PropertyListingsProps {
   properties: Property[];
+  linkPrefix?: string;
 }
 
-export function PropertyListings({ properties }: PropertyListingsProps) {
+export function PropertyListings({ properties, linkPrefix = "/broker/properties" }: PropertyListingsProps) {
   return (
     <div className="w-full">
       <div className="mb-4 flex flex-col md:flex-row justify-between items-center gap-2">
@@ -33,6 +34,7 @@ export function PropertyListings({ properties }: PropertyListingsProps) {
             property={property}
             showActions={true}
             className="h-full w-full"
+            linkPrefix={linkPrefix}
           />
         ))}
       </div>

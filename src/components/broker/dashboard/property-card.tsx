@@ -7,14 +7,21 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface PropertyCardProps {
   property: Property;
   showActions?: boolean;
   className?: string;
+  linkPrefix?: string;
 }
 
-export function PropertyCard({ property, showActions = true, className }: PropertyCardProps) {
+export function PropertyCard({ 
+  property, 
+  showActions = true, 
+  className,
+  linkPrefix = "/broker/properties" 
+}: PropertyCardProps) {
   const getConstructionStageColor = (stage?: string) => {
     // Use white background with black text for all stages
     return "bg-white text-black";
@@ -52,17 +59,27 @@ export function PropertyCard({ property, showActions = true, className }: Proper
     }
   };
 
+  const getPropertyImageUrl = () => {
+    if (property.images && property.images.length > 0 && property.images[0]?.url) {
+      return property.images[0].url;
+    }
+    return "/placeholder.svg";
+  };
+
+  const propertyLink = `${linkPrefix}/${property.id}`;
+
   return (
     <Card className={cn(
       "overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full",
       className
     )}>
       <div className="relative">
-        <Link to={`/client/property/${property.id}`}>
-          <img
-            src={property.images[0]?.url || "/placeholder.svg"}
+        <Link to={propertyLink}>
+          <OptimizedImage
+            src={getPropertyImageUrl()}
             alt={property.title}
             className="w-full h-48 sm:h-56 object-cover"
+            fallbackSrc="/placeholder.svg"
           />
         </Link>
         
@@ -96,7 +113,7 @@ export function PropertyCard({ property, showActions = true, className }: Proper
       
       <div className="p-4 flex flex-col flex-grow">
         <div className="mb-3">
-          <Link to={`/client/property/${property.id}`} className="hover:underline">
+          <Link to={propertyLink} className="hover:underline">
             <h3 className="font-semibold text-base sm:text-lg line-clamp-1 font-poppins">{property.title}</h3>
           </Link>
           <div className="flex items-center mt-1 text-cyrela-gray-dark text-xs sm:text-sm font-inter">
@@ -150,7 +167,7 @@ export function PropertyCard({ property, showActions = true, className }: Proper
               className="w-full bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-sm py-2 h-10 flex items-center justify-center" 
               asChild
             >
-              <Link to={`/client/property/${property.id}`}>
+              <Link to={propertyLink}>
                 Ver imóvel
                 <ArrowRight size={16} className="ml-1" />
               </Link>

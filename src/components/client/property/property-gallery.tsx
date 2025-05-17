@@ -10,6 +10,7 @@ import {
   CarouselPrevious
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface PropertyGalleryProps {
   property: Property;
@@ -17,18 +18,20 @@ interface PropertyGalleryProps {
 
 export function PropertyGallery({ property }: PropertyGalleryProps) {
   const [currentImage, setCurrentImage] = useState(0);
-  const imageCount = property.images.length;
+  
+  // Get valid images from property
+  const validImages = property.images?.filter(img => img?.url) || [];
   
   // If we have only one image, duplicate it to avoid carousel issues
-  const images = imageCount === 1 
-    ? [property.images[0], property.images[0]] 
-    : property.images;
+  const images = validImages.length === 1 
+    ? [validImages[0], validImages[0]] 
+    : validImages;
   
-  // For development purposes, use placeholder images if we have few images
+  // Use local placeholder images if we have few images
   const placeholderImages = [
-    "https://cdn.pixabay.com/photo/2016/11/18/17/46/house-1836070_1280.jpg",
-    "https://cdn.pixabay.com/photo/2016/11/29/03/53/architecture-1867187_1280.jpg",
-    "https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181960_1280.jpg"
+    "/placeholder.svg",
+    "/placeholder.svg",
+    "/placeholder.svg"
   ];
   
   const allImages = images.length < 3 
@@ -43,10 +46,11 @@ export function PropertyGallery({ property }: PropertyGalleryProps) {
           {allImages.map((imageUrl, index) => (
             <CarouselItem key={index} className="relative">
               <div className="aspect-[16/9] w-full overflow-hidden">
-                <img 
+                <OptimizedImage 
                   src={imageUrl} 
                   alt={`${property.title} - Imagem ${index + 1}`}
                   className="w-full h-full object-cover"
+                  fallbackSrc="/placeholder.svg"
                 />
               </div>
               
@@ -74,10 +78,11 @@ export function PropertyGallery({ property }: PropertyGalleryProps) {
                 : "border-transparent"
             )}
           >
-            <img
+            <OptimizedImage
               src={imageUrl}
               alt={`Thumbnail ${index + 1}`}
               className="w-full h-full object-cover"
+              fallbackSrc="/placeholder.svg"
             />
           </button>
         ))}

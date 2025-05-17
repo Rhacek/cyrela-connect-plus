@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,6 +13,8 @@ import { Copy, ExternalLink, QrCode, Share } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { ShareQrCodeModal } from "./share-qr-code-modal";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import { User } from "lucide-react";
 
 interface ShareLinkTableProps {
   links: SharedLink[];
@@ -38,6 +41,13 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
     return new Date(date).toLocaleDateString("pt-BR");
   };
 
+  const getPropertyImage = (link: SharedLink) => {
+    if (link.property?.images && link.property.images.length > 0 && link.property.images[0]?.url) {
+      return link.property.images[0].url;
+    }
+    return null;
+  }
+
   return (
     <>
       <div className="rounded-md border">
@@ -56,13 +66,16 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
               <TableRow key={link.id} className={!link.isActive ? "opacity-60" : ""}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    {link.property?.images[0]?.url && (
-                      <img 
-                        src={link.property.images[0].url} 
-                        alt={link.property?.title}
-                        className="w-8 h-8 rounded-sm object-cover" 
+                    <div className="w-8 h-8 rounded-sm overflow-hidden bg-cyrela-gray-lighter">
+                      <OptimizedImage 
+                        src={getPropertyImage(link)} 
+                        alt={link.property?.title || "Imóvel"}
+                        className="w-full h-full object-cover"
+                        fallbackComponent={<div className="w-full h-full flex items-center justify-center">
+                          <User size={16} className="text-cyrela-gray-dark" />
+                        </div>}
                       />
-                    )}
+                    </div>
                     <span className="line-clamp-1">{link.property?.title || "Imóvel"}</span>
                   </div>
                 </TableCell>
