@@ -4,3 +4,6 @@ export * from './event-handlers';
 export * from './process-session';
 export * from './periodic-verification';
 export * from './logging';
+export * from './session-verification';
+export * from './session-mapper';
+

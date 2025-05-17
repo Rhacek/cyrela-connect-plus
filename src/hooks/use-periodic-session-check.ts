@@ -1,23 +1,8 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { debounce } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
-import { UserSession } from '@/types/auth';
-import { refreshSession, isRefreshing } from '@/lib/supabase';
-
-// Define a conversion function to map Session to UserSession
-const mapToUserSession = (session: any): UserSession => {
-  if (!session) return null;
-  
-  return {
-    id: session.id,
-    email: session.email || session.user?.email,
-    expires_at: session.expires_at, // Include expires_at in the mapping
-    user_metadata: session.user_metadata || session.user?.user_metadata || {}
-  };
-};
+import { useLocation } from 'react-router-dom';
+import { useSessionRedirect, validateSession } from './use-session/session-verification';
 
 /**
  * Hook to periodically check if the session is still valid
@@ -26,67 +11,19 @@ const mapToUserSession = (session: any): UserSession => {
 export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPath: string) {
   const [isChecking, setIsChecking] = useState(false);
   const { session, setSession } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  const debouncedRedirect = useSessionRedirect();
   
   // Skip checks for client routes - they should remain public
   const isClientRoute = currentPath.startsWith('/client');
   if (isClientRoute) {
     return; // Exit early for client routes
   }
-  
-  // Create a debounced redirect function to avoid multiple redirects
-  const debouncedRedirect = useCallback(
-    debounce((path: string) => {
-      console.log(`Debounced redirect to ${path}`);
-      // Only redirect if we're not already on this path
-      if (location.pathname !== path) {
-        navigate(path, { replace: true });
-      } else {
-        console.log(`Already at ${path}, skipping redirect`);
-      }
-    }, 1000),
-    [navigate, location.pathname]
-  );
 
-  // Function to handle session invalidation
-  const handleInvalidSession = useCallback(() => {
-    if (!isMountedRef.current) return;
-    
-    // Skip for client routes
-    if (currentPath.startsWith('/client')) {
-      return;
-    }
-    
-    console.log('Session invalid or expired, redirecting to auth page');
-    
-    // Set session to null in auth context
-    setSession(null);
-    
-    // Show toast notification
-    toast.error('Sessão expirada', {
-      description: 'Sua sessão expirou. Por favor, faça login novamente.'
-    });
-    
-    // Create redirect URL with current path as redirect parameter
-    const searchParams = new URLSearchParams();
-    if (location.pathname !== '/auth') {
-      searchParams.set('redirect', location.pathname);
-    }
-    
-    // Use debounced redirect to prevent multiple redirects
-    const redirectPath = searchParams.toString() ? `/auth?${searchParams.toString()}` : '/auth';
-    
-    // Only redirect if we're not already on the auth page
-    if (location.pathname !== '/auth') {
-      debouncedRedirect(redirectPath);
-    }
-  }, [setSession, location.pathname, debouncedRedirect, currentPath]);
-
-  // Function to validate the current session
-  const checkSession = useCallback(async () => {
+  // Function to check session
+  const checkSession = async () => {
     if (!isMountedRef.current || isChecking) return;
     
     // Skip for client routes
@@ -98,52 +35,13 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
     
     try {
       console.log('Periodic session check for route:', currentPath);
-      
-      // First check if we even have a session in context
-      if (!session) {
-        console.log('No session found during periodic check');
-        handleInvalidSession();
-        return;
-      }
-      
-      // Check if we are less than 30 seconds from expiry
-      if (session.expires_at) {
-        const now = Date.now();
-        const expiresAt = session.expires_at * 1000;
-        const timeUntilExpiry = expiresAt - now;
-        
-        if (timeUntilExpiry < 30000) { // Less than 30 seconds
-          console.log('Session about to expire, handling invalidation');
-          
-          // Try to refresh first before invalidating
-          if (!isRefreshing) {
-            const refreshedSession = await refreshSession();
-            if (!refreshedSession) {
-              handleInvalidSession();
-            }
-          }
-          return;
-        }
-      }
-      
-    } catch (error) {
-      console.error('Error checking session:', error);
-      
-      // Only invalidate session if we're sure it's invalid
-      // Check if we're getting authorization errors
-      if (error.message && (
-          error.message.includes('JWT expired') || 
-          error.message.includes('invalid token') ||
-          error.message.includes('not authorized')
-        )) {
-        handleInvalidSession();
-      }
+      await validateSession(session, setSession, currentPath, debouncedRedirect);
     } finally {
       if (isMountedRef.current) {
         setIsChecking(false);
       }
     }
-  }, [session, currentPath, isChecking, handleInvalidSession]);
+  };
 
   useEffect(() => {
     // Skip for client routes
@@ -181,7 +79,7 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
         if (isMountedRef.current) {
           checkSession();
         }
-      }, 4 * 60 * 1000); // Reduced from 5 to 4 minutes to prevent token expiry
+      }, 4 * 60 * 1000); // 4 minutes to prevent token expiry
     };
     
     // Initialize the periodic check
@@ -198,7 +96,9 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   }, [
     isAuthorized,
     currentPath,
-    checkSession
+    session,
+    setSession,
+    debouncedRedirect
   ]);
   
   // No need to return anything as this hook is for side effects only
