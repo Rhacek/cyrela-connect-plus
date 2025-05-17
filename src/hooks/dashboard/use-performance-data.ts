@@ -1,9 +1,14 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Performance } from "@/types";
-import { getCurrentMonthPerformance } from "@/services/performance";
+import { 
+  getCurrentMonthPerformance,
+  getBrokerLeadCount,
+  getBrokerScheduledVisitsCount,
+  getBrokerPotentialVGV
+} from "@/services/performance";
 
 export const usePerformanceData = (
   brokerId: string | undefined, 
@@ -31,12 +36,66 @@ export const usePerformanceData = (
   const { 
     data: performance, 
     isLoading: isLoadingPerformance,
-    error: performanceError
+    error: performanceError,
+    refetch: refetchPerformance
   } = useQuery({
     queryKey: ['brokerPerformance', brokerId, currentMonth, currentYear],
     queryFn: () => getCurrentMonthPerformance(brokerId || ""),
     enabled: !!brokerId && enabled
   });
+  
+  // Fetch real-time lead count
+  const { 
+    data: leadCount,
+    refetch: refetchLeadCount 
+  } = useQuery({
+    queryKey: ['brokerLeadCount', brokerId],
+    queryFn: () => getBrokerLeadCount(brokerId || ""),
+    enabled: !!brokerId && enabled
+  });
+  
+  // Fetch real-time scheduled visits count
+  const { 
+    data: scheduledVisitsCount,
+    refetch: refetchScheduledVisits 
+  } = useQuery({
+    queryKey: ['brokerScheduledVisits', brokerId],
+    queryFn: () => getBrokerScheduledVisitsCount(brokerId || ""),
+    enabled: !!brokerId && enabled
+  });
+  
+  // Fetch potential VGV (Gross Sales Volume)
+  const { 
+    data: potentialVGV,
+    refetch: refetchPotentialVGV 
+  } = useQuery({
+    queryKey: ['brokerPotentialVGV', brokerId],
+    queryFn: () => getBrokerPotentialVGV(brokerId || ""),
+    enabled: !!brokerId && enabled
+  });
+  
+  // Merge real-time data with performance data
+  const [currentPerformance, setCurrentPerformance] = useState<Performance>(emptyPerformance);
+  
+  useEffect(() => {
+    if (performance) {
+      // Start with the base performance data
+      const updatedPerformance = { ...performance };
+      
+      // Update with real-time metrics if available
+      if (leadCount !== undefined) {
+        updatedPerformance.leads = leadCount;
+      }
+      
+      if (scheduledVisitsCount !== undefined) {
+        updatedPerformance.schedules = scheduledVisitsCount;
+      }
+      
+      setCurrentPerformance(updatedPerformance);
+    } else {
+      setCurrentPerformance(emptyPerformance);
+    }
+  }, [performance, leadCount, scheduledVisitsCount, potentialVGV]);
   
   // Display toast if performance data fetch fails
   useEffect(() => {
@@ -46,11 +105,18 @@ export const usePerformanceData = (
     }
   }, [performanceError]);
   
-  // Use actual data or fallback to empty data
-  const currentPerformance = performance ? performance : emptyPerformance;
+  // Function to refetch all performance metrics
+  const refreshAllMetrics = () => {
+    refetchPerformance();
+    refetchLeadCount();
+    refetchScheduledVisits();
+    refetchPotentialVGV();
+  };
   
   return {
     currentPerformance,
-    isLoadingPerformance
+    isLoadingPerformance,
+    potentialVGV: potentialVGV || 0,
+    refreshAllMetrics
   };
 };

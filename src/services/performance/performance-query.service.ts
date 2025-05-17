@@ -118,6 +118,103 @@ export const getCurrentMonthPerformance = async (brokerId: string): Promise<Perf
 };
 
 /**
+ * Gets the current lead count for a broker
+ */
+export const getBrokerLeadCount = async (brokerId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_to_id', brokerId);
+    
+    if (error) {
+      console.error('Error fetching broker lead count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in getBrokerLeadCount:', error);
+    return 0;
+  }
+};
+
+/**
+ * Gets the current scheduled visits count for a broker
+ */
+export const getBrokerScheduledVisitsCount = async (brokerId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_to_id', brokerId)
+      .eq('status', 'SCHEDULED');
+    
+    if (error) {
+      console.error('Error fetching broker scheduled visits count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in getBrokerScheduledVisitsCount:', error);
+    return 0;
+  }
+};
+
+/**
+ * Gets the potential sales volume (VGV) for a broker
+ * Calculates the sum of property prices for all leads with status INTERESTED, SCHEDULED, or VISITED
+ */
+export const getBrokerPotentialVGV = async (brokerId: string): Promise<number> => {
+  try {
+    // Get all leads with potential conversion (interested, scheduled, or visited)
+    const { data: potentialLeads, error: leadsError } = await supabase
+      .from('leads')
+      .select('id, property_id')
+      .eq('assigned_to_id', brokerId)
+      .in('status', ['INTERESTED', 'SCHEDULED', 'VISITED']);
+    
+    if (leadsError) {
+      console.error('Error fetching potential leads:', leadsError);
+      return 0;
+    }
+    
+    if (!potentialLeads || potentialLeads.length === 0) {
+      return 0;
+    }
+    
+    // Extract property IDs (filtering out null values)
+    const propertyIds = potentialLeads
+      .map(lead => lead.property_id)
+      .filter(id => id !== null) as string[];
+    
+    if (propertyIds.length === 0) {
+      return 0;
+    }
+    
+    // Get total sum of property prices
+    const { data: properties, error: propertiesError } = await supabase
+      .from('properties')
+      .select('price')
+      .in('id', propertyIds);
+    
+    if (propertiesError) {
+      console.error('Error fetching property prices:', propertiesError);
+      return 0;
+    }
+    
+    // Calculate total potential VGV
+    const totalVGV = properties.reduce((sum, property) => sum + (property.price || 0), 0);
+    
+    return totalVGV;
+  } catch (error) {
+    console.error('Error in getBrokerPotentialVGV:', error);
+    return 0;
+  }
+};
+
+/**
  * Gets the performance data for each month in the specified year
  */
 export const getMonthlyPerformance = async (brokerId: string, year: number): Promise<Performance[]> => {

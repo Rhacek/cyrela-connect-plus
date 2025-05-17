@@ -6,33 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Create a typed debounce function
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  
-  return function(...args: Parameters<T>) {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-    
-    if (timeout !== null) {
-      clearTimeout(timeout);
-    }
-    
-    timeout = setTimeout(later, wait);
-  };
-}
-
-/**
- * Format a number as currency (BRL by default)
- */
-export function formatCurrency(value: number, locale = 'pt-BR', currency = 'BRL'): string {
-  return new Intl.NumberFormat(locale, {
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: currency
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(value);
 }

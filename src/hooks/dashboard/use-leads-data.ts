@@ -12,7 +12,8 @@ export const useLeadsData = (
   const { 
     data: leads, 
     isLoading: isLoadingLeads,
-    error: leadsError
+    error: leadsError,
+    refetch: refetchLeads
   } = useQuery({
     queryKey: ['brokerLeads', brokerId],
     queryFn: () => leadsService.getBrokerLeads(brokerId || ""),
@@ -32,6 +33,7 @@ export const useLeadsData = (
   
   return {
     recentLeads,
-    isLoadingLeads
+    isLoadingLeads,
+    refetchLeads
   };
 };
