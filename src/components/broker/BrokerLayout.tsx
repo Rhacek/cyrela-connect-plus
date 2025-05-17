@@ -4,7 +4,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { BrokerSidebar } from "@/components/broker/sidebar/broker-sidebar";
-import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { useAuth } from "@/context/auth-context";
 
 /**
@@ -20,9 +19,8 @@ const BrokerLayout = memo(() => {
   
   console.log(`BrokerLayout render #${renderCount.current}, path: ${location.pathname}`);
   
-  // Add periodic session check without causing unnecessary rerenders
-  // Only verify that session exists, without redirecting
-  usePeriodicSessionCheck(session !== null, location.pathname);
+  // No session checking or redirection here - this should be handled by ProtectedRoute
+  // This component should only render the layout and outlet
 
   return (
     <SidebarProvider defaultOpen={true}>

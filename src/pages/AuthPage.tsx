@@ -150,19 +150,39 @@ const AuthPage = () => {
     
     // Proceed with redirection if needed
     if (userRole === UserRole.BROKER) {
-      console.log("Redirecting to broker dashboard");
-      navigate("/broker/dashboard", { replace: true });
+      // Only redirect if not already at broker dashboard
+      if (location.pathname !== "/broker/dashboard") {
+        console.log("Redirecting to broker dashboard");
+        navigate("/broker/dashboard", { replace: true });
+      } else {
+        console.log("Already at broker dashboard, skipping redirect");
+      }
     } else if (userRole === UserRole.ADMIN) {
       // Always redirect admins to /admin/ with trailing slash  
-      console.log("Redirecting to admin dashboard with trailing slash");
-      navigate("/admin/", { replace: true });
+      // Only if not already there
+      if (location.pathname !== "/admin/") {
+        console.log("Redirecting to admin dashboard with trailing slash");
+        navigate("/admin/", { replace: true });
+      } else {
+        console.log("Already at admin dashboard, skipping redirect");
+      }
     } else if (userRole === UserRole.CLIENT) {
-      console.log("Redirecting to client welcome page");
-      navigate("/client/welcome", { replace: true });
+      // Only if not already there
+      if (location.pathname !== "/client/welcome") {
+        console.log("Redirecting to client welcome page");
+        navigate("/client/welcome", { replace: true });
+      } else {
+        console.log("Already at client welcome page, skipping redirect");
+      }
     } else {
       // Fallback for unknown roles
-      console.log("Unknown role, redirecting to home page");
-      navigate("/", { replace: true });
+      // Only if not already at home
+      if (location.pathname !== "/") {
+        console.log("Unknown role, redirecting to home page");
+        navigate("/", { replace: true });
+      } else {
+        console.log("Already at home page, skipping redirect");
+      }
     }
   };
   

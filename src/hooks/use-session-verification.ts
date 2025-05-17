@@ -120,8 +120,8 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
               }
               break;
             case UserRole.BROKER:
-              // Only redirect if not already on broker dashboard
-              if (location.pathname !== "/broker/dashboard") {
+              // Only redirect if at root broker path (no subpath)
+              if (location.pathname === "/broker") {
                 debouncedNavigate("/broker/dashboard");
               }
               break;

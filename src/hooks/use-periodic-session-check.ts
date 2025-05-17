@@ -38,6 +38,8 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
       // Only redirect if we're not already on this path
       if (location.pathname !== path) {
         navigate(path, { replace: true });
+      } else {
+        console.log(`Already at ${path}, skipping redirect`);
       }
     }, 1000),
     [navigate, location.pathname]
@@ -59,10 +61,17 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
     
     // Create redirect URL with current path as redirect parameter
     const searchParams = new URLSearchParams();
-    searchParams.set('redirect', location.pathname);
+    if (location.pathname !== '/auth') {
+      searchParams.set('redirect', location.pathname);
+    }
     
     // Use debounced redirect to prevent multiple redirects
-    debouncedRedirect(`/auth?${searchParams.toString()}`);
+    const redirectPath = searchParams.toString() ? `/auth?${searchParams.toString()}` : '/auth';
+    
+    // Only redirect if we're not already on the auth page
+    if (location.pathname !== '/auth') {
+      debouncedRedirect(redirectPath);
+    }
   }, [setSession, location.pathname, debouncedRedirect]);
 
   // Function to validate the current session
