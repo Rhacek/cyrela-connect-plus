@@ -15,8 +15,8 @@ export const BrokerSidebar = () => {
 
   return (
     <Sidebar 
-      className={isExpanded ? "w-60" : "w-14"} 
-      side="left" // Explicitly set side to left
+      className={`${isExpanded ? "w-60" : "w-14"} h-screen flex-shrink-0`} 
+      side="left"
       collapsible="icon"
     >
       <BrokerSidebarContent />

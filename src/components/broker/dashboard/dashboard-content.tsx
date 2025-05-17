@@ -32,58 +32,56 @@ export function DashboardContent({
   const isMobile = useIsMobile();
   
   return (
-    <ScrollArea className="h-screen w-full">
-      <div className="flex flex-col w-full p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
-        <DashboardHeader 
-          title="Dashboard" 
-          description={`Bem-vindo de volta${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}
-          buttonLabel="Cadastrar lead"
-          onButtonClick={onAddLead}
-        />
-        
-        <StatsGrid 
-          performance={performance} 
-          target={target} 
-          className="w-full mb-4 sm:mb-6"
-          isLoading={isLoadingPerformance || isLoadingTarget}
-        />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 min-h-[500px] w-full mb-6">
-          <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
-            <RecentLeadsSection 
-              leads={leads} 
-              className="flex-1 w-full"
-              isLoading={isLoadingLeads}
+    <div className="w-full">
+      <DashboardHeader 
+        title="Dashboard" 
+        description={`Bem-vindo de volta${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}
+        buttonLabel="Cadastrar lead"
+        onButtonClick={onAddLead}
+      />
+      
+      <StatsGrid 
+        performance={performance} 
+        target={target} 
+        className="w-full mb-4 sm:mb-6"
+        isLoading={isLoadingPerformance || isLoadingTarget}
+      />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 min-h-[500px] w-full mb-6">
+        <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">
+          <RecentLeadsSection 
+            leads={leads} 
+            className="flex-1 w-full"
+            isLoading={isLoadingLeads}
+          />
+          
+          {isMobile ? (
+            <ProgressCard 
+              target={target} 
+              performance={performance} 
+              className="w-full"
+              isLoading={isLoadingPerformance || isLoadingTarget}
             />
-            
-            {isMobile ? (
-              <ProgressCard 
-                target={target} 
-                performance={performance} 
-                className="w-full"
-                isLoading={isLoadingPerformance || isLoadingTarget}
-              />
-            ) : (
-              <QuickAccess className="flex-1 w-full" />
-            )}
-          </div>
-          
-          {!isMobile && (
-            <div className="h-full">
-              <ProgressCard 
-                target={target} 
-                performance={performance} 
-                className="h-full w-full"
-                isLoading={isLoadingPerformance || isLoadingTarget}
-              />
-            </div>
-          )}
-          
-          {isMobile && (
-            <QuickAccess className="w-full" />
+          ) : (
+            <QuickAccess className="flex-1 w-full" />
           )}
         </div>
+        
+        {!isMobile && (
+          <div className="h-full">
+            <ProgressCard 
+              target={target} 
+              performance={performance} 
+              className="h-full w-full"
+              isLoading={isLoadingPerformance || isLoadingTarget}
+            />
+          </div>
+        )}
+        
+        {isMobile && (
+          <QuickAccess className="w-full" />
+        )}
       </div>
-    </ScrollArea>
+    </div>
   );
 }

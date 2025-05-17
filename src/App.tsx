@@ -13,7 +13,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 
-// Broker pages
+// Broker pages and layout
+import BrokerLayout from "./components/broker/BrokerLayout"; // Import the BrokerLayout
 import BrokerDashboard from "./pages/broker/BrokerDashboard";
 import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerProperties from "./pages/broker/BrokerProperties";
@@ -61,79 +62,26 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             
-            {/* Broker routes - protected for broker role */}
+            {/* Broker routes - protected for broker role and using BrokerLayout */}
             <Route 
-              path="/broker/dashboard" 
+              path="/broker" 
               element={
                 <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerDashboard />
+                  <BrokerLayout />
                 </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/profile" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerProfile />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/properties" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerProperties />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/schedule" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerSchedule />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/leads" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerLeads />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/metrics" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerMetrics />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/share" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerShare />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/plans" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerPlans />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/broker/settings" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerSettings />
-                </ProtectedRoute>
-              } 
-            />
+              }
+            >
+              <Route index element={<Navigate to="/broker/dashboard" replace />} />
+              <Route path="dashboard" element={<BrokerDashboard />} />
+              <Route path="profile" element={<BrokerProfile />} />
+              <Route path="properties" element={<BrokerProperties />} />
+              <Route path="schedule" element={<BrokerSchedule />} />
+              <Route path="leads" element={<BrokerLeads />} />
+              <Route path="metrics" element={<BrokerMetrics />} />
+              <Route path="share" element={<BrokerShare />} />
+              <Route path="plans" element={<BrokerPlans />} />
+              <Route path="settings" element={<BrokerSettings />} />
+            </Route>
             
             {/* Client routes */}
             <Route path="/client/welcome" element={<WelcomePage />} />
@@ -151,13 +99,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              {/* Add explicit index route with trailing slash */}
               <Route index element={<AdminDashboard />} />
-              
-              {/* Add explicit dashboard route for direct navigation */}
               <Route path="dashboard" element={<Navigate to="/admin/" replace />} />
-              
-              {/* Consistently use trailing slashes for all admin routes */}
               <Route path="properties/" element={<AdminProperties />} />
               <Route path="properties/new/" element={<AdminPropertyForm />} />
               <Route path="properties/:id/edit/" element={<AdminPropertyForm />} />
