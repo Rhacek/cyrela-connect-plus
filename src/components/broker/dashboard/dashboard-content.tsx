@@ -8,15 +8,12 @@ import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { ProgressCard } from "@/components/broker/dashboard/progress-card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
 
 interface DashboardContentProps {
   userName: string;
   performance: any;
   target: any;
   leads: any[];
-  potentialVGV?: number;
   isLoadingPerformance: boolean;
   isLoadingTarget: boolean;
   isLoadingLeads: boolean;
@@ -28,7 +25,6 @@ export function DashboardContent({
   performance,
   target,
   leads,
-  potentialVGV = 0,
   isLoadingPerformance,
   isLoadingTarget,
   isLoadingLeads,
@@ -52,21 +48,6 @@ export function DashboardContent({
         className="w-full mb-4 sm:mb-6"
         isLoading={isLoadingPerformance || isLoadingTarget}
       />
-      
-      {/* VGV Card */}
-      <Card className="w-full mb-4 sm:mb-6 bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">VGV Potencial</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">
-            {formatCurrency(potentialVGV)}
-          </div>
-          <p className="text-sm opacity-80 mt-1">
-            Valor total dos imóveis relacionados aos seus leads interessados, agendados e visitados
-          </p>
-        </CardContent>
-      </Card>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 min-h-[500px] w-full mb-6">
         <div className="lg:col-span-2 flex flex-col gap-3 sm:gap-6 h-full">

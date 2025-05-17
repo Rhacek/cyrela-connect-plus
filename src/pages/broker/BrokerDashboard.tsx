@@ -19,7 +19,6 @@ export default function BrokerDashboard() {
   const { 
     currentPerformance, 
     isLoadingPerformance, 
-    potentialVGV,
     refreshAllMetrics 
   } = usePerformanceData(brokerId, sessionEnabled);
   const { recentLeads, isLoadingLeads, refetchLeads } = useLeadsData(brokerId, sessionEnabled);
@@ -50,7 +49,6 @@ export default function BrokerDashboard() {
         isLoadingTarget={isLoadingTarget}
         isLoadingLeads={isLoadingLeads}
         onAddLead={handleAddLead}
-        potentialVGV={potentialVGV}
       />
       
       <CreateLeadDialog 

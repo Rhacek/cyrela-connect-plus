@@ -6,8 +6,7 @@ import { Performance } from "@/types";
 import { 
   getCurrentMonthPerformance,
   getBrokerLeadCount,
-  getBrokerScheduledVisitsCount,
-  getBrokerPotentialVGV
+  getBrokerScheduledVisitsCount
 } from "@/services/performance";
 
 export const usePerformanceData = (
@@ -64,16 +63,6 @@ export const usePerformanceData = (
     enabled: !!brokerId && enabled
   });
   
-  // Fetch potential VGV (Gross Sales Volume)
-  const { 
-    data: potentialVGV,
-    refetch: refetchPotentialVGV 
-  } = useQuery({
-    queryKey: ['brokerPotentialVGV', brokerId],
-    queryFn: () => getBrokerPotentialVGV(brokerId || ""),
-    enabled: !!brokerId && enabled
-  });
-  
   // Merge real-time data with performance data
   const [currentPerformance, setCurrentPerformance] = useState<Performance>(emptyPerformance);
   
@@ -95,7 +84,7 @@ export const usePerformanceData = (
     } else {
       setCurrentPerformance(emptyPerformance);
     }
-  }, [performance, leadCount, scheduledVisitsCount, potentialVGV]);
+  }, [performance, leadCount, scheduledVisitsCount]);
   
   // Display toast if performance data fetch fails
   useEffect(() => {
@@ -110,13 +99,11 @@ export const usePerformanceData = (
     refetchPerformance();
     refetchLeadCount();
     refetchScheduledVisits();
-    refetchPotentialVGV();
   };
   
   return {
     currentPerformance,
     isLoadingPerformance,
-    potentialVGV: potentialVGV || 0,
     refreshAllMetrics
   };
 };
