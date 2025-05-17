@@ -21,6 +21,9 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
   const { hasValidCache, cachedSession, updateSessionCache } = useSessionCache(location.pathname);
   const currentPath = location.pathname;
   
+  // Skip verification for client routes - they should remain public
+  const isClientRoute = currentPath.startsWith('/client');
+  
   // Create a debounced navigation function
   const debouncedNavigate = useCallback(
     debounce((path: string) => {
@@ -36,6 +39,13 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
   );
 
   useEffect(() => {
+    // Skip verification for client routes
+    if (isClientRoute) {
+      setIsAuthorized(true);
+      setIsVerifying(false);
+      return;
+    }
+    
     let isMounted = true;
     
     // Check if we can use the cached session first
@@ -84,9 +94,22 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         return;
       }
       
-      // If we don't have a session, not authorized
-      if (!session) {
-        console.log("No valid session found");
+      // Determine if this is a protected route
+      const isProtectedRoute = location.pathname.startsWith('/broker') || 
+                               location.pathname.startsWith('/admin');
+      
+      // If not a protected route and no roles specified, authorize
+      if (!isProtectedRoute && !allowedRoles) {
+        if (isMounted) {
+          setIsAuthorized(true);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
+      // If we don't have a session and this is a protected route, not authorized
+      if (!session && isProtectedRoute) {
+        console.log("No valid session found for protected route");
         if (isMounted) {
           setIsAuthorized(false);
           setIsVerifying(false);
@@ -94,8 +117,27 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         return;
       }
       
+      // If we don't have a session but there are allowed roles, not authorized
+      if (!session && allowedRoles) {
+        console.log("No valid session found for role-protected route");
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
+      // If we have a session but there are no allowed roles, and it's not a protected route, authorize
+      if (session && !allowedRoles && !isProtectedRoute) {
+        if (isMounted) {
+          setIsAuthorized(true);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
       // Check if user has permission based on role
-      const userRole = session.user_metadata.role;
+      const userRole = session!.user_metadata.role;
       const hasPermission = allowedRoles ? allowedRoles.includes(userRole) : true;
       
       console.log("Checking authorization:", {
@@ -176,8 +218,14 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     hasValidCache, 
     cachedSession, 
     updateSessionCache,
-    debouncedNavigate
+    debouncedNavigate,
+    isClientRoute
   ]);
+
+  // If this is a client route, always return authorized
+  if (isClientRoute) {
+    return { isAuthorized: true, isVerifying: false };
+  }
 
   return { isAuthorized, isVerifying };
 }

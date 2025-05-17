@@ -18,11 +18,13 @@ const BrokerLayout = memo(() => {
   // Safe redirection logic that prevents loops
   useEffect(() => {
     if (!loading) {
+      // Only redirect if not authenticated on broker routes
       if (!session && pathname.startsWith("/broker")) {
         navigate("/auth", { replace: true });
         return;
       }
 
+      // Only redirect from root /broker path to dashboard
       if (session && pathname === "/broker") {
         navigate("/broker/dashboard", { replace: true });
         return;

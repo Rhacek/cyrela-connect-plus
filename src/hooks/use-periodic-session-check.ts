@@ -31,6 +31,12 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   
+  // Skip checks for client routes - they should remain public
+  const isClientRoute = currentPath.startsWith('/client');
+  if (isClientRoute) {
+    return; // Exit early for client routes
+  }
+  
   // Create a debounced redirect function to avoid multiple redirects
   const debouncedRedirect = useCallback(
     debounce((path: string) => {
@@ -48,6 +54,11 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   // Function to handle session invalidation
   const handleInvalidSession = useCallback(() => {
     if (!isMountedRef.current) return;
+    
+    // Skip for client routes
+    if (currentPath.startsWith('/client')) {
+      return;
+    }
     
     console.log('Session invalid or expired, redirecting to auth page');
     
@@ -72,11 +83,16 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
     if (location.pathname !== '/auth') {
       debouncedRedirect(redirectPath);
     }
-  }, [setSession, location.pathname, debouncedRedirect]);
+  }, [setSession, location.pathname, debouncedRedirect, currentPath]);
 
   // Function to validate the current session
   const checkSession = useCallback(async () => {
     if (!isMountedRef.current || isChecking) return;
+    
+    // Skip for client routes
+    if (currentPath.startsWith('/client')) {
+      return;
+    }
     
     setIsChecking(true);
     
@@ -130,6 +146,11 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   }, [session, currentPath, isChecking, handleInvalidSession]);
 
   useEffect(() => {
+    // Skip for client routes
+    if (currentPath.startsWith('/client')) {
+      return;
+    }
+    
     // Skip if not authorized or already checking
     if (!isAuthorized) {
       return;

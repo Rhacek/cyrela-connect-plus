@@ -109,10 +109,25 @@ const AuthPage = () => {
     console.log("User role detected:", userRole);
     
     // If there's a specific redirect path, use it unless it's admin path with wrong role
+    // or a client path (which should be accessible regardless of authentication)
     if (redirectPath) {
+      // Don't redirect to client paths - they should be publicly accessible
+      if (redirectPath.startsWith('/client')) {
+        console.log(`Client path detected: ${redirectPath}, navigating`);
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+      
       // Only redirect to admin paths if user is admin
       if (redirectPath.startsWith('/admin') && userRole !== UserRole.ADMIN) {
         console.log("Attempt to redirect to admin path, but user is not admin");
+        redirectToDefaultForRole(userRole);
+        return;
+      }
+      
+      // Only redirect to broker paths if user is broker
+      if (redirectPath.startsWith('/broker') && userRole !== UserRole.BROKER) {
+        console.log("Attempt to redirect to broker path, but user is not broker");
         redirectToDefaultForRole(userRole);
         return;
       }

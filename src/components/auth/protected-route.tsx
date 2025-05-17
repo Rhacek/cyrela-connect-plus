@@ -16,6 +16,16 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
   const location = useLocation();
   
+  // Check if the current path is a protected route
+  const isProtectedRoute = location.pathname.startsWith('/broker') || 
+                           location.pathname.startsWith('/admin');
+  
+  // Skip auth checks for client paths - they should remain public
+  const isClientRoute = location.pathname.startsWith('/client');
+  if (isClientRoute) {
+    return children ? <>{children}</> : <Outlet />;
+  }
+  
   // Show loading state while verifying
   if (loading || isVerifying) {
     return (
@@ -35,22 +45,17 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
     if (location.pathname.startsWith('/admin') && session?.user_metadata?.role !== UserRole.ADMIN) {
       toast.error("Você não tem permissão para acessar esta página");
       
-      // Redirect brokers to auth
-      if (session?.user_metadata?.role === UserRole.BROKER) {
-        return <Navigate to="/auth" replace />;
-      }
-      
-      // Redirect clients to client welcome page
-      if (session?.user_metadata?.role === UserRole.CLIENT) {
-        return <Navigate to="/client/welcome" replace />;
-      }
-      
-      // Redirect other users to auth
+      // Redirect to auth page
       return <Navigate to="/auth" replace />;
     }
     
-    // Default redirect to auth page
-    return <Navigate to="/auth" replace />;
+    // Only redirect to auth if this is a protected route
+    if (isProtectedRoute) {
+      return <Navigate to="/auth" replace />;
+    }
+    
+    // If not a protected route, allow access
+    return children ? <>{children}</> : <Outlet />;
   };
 
   // If not authorized, redirect appropriately
