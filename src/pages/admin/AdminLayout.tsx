@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth-context";
 import { useSessionCache } from "@/hooks/use-session-cache";
 import { toast } from "@/hooks/use-toast";
 import { UserSession } from "@/types/auth"; // Fixed import path from @/types/auth
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Helper function to map Session to UserSession
 const mapToUserSession = (session: any): UserSession => {
@@ -90,16 +91,18 @@ const AdminLayout = () => {
   }, [location.pathname, hasValidCache, session, navigate, updateSessionCache]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <AdminSidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <AdminHeader />
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
-          <Outlet />
-        </main>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex h-screen overflow-hidden">
+        <AdminSidebar />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <AdminHeader />
+          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+            <Outlet />
+          </main>
+        </div>
+        <Toaster />
       </div>
-      <Toaster />
-    </div>
+    </SidebarProvider>
   );
 };
 
