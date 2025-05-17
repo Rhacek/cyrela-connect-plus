@@ -19,14 +19,20 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
   const { hasValidCache, cachedSession, updateSessionCache } = useSessionCache(location.pathname);
+  const currentPath = location.pathname;
   
   // Create a debounced navigation function
   const debouncedNavigate = useCallback(
     debounce((path: string) => {
-      console.log(`Debounced navigate to ${path}`);
-      navigate(path, { replace: true });
+      // Only navigate if we're not already on this path
+      if (currentPath !== path) {
+        console.log(`Debounced navigate to ${path}`);
+        navigate(path, { replace: true });
+      } else {
+        console.log(`Already at ${path}, skipping navigation`);
+      }
     }, 800),
-    [navigate]
+    [navigate, currentPath]
   );
 
   useEffect(() => {
@@ -108,16 +114,28 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
           // Redirect based on role using debounced navigation
           switch (userRole) {
             case UserRole.ADMIN:
-              debouncedNavigate("/admin/");
+              // Only redirect if not already on admin route
+              if (!location.pathname.startsWith('/admin')) {
+                debouncedNavigate("/admin/");
+              }
               break;
             case UserRole.BROKER:
-              debouncedNavigate("/broker/dashboard");
+              // Only redirect if not already on broker dashboard
+              if (location.pathname !== "/broker/dashboard") {
+                debouncedNavigate("/broker/dashboard");
+              }
               break;
             case UserRole.CLIENT:
-              debouncedNavigate("/client/welcome");
+              // Only redirect if not already on client welcome
+              if (location.pathname !== "/client/welcome") {
+                debouncedNavigate("/client/welcome");
+              }
               break;
             default:
-              debouncedNavigate("/auth");
+              // Only redirect if not already on auth
+              if (location.pathname !== "/auth") {
+                debouncedNavigate("/auth");
+              }
               break;
           }
           

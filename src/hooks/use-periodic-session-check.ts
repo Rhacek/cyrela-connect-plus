@@ -35,9 +35,12 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   const debouncedRedirect = useCallback(
     debounce((path: string) => {
       console.log(`Debounced redirect to ${path}`);
-      navigate(path, { replace: true });
+      // Only redirect if we're not already on this path
+      if (location.pathname !== path) {
+        navigate(path, { replace: true });
+      }
     }, 1000),
-    [navigate]
+    [navigate, location.pathname]
   );
 
   // Function to handle session invalidation

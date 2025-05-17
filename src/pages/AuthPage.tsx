@@ -117,8 +117,13 @@ const AuthPage = () => {
         return;
       }
       
-      console.log(`Redirecting to specified path: ${redirectPath}`);
-      navigate(redirectPath, { replace: true });
+      // Avoid redirecting to the current path
+      if (location.pathname !== redirectPath) {
+        console.log(`Redirecting to specified path: ${redirectPath}`);
+        navigate(redirectPath, { replace: true });
+      } else {
+        console.log(`Already at specified path: ${redirectPath}, skipping redirect`);
+      }
       return;
     }
     
@@ -127,6 +132,23 @@ const AuthPage = () => {
   };
   
   const redirectToDefaultForRole = (userRole: UserRole) => {
+    // Avoid redirecting if already at the target route
+    if (userRole === UserRole.BROKER && location.pathname === "/broker/dashboard") {
+      console.log("Already at broker dashboard, skipping redirect");
+      return;
+    }
+    
+    if (userRole === UserRole.ADMIN && location.pathname === "/admin/") {
+      console.log("Already at admin dashboard, skipping redirect");
+      return;
+    }
+    
+    if (userRole === UserRole.CLIENT && location.pathname === "/client/welcome") {
+      console.log("Already at client welcome page, skipping redirect");
+      return;
+    }
+    
+    // Proceed with redirection if needed
     if (userRole === UserRole.BROKER) {
       console.log("Redirecting to broker dashboard");
       navigate("/broker/dashboard", { replace: true });
