@@ -1,7 +1,6 @@
 
 import { cn } from "@/lib/utils";
 import { AppLogo } from "@/components/ui/app-logo";
-import { X } from "lucide-react";
 
 interface SidebarLogoProps {
   isCollapsed: boolean;
@@ -16,16 +15,6 @@ export function SidebarLogo({ isCollapsed, handleToggleCollapse }: SidebarLogoPr
       ) : (
         <AppLogo />
       )}
-      
-      <button 
-        className={cn(
-          "ml-auto text-cyrela-gray-dark hover:text-primary",
-          !isCollapsed ? "block" : "hidden"
-        )}
-        onClick={handleToggleCollapse}
-      >
-        <X size={20} />
-      </button>
     </div>
   );
 }
