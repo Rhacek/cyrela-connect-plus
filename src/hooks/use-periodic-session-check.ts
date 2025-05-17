@@ -13,6 +13,7 @@ const mapToUserSession = (session: any): UserSession => {
   return {
     id: session.id,
     email: session.email || session.user?.email,
+    expires_at: session.expires_at, // Include expires_at in the mapping
     user_metadata: session.user_metadata || session.user?.user_metadata || {}
   };
 };
@@ -109,6 +110,7 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
         }
         
         // Check if we are less than 30 seconds from expiry
+        // Note: For UserSession the expires_at might be undefined, so add null check
         const expiresAt = session.expires_at ? session.expires_at * 1000 : null;
         
         if (expiresAt) {

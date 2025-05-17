@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/context/auth-context";
 import { useSessionCache } from "@/hooks/use-session-cache";
 import { toast } from "@/hooks/use-toast";
-import { UserSession } from "@/types";
+import { UserSession } from "@/types/auth"; // Fixed import path from @/types/auth
 
 // Helper function to map Session to UserSession
 const mapToUserSession = (session: any): UserSession => {
@@ -16,6 +16,7 @@ const mapToUserSession = (session: any): UserSession => {
   return {
     id: session.id,
     email: session.email || session.user?.email,
+    expires_at: session.expires_at, // Include expires_at property
     user_metadata: session.user_metadata || session.user?.user_metadata || {}
   };
 };
