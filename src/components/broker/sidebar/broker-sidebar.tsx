@@ -4,6 +4,7 @@ import {
   SidebarContent, 
   SidebarHeader, 
   SidebarFooter,
+  SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar";
 import { BrokerSidebarContent } from "./broker-sidebar-content";
@@ -13,7 +14,11 @@ export const BrokerSidebar = () => {
   const isExpanded = state === "expanded";
 
   return (
-    <Sidebar className={isExpanded ? "w-60" : "w-14"}>
+    <Sidebar 
+      className={isExpanded ? "w-60" : "w-14"} 
+      side="left" // Explicitly set side to left
+      collapsible="icon"
+    >
       <BrokerSidebarContent />
     </Sidebar>
   );

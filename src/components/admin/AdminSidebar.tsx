@@ -6,7 +6,7 @@ import {
   SidebarHeader, 
   SidebarMenu, 
   SidebarMenuItem, 
-  SidebarMenuButton,
+  SidebarMenuButton, 
   SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar";
@@ -18,7 +18,11 @@ export const AdminSidebar = () => {
   const isExpanded = state === "expanded";
 
   return (
-    <Sidebar className={isExpanded ? "w-60" : "w-14"}>
+    <Sidebar 
+      className={isExpanded ? "w-60" : "w-14"} 
+      side="left" // Explicitly set side to left  
+      collapsible="icon"
+    >
       <SidebarHeader className="py-4">
         <div className="flex items-center px-4">
           <AppLogo size="sm" />
