@@ -61,14 +61,13 @@ export default function BrokerLeads() {
     setStatusFilter(status);
   };
 
-  const handleAddLeadClick = () => {
-    // This will be implemented in the future
-    console.log("Add new lead");
+  const handleLeadCreated = () => {
+    refetch();
   };
 
   return (
     <div className="w-full">
-      <LeadsHeader onAddLeadClick={handleAddLeadClick} />
+      <LeadsHeader onLeadCreated={handleLeadCreated} />
       
       <LeadsFilter 
         searchTerm={searchTerm}
@@ -83,6 +82,10 @@ export default function BrokerLeads() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyrela-blue mx-auto"></div>
             <p className="mt-2 text-cyrela-gray-dark">Carregando leads...</p>
           </div>
+        </div>
+      ) : filteredLeads.length === 0 ? (
+        <div className="w-full bg-white rounded-lg shadow-sm border border-cyrela-gray-lighter p-8 text-center">
+          <p className="text-cyrela-gray-dark">Você ainda não cadastrou nenhum lead.</p>
         </div>
       ) : isMobile ? (
         <LeadsList leads={filteredLeads} />
