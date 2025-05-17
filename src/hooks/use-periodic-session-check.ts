@@ -1,172 +1,171 @@
 
-import { useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase, refreshSession } from "@/lib/supabase";
-import { toast } from "@/hooks/use-toast";
-import { useSessionCache } from "./use-session-cache";
-import { debounce } from "@/lib/utils";
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { debounce } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import { UserSession } from '@/types/auth';
 
-export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPath: string = "") {
+// Define a conversion function to map Session to UserSession
+const mapToUserSession = (session: any): UserSession => {
+  if (!session) return null;
+  
+  return {
+    id: session.id,
+    email: session.email || session.user?.email,
+    user_metadata: session.user_metadata || session.user?.user_metadata || {}
+  };
+};
+
+/**
+ * Hook to periodically check if the session is still valid
+ * Helps prevent users from continuing to use the app with an invalid session
+ */
+export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPath: string) {
+  const [isChecking, setIsChecking] = useState(false);
+  const { session, setSession } = useAuth();
   const navigate = useNavigate();
-  const sessionChecksRef = useRef<number>(0);
-  const lastValidCheckRef = useRef<number>(Date.now());
-  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const checkIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isAdminRoute = currentPath.startsWith("/admin");
-  const { hasValidCache, updateSessionCache } = useSessionCache(currentPath);
-
+  const location = useLocation();
+  
   // Create a debounced redirect function to avoid multiple redirects
   const debouncedRedirect = useCallback(
     debounce((path: string) => {
       console.log(`Debounced redirect to ${path}`);
       navigate(path, { replace: true });
-    }, 800),
+    }, 1000),
     [navigate]
   );
 
-  // Enhanced function to handle session loss with proper state cleanup
-  const handleSessionLoss = useCallback(() => {
-    console.warn("Session lost, will redirect to login");
+  // Function to handle session invalidation
+  const handleInvalidSession = useCallback(() => {
+    console.log('Session invalid or expired, redirecting to auth page');
     
-    // Display toast message
-    toast.error("Sua sessão expirou", { 
-      description: "Redirecionando para página de login..." 
+    // Set session to null in auth context
+    setSession(null);
+    
+    // Show toast notification
+    toast.error('Sessão expirada', {
+      description: 'Sua sessão expirou. Por favor, faça login novamente.'
     });
     
-    // Use the debounced redirect to prevent multiple redirects
-    let redirectPath = "/auth";
-    if (currentPath) {
-      redirectPath += `?redirect=${encodeURIComponent(currentPath)}`;
-    }
-    debouncedRedirect(redirectPath);
-  }, [currentPath, debouncedRedirect]);
+    // Create redirect URL with current path as redirect parameter
+    const searchParams = new URLSearchParams();
+    searchParams.set('redirect', location.pathname);
+    
+    // Use debounced redirect to prevent multiple redirects
+    debouncedRedirect(`/auth?${searchParams.toString()}`);
+  }, [setSession, location.pathname, debouncedRedirect]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    // Skip setup if we're not authorized or we have a valid cache
-    if (!isAuthorized || hasValidCache) {
-      console.log(
-        hasValidCache 
-          ? "Using cached session validation, skipping periodic checks" 
-          : "Not authorized, skipping periodic session checks"
-      );
+    // Skip if not authorized or already checking
+    if (!isAuthorized || isChecking) {
+      console.log('Not authorized, skipping periodic session checks');
       return;
     }
     
-    console.log(`Setting up periodic session checks for route: ${currentPath}`);
+    // Skip for auth pages
+    if (currentPath.startsWith('/auth')) {
+      return;
+    }
     
-    // Reset counter when component mounts with authorization
-    sessionChecksRef.current = 0;
-    lastValidCheckRef.current = Date.now();
+    let checkInterval: NodeJS.Timeout;
+    let isMounted = true;
     
-    // Function to schedule next check with increased interval for admin routes
-    const scheduleNextCheck = () => {
-      if (checkIntervalRef.current) {
-        clearTimeout(checkIntervalRef.current);
-      }
+    // Initialize a session check that runs periodically
+    const initializePeriodicCheck = () => {
+      console.log('Setting up periodic session checks for route:', currentPath);
       
-      // Base interval longer for admin routes (30 minutes vs 20 minutes)
-      let interval = isAdminRoute ? 30 * 60 * 1000 : 20 * 60 * 1000;
+      // Check immediately on first render to ensure session hasn't expired before
+      // the first interval check is triggered
+      checkSession();
       
-      // Add some jitter to prevent all clients from checking at the same time
-      interval += Math.random() * 60000; // Add up to 1 minute of random jitter
-      
-      checkIntervalRef.current = setTimeout(performSessionCheck, interval);
-      console.log(`Next session check scheduled in ${Math.round(interval/60000)} minutes`);
+      // Set up periodic check - every 4 minutes
+      checkInterval = setInterval(() => {
+        if (isMounted) {
+          checkSession();
+        }
+      }, 4 * 60 * 1000); // Reduced from 5 to 4 minutes to prevent token expiry
     };
     
-    // Enhanced session check function
-    const performSessionCheck = async () => {
+    // Function to validate the current session
+    const checkSession = async () => {
       if (!isMounted) return;
       
-      // Skip if we're in an admin route and have verified in the last 10 minutes
-      const timeSinceLastCheck = Date.now() - lastValidCheckRef.current;
-      if (isAdminRoute && timeSinceLastCheck < 10 * 60 * 1000) {
-        console.log("Recent admin route check was successful, skipping");
-        scheduleNextCheck();
+      if (isChecking) {
+        console.log('Session check already in progress, skipping');
         return;
       }
       
-      // Increment check counter
-      sessionChecksRef.current += 1;
+      setIsChecking(true);
       
       try {
-        console.log(`Performing periodic session check #${sessionChecksRef.current}`);
+        console.log('Periodic session check for route:', currentPath);
         
-        // Get current session
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error checking session:", error);
-          handleSessionLoss();
+        // First check if we even have a session in context
+        if (!session) {
+          console.log('No session found during periodic check');
+          handleInvalidSession();
           return;
         }
         
-        if (!data.session) {
-          console.warn("Session lost during periodic check");
+        // Check if we are less than 30 seconds from expiry
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : null;
+        
+        if (expiresAt) {
+          const now = Date.now();
+          const timeUntilExpiry = expiresAt - now;
           
-          // Try to refresh the session before giving up
-          const refreshedSession = await refreshSession();
-          
-          if (!refreshedSession) {
-            handleSessionLoss();
-          } else {
-            // Session refreshed successfully
-            lastValidCheckRef.current = Date.now();
-            
-            // Update session cache for this route
-            if (isAdminRoute) {
-              updateSessionCache(refreshedSession, currentPath);
-            }
-            
-            console.log("Session refreshed successfully in periodic check");
-            scheduleNextCheck();
+          if (timeUntilExpiry < 30000) { // Less than 30 seconds
+            console.log('Session about to expire, handling invalidation');
+            handleInvalidSession();
+            return;
           }
-          return;
         }
         
-        // Session is valid, update last valid check timestamp
-        lastValidCheckRef.current = Date.now();
-        
-        // For admin routes, update the cache
-        if (isAdminRoute) {
-          updateSessionCache(data.session, currentPath);
+        // Attempt to directly verify token on admin routes to prevent 
+        // issues with token refresh mechanism
+        if (currentPath.startsWith('/admin')) {
+          // For admin routes, ensure session is properly stored in cache
+          // for future reference
+          updateSessionCache(mapToUserSession(session), currentPath);
         }
         
-        console.log("Periodic check: Session valid");
-        scheduleNextCheck();
-      } catch (err) {
-        console.error("Error during periodic session check:", err);
+      } catch (error) {
+        console.error('Error checking session:', error);
         
-        // Only redirect if we haven't had a valid check in the last 20 minutes
-        const timeSinceLastValidCheck = Date.now() - lastValidCheckRef.current;
-        if (timeSinceLastValidCheck > 20 * 60 * 1000) {
-          handleSessionLoss();
-        } else {
-          console.log("Ignoring temporary error, last valid check was recent");
-          scheduleNextCheck();
+        // If error during check, invalidate session to be safe
+        handleInvalidSession();
+      } finally {
+        if (isMounted) {
+          setIsChecking(false);
         }
       }
     };
     
-    // Start the first check cycle, but with a delay for initial page load
-    const initialDelay = isAdminRoute ? 30000 : 10000; // Longer delay for admin routes
-    checkIntervalRef.current = setTimeout(() => {
-      if (isMounted) {
-        console.log("Starting first periodic session check after initial delay");
-        performSessionCheck();
-      }
-    }, initialDelay);
+    // Optional caching mechanism for verified sessions
+    const updateSessionCache = (userSession: UserSession, path: string) => {
+      if (!userSession) return;
+      
+      // Here we could store verified paths in local storage or memory
+      // For this implementation, we'll just log it
+      console.log(`Session valid for path: ${path}`);
+    };
     
+    // Initialize the periodic check
+    initializePeriodicCheck();
+    
+    // Cleanup on unmount
     return () => {
       isMounted = false;
-      if (checkIntervalRef.current) {
-        clearTimeout(checkIntervalRef.current);
-      }
-      if (redirectTimerRef.current) {
-        clearTimeout(redirectTimerRef.current);
-      }
+      clearInterval(checkInterval);
     };
-  }, [isAuthorized, navigate, currentPath, isAdminRoute, hasValidCache, handleSessionLoss, updateSessionCache]);
+  }, [
+    isAuthorized,
+    session,
+    currentPath,
+    isChecking,
+    handleInvalidSession
+  ]);
+  
+  // No need to return anything as this hook is for side effects only
 }

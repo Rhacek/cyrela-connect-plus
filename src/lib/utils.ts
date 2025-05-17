@@ -26,3 +26,13 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(later, wait);
   };
 }
+
+/**
+ * Format a number as currency (BRL by default)
+ */
+export function formatCurrency(value: number, locale = 'pt-BR', currency = 'BRL'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency
+  }).format(value);
+}
