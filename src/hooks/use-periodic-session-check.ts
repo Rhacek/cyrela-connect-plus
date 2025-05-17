@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { debounce } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { UserSession } from '@/types/auth';
+import { refreshSession, isRefreshing } from '@/lib/supabase';
 
 // Define a conversion function to map Session to UserSession
 const mapToUserSession = (session: any): UserSession => {
@@ -60,7 +61,6 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   useEffect(() => {
     // Skip if not authorized or already checking
     if (!isAuthorized || isChecking) {
-      console.log('Not authorized, skipping periodic session checks');
       return;
     }
     
@@ -110,47 +110,42 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
         }
         
         // Check if we are less than 30 seconds from expiry
-        // Note: For UserSession the expires_at might be undefined, so add null check
-        const expiresAt = session.expires_at ? session.expires_at * 1000 : null;
-        
-        if (expiresAt) {
+        if (session.expires_at) {
           const now = Date.now();
+          const expiresAt = session.expires_at * 1000;
           const timeUntilExpiry = expiresAt - now;
           
           if (timeUntilExpiry < 30000) { // Less than 30 seconds
             console.log('Session about to expire, handling invalidation');
-            handleInvalidSession();
+            
+            // Try to refresh first before invalidating
+            if (!isRefreshing) {
+              const refreshedSession = await refreshSession();
+              if (!refreshedSession) {
+                handleInvalidSession();
+              }
+            }
             return;
           }
-        }
-        
-        // Attempt to directly verify token on admin routes to prevent 
-        // issues with token refresh mechanism
-        if (currentPath.startsWith('/admin')) {
-          // For admin routes, ensure session is properly stored in cache
-          // for future reference
-          updateSessionCache(mapToUserSession(session), currentPath);
         }
         
       } catch (error) {
         console.error('Error checking session:', error);
         
-        // If error during check, invalidate session to be safe
-        handleInvalidSession();
+        // Only invalidate session if we're sure it's invalid
+        // Check if we're getting authorization errors
+        if (error.message && (
+            error.message.includes('JWT expired') || 
+            error.message.includes('invalid token') ||
+            error.message.includes('not authorized')
+          )) {
+          handleInvalidSession();
+        }
       } finally {
         if (isMounted) {
           setIsChecking(false);
         }
       }
-    };
-    
-    // Optional caching mechanism for verified sessions
-    const updateSessionCache = (userSession: UserSession, path: string) => {
-      if (!userSession) return;
-      
-      // Here we could store verified paths in local storage or memory
-      // For this implementation, we'll just log it
-      console.log(`Session valid for path: ${path}`);
     };
     
     // Initialize the periodic check

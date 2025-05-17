@@ -7,8 +7,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/context/auth-context";
 import { useSessionCache } from "@/hooks/use-session-cache";
 import { toast } from "@/hooks/use-toast";
-import { UserSession } from "@/types/auth"; // Fixed import path from @/types/auth
+import { UserSession } from "@/types/auth"; 
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 
 // Helper function to map Session to UserSession
 const mapToUserSession = (session: any): UserSession => {
@@ -17,7 +18,7 @@ const mapToUserSession = (session: any): UserSession => {
   return {
     id: session.id,
     email: session.email || session.user?.email,
-    expires_at: session.expires_at, // Include expires_at property
+    expires_at: session.expires_at, 
     user_metadata: session.user_metadata || session.user?.user_metadata || {}
   };
 };
@@ -30,6 +31,9 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { hasValidCache, updateSessionCache } = useSessionCache(location.pathname);
+  
+  // Add the periodic session check to ensure token validity
+  usePeriodicSessionCheck(session !== null, location.pathname);
   
   // Effect to handle path verification and route adjustments
   useEffect(() => {
