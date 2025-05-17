@@ -6,6 +6,7 @@ import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
+import { useSessionCache } from "@/hooks/use-session-cache";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,18 +20,32 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const location = useLocation();
   const { session, initialized } = useAuth();
   const [isLocallyVerifying, setIsLocallyVerifying] = useState(true);
+  const { hasValidCache, updateSessionCache } = useSessionCache(location.pathname);
   
   // Use the custom hook for session verification
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
   
-  // Setup periodic session check for authenticated users
-  usePeriodicSessionCheck(isAuthorized);
+  // Setup periodic session check for authenticated users with the current path
+  usePeriodicSessionCheck(isAuthorized, location.pathname);
   
   // Simpler verification that relies more on the auth context
   useEffect(() => {
+    // Skip verification if we have a valid cache
+    if (hasValidCache) {
+      console.log(`Using cached session validation for ${location.pathname}`);
+      setIsLocallyVerifying(false);
+      return;
+    }
+    
     // Skip if useSessionVerification is ready
     if (!isVerifying) {
       setIsLocallyVerifying(false);
+      
+      // If authorized, update the session cache for this path
+      if (isAuthorized && session) {
+        updateSessionCache(session, location.pathname);
+      }
+      
       return;
     }
     
@@ -42,14 +57,37 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     
     // We have a session, verification is complete
     setIsLocallyVerifying(false);
-  }, [session, initialized, isVerifying]);
+    
+    // If we have a session, update the cache
+    if (session) {
+      updateSessionCache(session, location.pathname);
+    }
+  }, [
+    session, 
+    initialized, 
+    isVerifying, 
+    location.pathname, 
+    isAuthorized, 
+    hasValidCache, 
+    updateSessionCache
+  ]);
   
   // Effect to log protected route access
   useEffect(() => {
+    const isAdminRoute = location.pathname.startsWith("/admin");
+    
     console.log(`Protected route accessed: ${location.pathname}`);
     console.log(`Session exists: ${!!session}, ID: ${session?.id}`);
     console.log(`Auth status: authorized=${isAuthorized}, verifying=${isVerifying || isLocallyVerifying}`);
-  }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles, isLocallyVerifying]);
+    
+    // Log more detailed info for admin routes
+    if (isAdminRoute) {
+      console.log("Admin route detailed session info:", {
+        user_metadata: session?.user_metadata,
+        hasValidCache
+      });
+    }
+  }, [location.pathname, isAuthorized, isVerifying, session, allowedRoles, isLocallyVerifying, hasValidCache]);
   
   // Show loading state while verifying
   if (isVerifying || isLocallyVerifying) {

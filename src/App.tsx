@@ -151,24 +151,29 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              {/* Add explicit index route */}
+              {/* Add explicit index route with trailing slash */}
               <Route index element={<AdminDashboard />} />
               
               {/* Add explicit dashboard route for direct navigation */}
-              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="dashboard" element={<Navigate to="/admin/" replace />} />
               
-              <Route path="properties" element={<AdminProperties />} />
-              <Route path="properties/new" element={<AdminPropertyForm />} />
-              <Route path="properties/:id/edit" element={<AdminPropertyForm />} />
-              <Route path="brokers" element={<AdminBrokers />} />
-              <Route path="brokers/new" element={<AdminBrokerForm />} />
-              <Route path="brokers/:id/edit" element={<AdminBrokerForm />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="plans" element={<AdminPlans />} />
+              {/* Consistently use trailing slashes for all admin routes */}
+              <Route path="properties/" element={<AdminProperties />} />
+              <Route path="properties/new/" element={<AdminPropertyForm />} />
+              <Route path="properties/:id/edit/" element={<AdminPropertyForm />} />
+              <Route path="brokers/" element={<AdminBrokers />} />
+              <Route path="brokers/new/" element={<AdminBrokerForm />} />
+              <Route path="brokers/:id/edit/" element={<AdminBrokerForm />} />
+              <Route path="settings/" element={<AdminSettings />} />
+              <Route path="plans/" element={<AdminPlans />} />
             </Route>
             
-            {/* Extra route to handle trailing slash redirect */}
+            {/* Redirects to ensure consistent trailing slashes */}
             <Route path="/admin" element={<Navigate to="/admin/" replace />} />
+            <Route path="/admin/properties" element={<Navigate to="/admin/properties/" replace />} />
+            <Route path="/admin/brokers" element={<Navigate to="/admin/brokers/" replace />} />
+            <Route path="/admin/plans" element={<Navigate to="/admin/plans/" replace />} />
+            <Route path="/admin/settings" element={<Navigate to="/admin/settings/" replace />} />
             
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

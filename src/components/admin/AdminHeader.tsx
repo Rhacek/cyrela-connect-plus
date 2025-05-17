@@ -14,7 +14,7 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/auth-context";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutAndCleanup } from "@/lib/supabase";
 
 export function AdminHeader() {
   const sidebar = useSidebar();
@@ -29,8 +29,8 @@ export function AdminHeader() {
       // First clear session in the auth context to prevent redirection issues
       setSession(null);
       
-      // Then perform Supabase signout
-      const { error } = await supabase.auth.signOut();
+      // Then perform Supabase signout using the centralized helper
+      const { success, error } = await signOutAndCleanup();
       
       if (error) {
         console.error('Error signing out:', error);

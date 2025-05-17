@@ -1,9 +1,11 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSessionCache } from "./use-session-cache";
+import { debounce } from "@/lib/utils";
 
 interface SessionVerificationResult {
   isAuthorized: boolean | null;
@@ -13,11 +15,32 @@ interface SessionVerificationResult {
 export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerificationResult {
   const { session, loading, initialized } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
+  const { hasValidCache, cachedSession, updateSessionCache } = useSessionCache(location.pathname);
+  
+  // Create a debounced navigation function
+  const debouncedNavigate = useCallback(
+    debounce((path: string) => {
+      console.log(`Debounced navigate to ${path}`);
+      navigate(path, { replace: true });
+    }, 800),
+    [navigate]
+  );
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Check if we can use the cached session first
+    if (hasValidCache) {
+      console.log(`Using cached session validation for ${location.pathname}`);
+      if (isMounted) {
+        setIsAuthorized(true);
+        setIsVerifying(false);
+      }
+      return;
+    }
     
     // Main check for authorization with simplified logic
     const checkAuthorization = async () => {
@@ -37,6 +60,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         hasSession: !!session,
         sessionId: session?.id,
         userRole: session?.user_metadata?.role,
+        path: location.pathname
       });
       
       // If we have a session but no allowed roles, it's protected but open to all authenticated
@@ -45,6 +69,11 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           setIsAuthorized(true);
           setIsVerifying(false);
+          
+          // Update session cache if on admin route
+          if (location.pathname.startsWith('/admin')) {
+            updateSessionCache(session, location.pathname);
+          }
         }
         return;
       }
@@ -66,7 +95,8 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       console.log("Checking authorization:", {
         userRole,
         allowedRoles,
-        hasPermission
+        hasPermission,
+        path: location.pathname
       });
       
       if (!hasPermission) {
@@ -75,19 +105,19 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           toast.error("Você não tem permissão para acessar esta página");
           
-          // Redirect based on role
+          // Redirect based on role using debounced navigation
           switch (userRole) {
             case UserRole.ADMIN:
-              navigate("/admin/", { replace: true });
+              debouncedNavigate("/admin/");
               break;
             case UserRole.BROKER:
-              navigate("/broker/dashboard", { replace: true });
+              debouncedNavigate("/broker/dashboard");
               break;
             case UserRole.CLIENT:
-              navigate("/client/welcome", { replace: true });
+              debouncedNavigate("/client/welcome");
               break;
             default:
-              navigate("/auth", { replace: true });
+              debouncedNavigate("/auth");
               break;
           }
           
@@ -98,16 +128,38 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           setIsAuthorized(true);
           setIsVerifying(false);
+          
+          // Update session cache for admin routes
+          if (location.pathname.startsWith('/admin')) {
+            updateSessionCache(session, location.pathname);
+          }
         }
       }
     };
     
-    checkAuthorization();
+    // Add a small timeout to prevent excessive checks during navigation
+    const authCheckTimer = setTimeout(() => {
+      if (isMounted) {
+        checkAuthorization();
+      }
+    }, 100);
     
     return () => {
       isMounted = false;
+      clearTimeout(authCheckTimer);
     };
-  }, [session, loading, allowedRoles, navigate, initialized]);
+  }, [
+    session, 
+    loading, 
+    allowedRoles, 
+    navigate, 
+    initialized, 
+    location.pathname, 
+    hasValidCache, 
+    cachedSession, 
+    updateSessionCache,
+    debouncedNavigate
+  ]);
 
   return { isAuthorized, isVerifying };
 }
