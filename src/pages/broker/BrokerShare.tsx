@@ -138,19 +138,20 @@ export default function BrokerShare() {
           };
         }
         
-        // Ensure the most_shared_property has the correct format
-        const mostShareProperty = data[0].most_shared_property ? {
-          id: String(data[0].most_shared_property.id || ''),
-          name: String(data[0].most_shared_property.name || ''),
-          count: Number(data[0].most_shared_property.count || 0)
-        } : null;
+        // Cast the most_shared_property to the correct type with proper type checking
+        const mostSharedProperty = data[0].most_shared_property ? 
+          (typeof data[0].most_shared_property === 'object' ? {
+            id: String(data[0].most_shared_property.id || ''),
+            name: String(data[0].most_shared_property.name || ''),
+            count: Number(data[0].most_shared_property.count || 0)
+          } : null) : null;
         
         return {
           totalShares: data[0].total_shares || 0,
           totalClicks: data[0].total_clicks || 0,
           activeLinks: data[0].active_links || 0,
           averageClicksPerShare: data[0].average_clicks_per_share || 0,
-          mostSharedProperty: mostShareProperty
+          mostSharedProperty
         };
       } catch (err) {
         console.error("Error fetching share stats:", err);

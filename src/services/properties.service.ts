@@ -228,8 +228,8 @@ export const propertiesService = {
 
   async create(propertyData: Partial<Property>): Promise<Property | null> {
     try {
-      // Convert camelCase to snake_case for database
-      const dbData: Record<string, any> = {
+      // Provide all required fields for the database model
+      const propertyValues = {
         title: propertyData.title || "",
         description: propertyData.description || "",
         type: propertyData.type || "",
@@ -247,20 +247,23 @@ export const propertiesService = {
         created_by_id: propertyData.createdById || "",
         is_active: propertyData.isActive !== undefined ? propertyData.isActive : true,
         is_highlighted: propertyData.isHighlighted || false,
+        view_count: 0,
+        share_count: 0
       };
       
-      if (propertyData.developmentName) dbData.development_name = propertyData.developmentName;
-      if (propertyData.promotionalPrice !== undefined) dbData.promotional_price = propertyData.promotionalPrice;
-      if (propertyData.latitude !== undefined) dbData.latitude = propertyData.latitude;
-      if (propertyData.longitude !== undefined) dbData.longitude = propertyData.longitude;
-      if (propertyData.constructionStage) dbData.construction_stage = propertyData.constructionStage;
-      if (propertyData.youtubeUrl) dbData.youtube_url = propertyData.youtubeUrl;
-      if (propertyData.commission !== undefined) dbData.commission = propertyData.commission;
-      if (propertyData.brokerNotes) dbData.broker_notes = propertyData.brokerNotes;
+      // Add optional fields if they exist
+      if (propertyData.developmentName !== undefined) propertyValues.development_name = propertyData.developmentName;
+      if (propertyData.promotionalPrice !== undefined) propertyValues.promotional_price = propertyData.promotionalPrice;
+      if (propertyData.latitude !== undefined) propertyValues.latitude = propertyData.latitude;
+      if (propertyData.longitude !== undefined) propertyValues.longitude = propertyData.longitude;
+      if (propertyData.constructionStage !== undefined) propertyValues.construction_stage = propertyData.constructionStage;
+      if (propertyData.youtubeUrl !== undefined) propertyValues.youtube_url = propertyData.youtubeUrl;
+      if (propertyData.commission !== undefined) propertyValues.commission = propertyData.commission;
+      if (propertyData.brokerNotes !== undefined) propertyValues.broker_notes = propertyData.brokerNotes;
       
       const { data, error } = await supabase
         .from('properties')
-        .insert(dbData)
+        .insert(propertyValues)
         .select()
         .single();
       
