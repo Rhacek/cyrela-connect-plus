@@ -2,10 +2,19 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
-import { toast } from "@/hooks/use-toast";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useSessionCache } from "./use-session-cache";
-import { debounce } from "@/lib/utils";
+import { useLocation } from "react-router-dom";
+import { 
+  isSessionCacheValid, 
+  updateSessionCache,
+  getCachedSession
+} from "./use-session/cache/session-cache";
+import { 
+  isProtectedRoute, 
+  isClientRoute,
+  redirectBasedOnRole
+} from "./use-session/routing/role-redirection";
+import { useDebouncedNavigate } from "./use-session/routing/use-debounced-navigate";
+import { hasRolePermission } from "./use-session/auth/permission-checks";
 
 interface SessionVerificationResult {
   isAuthorized: boolean | null;
@@ -14,33 +23,18 @@ interface SessionVerificationResult {
 
 export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerificationResult {
   const { session, loading, initialized } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
-  const { hasValidCache, cachedSession, updateSessionCache } = useSessionCache(location.pathname);
+  const debouncedNavigate = useDebouncedNavigate();
   const currentPath = location.pathname;
   
   // Skip verification for client routes - they should remain public
-  const isClientRoute = currentPath.startsWith('/client');
+  const isCurrentPathClientRoute = isClientRoute(currentPath);
   
-  // Create a debounced navigation function
-  const debouncedNavigate = useCallback(
-    debounce((path: string) => {
-      // Only navigate if we're not already on this path
-      if (currentPath !== path) {
-        console.log(`Debounced navigate to ${path}`);
-        navigate(path, { replace: true });
-      } else {
-        console.log(`Already at ${path}, skipping navigation`);
-      }
-    }, 800),
-    [navigate, currentPath]
-  );
-
   useEffect(() => {
     // Skip verification for client routes
-    if (isClientRoute) {
+    if (isCurrentPathClientRoute) {
       setIsAuthorized(true);
       setIsVerifying(false);
       return;
@@ -49,7 +43,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     let isMounted = true;
     
     // Check if we can use the cached session first
-    if (hasValidCache) {
+    if (isSessionCacheValid(location.pathname)) {
       console.log(`Using cached session validation for ${location.pathname}`);
       if (isMounted) {
         setIsAuthorized(true);
@@ -95,11 +89,10 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
       
       // Determine if this is a protected route
-      const isProtectedRoute = location.pathname.startsWith('/broker') || 
-                               location.pathname.startsWith('/admin');
+      const isCurrentRouteProtected = isProtectedRoute(location.pathname);
       
       // If not a protected route and no roles specified, authorize
-      if (!isProtectedRoute && !allowedRoles) {
+      if (!isCurrentRouteProtected && !allowedRoles) {
         if (isMounted) {
           setIsAuthorized(true);
           setIsVerifying(false);
@@ -108,7 +101,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
       
       // If we don't have a session and this is a protected route, not authorized
-      if (!session && isProtectedRoute) {
+      if (!session && isCurrentRouteProtected) {
         console.log("No valid session found for protected route");
         if (isMounted) {
           setIsAuthorized(false);
@@ -128,7 +121,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
       
       // If we have a session but there are no allowed roles, and it's not a protected route, authorize
-      if (session && !allowedRoles && !isProtectedRoute) {
+      if (session && !allowedRoles && !isCurrentRouteProtected) {
         if (isMounted) {
           setIsAuthorized(true);
           setIsVerifying(false);
@@ -137,11 +130,10 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
       
       // Check if user has permission based on role
-      const userRole = session!.user_metadata.role;
-      const hasPermission = allowedRoles ? allowedRoles.includes(userRole) : true;
+      const hasPermission = hasRolePermission(session, allowedRoles);
       
       console.log("Checking authorization:", {
-        userRole,
+        userRole: session?.user_metadata?.role,
         allowedRoles,
         hasPermission,
         path: location.pathname
@@ -151,34 +143,13 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         console.log("User role not allowed, redirecting");
         
         if (isMounted) {
-          toast.error("Você não tem permissão para acessar esta página");
-          
-          // Redirect based on role using debounced navigation - BUT ONLY REDIRECT FROM ROOT PATHS
-          switch (userRole) {
-            case UserRole.ADMIN:
-              // Only redirect if at root admin path
-              if (location.pathname === "/admin") {
-                debouncedNavigate("/admin/");
-              }
-              break;
-            case UserRole.BROKER:
-              // Only redirect if at root broker path
-              if (location.pathname === "/broker") {
-                debouncedNavigate("/broker/dashboard");
-              }
-              break;
-            case UserRole.CLIENT:
-              // Only redirect if at root client path
-              if (location.pathname === "/client") {
-                debouncedNavigate("/client/welcome");
-              }
-              break;
-            default:
-              // Only redirect if not already on auth
-              if (location.pathname !== "/auth") {
-                debouncedNavigate("/auth");
-              }
-              break;
+          // Handle role-based redirection
+          if (session) {
+            redirectBasedOnRole(
+              session.user_metadata.role, 
+              location.pathname,
+              debouncedNavigate
+            );
           }
           
           setIsAuthorized(false);
@@ -212,18 +183,14 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     session, 
     loading, 
     allowedRoles, 
-    navigate, 
     initialized, 
     location.pathname, 
-    hasValidCache, 
-    cachedSession, 
-    updateSessionCache,
     debouncedNavigate,
-    isClientRoute
+    isCurrentPathClientRoute
   ]);
 
   // If this is a client route, always return authorized
-  if (isClientRoute) {
+  if (isCurrentPathClientRoute) {
     return { isAuthorized: true, isVerifying: false };
   }
 
