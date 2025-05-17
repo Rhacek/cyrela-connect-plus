@@ -15,22 +15,20 @@ const BrokerLayout = memo(() => {
   const navigate = useNavigate();
   const pathname = location.pathname;
   
-  const isBrokerRoute = pathname.startsWith("/broker");
-  
-  // Only redirect from the root broker path to dashboard
+  // Safe redirection logic that prevents loops
   useEffect(() => {
     if (!loading) {
-      // Redirect to auth if no session and on broker route
-      if (!session && isBrokerRoute) {
+      if (!session && pathname.startsWith("/broker")) {
         navigate("/auth", { replace: true });
+        return;
       }
-      
-      // Only redirect to dashboard if exactly at /broker path
+
       if (session && pathname === "/broker") {
         navigate("/broker/dashboard", { replace: true });
+        return;
       }
     }
-  }, [session, pathname, navigate, loading, isBrokerRoute]);
+  }, [session, pathname, navigate, loading]);
   
   // Show nothing while checking auth
   if (loading) {
@@ -38,7 +36,7 @@ const BrokerLayout = memo(() => {
   }
   
   // Show nothing if not authenticated on broker route
-  if (!session && isBrokerRoute) {
+  if (!session && pathname.startsWith("/broker")) {
     return null;
   }
 

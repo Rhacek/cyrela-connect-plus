@@ -35,7 +35,7 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
     if (location.pathname.startsWith('/admin') && session?.user_metadata?.role !== UserRole.ADMIN) {
       toast.error("Você não tem permissão para acessar esta página");
       
-      // Redirect brokers to broker dashboard - but only if not already there
+      // Redirect brokers to auth
       if (session?.user_metadata?.role === UserRole.BROKER) {
         return <Navigate to="/auth" replace />;
       }

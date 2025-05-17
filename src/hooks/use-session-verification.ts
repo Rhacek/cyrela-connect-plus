@@ -111,23 +111,23 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
         if (isMounted) {
           toast.error("Você não tem permissão para acessar esta página");
           
-          // Redirect based on role using debounced navigation
+          // Redirect based on role using debounced navigation - BUT ONLY REDIRECT FROM ROOT PATHS
           switch (userRole) {
             case UserRole.ADMIN:
-              // Only redirect if not already on admin route
-              if (!location.pathname.startsWith('/admin')) {
+              // Only redirect if at root admin path
+              if (location.pathname === "/admin") {
                 debouncedNavigate("/admin/");
               }
               break;
             case UserRole.BROKER:
-              // Only redirect if at root broker path (no subpath)
+              // Only redirect if at root broker path
               if (location.pathname === "/broker") {
                 debouncedNavigate("/broker/dashboard");
               }
               break;
             case UserRole.CLIENT:
-              // Only redirect if not already on client welcome
-              if (location.pathname !== "/client/welcome") {
+              // Only redirect if at root client path
+              if (location.pathname === "/client") {
                 debouncedNavigate("/client/welcome");
               }
               break;
