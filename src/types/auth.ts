@@ -14,5 +14,6 @@ export interface UserSession {
     company?: string;
     city?: string;
     zone?: string;
+    profile_image?: string; // Add profile_image property
   }
 }
