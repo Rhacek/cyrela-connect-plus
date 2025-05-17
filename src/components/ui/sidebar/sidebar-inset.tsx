@@ -10,7 +10,7 @@ export const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "flex-1 min-h-screen overflow-y-auto bg-background transition-all duration-300",
+        "flex-1 min-h-screen overflow-y-auto overflow-x-hidden bg-background transition-all duration-300",
         className
       )}
       {...props}

@@ -10,12 +10,6 @@ import {
 import { toast } from "sonner";
 import { ProfileSettingsForm } from "@/components/broker/settings/ProfileSettingsForm";
 import { NotificationSettingsForm } from "@/components/broker/settings/NotificationSettingsForm";
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarInset 
-} from "@/components/ui/sidebar";
-import { BrokerSidebarContent } from "@/components/broker/sidebar/broker-sidebar-content";
 
 const BrokerSettings = () => {
   const [loading, setLoading] = useState({
@@ -82,66 +76,56 @@ const BrokerSettings = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-background">
-        <Sidebar>
-          <BrokerSidebarContent />
-        </Sidebar>
-        
-        <SidebarInset>
-          <div className="space-y-6 p-6 max-w-6xl mx-auto">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-              <p className="text-muted-foreground mt-2">
-                Gerencie suas preferências de perfil e notificações.
-              </p>
-            </div>
-
-            <Tabs 
-              defaultValue="profile" 
-              value={activeTab} 
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid grid-cols-2 w-full max-w-md">
-                <TabsTrigger value="profile">Perfil</TabsTrigger>
-                <TabsTrigger value="notifications">Notificações</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="profile" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Perfil</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ProfileSettingsForm 
-                      loading={loading.profile} 
-                      initialData={profileSettings}
-                      onSuccess={refreshProfileSettings}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notifications" className="mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configurações de Notificação</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <NotificationSettingsForm 
-                      loading={loading.notifications} 
-                      initialData={notificationSettings}
-                      onSuccess={refreshNotificationSettings}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </SidebarInset>
+    <div className="space-y-6 w-full">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+        <p className="text-muted-foreground mt-2">
+          Gerencie suas preferências de perfil e notificações.
+        </p>
       </div>
-    </SidebarProvider>
+
+      <Tabs 
+        defaultValue="profile" 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
+          <TabsTrigger value="notifications">Notificações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Perfil</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProfileSettingsForm 
+                loading={loading.profile} 
+                initialData={profileSettings}
+                onSuccess={refreshProfileSettings}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Notificação</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NotificationSettingsForm 
+                loading={loading.notifications} 
+                initialData={notificationSettings}
+                onSuccess={refreshNotificationSettings}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
