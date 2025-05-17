@@ -4,7 +4,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { SidebarLogo } from "./sidebar-logo";
 import { CollapsedNavLinks } from "./collapsed-nav-links";
@@ -24,7 +23,6 @@ export const BrokerSidebarContent = () => {
             isCollapsed={isCollapsed} 
             handleToggleCollapse={toggleSidebar} 
           />
-          <SidebarTrigger className="ml-auto" />
         </div>
       </SidebarHeader>
       <SidebarContent>
