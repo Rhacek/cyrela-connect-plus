@@ -101,6 +101,7 @@ export const usePropertyForm = ({ propertyId, userId }: UsePropertyFormProps) =>
         });
       } else {
         // Create new property - ensure all required fields are present
+        // Fix: Pass both required arguments to create method
         await propertiesService.create({
           title: values.title,
           description: values.description,
@@ -127,7 +128,7 @@ export const usePropertyForm = ({ propertyId, userId }: UsePropertyFormProps) =>
           isActive: true,
           viewCount: 0,
           shareCount: 0
-        });
+        }, userId); // Fix: Pass the userId as the second argument
         
         toast.success("Imóvel cadastrado com sucesso!", {
           description: "O novo imóvel foi adicionado ao sistema."
