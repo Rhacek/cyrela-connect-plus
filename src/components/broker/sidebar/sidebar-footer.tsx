@@ -48,9 +48,11 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
       
       <div className="mt-4 transition-all duration-300">
         {isCollapsed ? (
-          <a href="/settings" className="block p-3 hover:bg-cyrela-gray-lighter rounded-full mx-auto w-fit">
-            <Settings size={20} className="text-cyrela-gray-dark" />
-          </a>
+          <div className="flex justify-center">
+            <a href="/settings" className="flex items-center justify-center p-3 hover:bg-cyrela-gray-lighter rounded-full w-10 h-10">
+              <Settings size={20} className="text-cyrela-gray-dark transition-all duration-300" />
+            </a>
+          </div>
         ) : (
           <SidebarLink 
             icon={<Settings size={18} />} 
@@ -63,12 +65,14 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
       {/* Logout button */}
       <div className="mt-4 transition-all duration-300">
         {isCollapsed ? (
-          <button 
-            onClick={handleLogout}
-            className="block p-3 hover:bg-cyrela-gray-lighter rounded-full mx-auto w-fit text-cyrela-gray-dark"
-          >
-            <LogOut size={20} />
-          </button>
+          <div className="flex justify-center">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center justify-center p-3 hover:bg-cyrela-gray-lighter rounded-full w-10 h-10 text-cyrela-gray-dark"
+            >
+              <LogOut size={20} className="transition-all duration-300" />
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleLogout}
@@ -85,11 +89,11 @@ export function SidebarFooter({ isCollapsed, handleToggleCollapse }: SidebarFoot
           onClick={handleToggleCollapse}
           className={cn(
             "flex items-center justify-center w-full py-2 text-sm text-cyrela-gray-dark hover:text-primary font-inter transition-all duration-300",
-            isCollapsed ? "mx-auto" : ""
+            isCollapsed && "px-0"
           )}
         >
           {isCollapsed ? (
-            <Menu size={20} />
+            <Menu size={20} className="transition-all duration-300" />
           ) : (
             <span>Recolher</span>
           )}

@@ -9,9 +9,17 @@ interface SidebarLinkProps {
   to: string;
   children?: ReactNode;
   isActive?: boolean;
+  className?: string;
 }
 
-export function SidebarLink({ icon, label, to, children, isActive: forcedActive }: SidebarLinkProps) {
+export function SidebarLink({ 
+  icon, 
+  label, 
+  to, 
+  children, 
+  isActive: forcedActive,
+  className 
+}: SidebarLinkProps) {
   const location = useLocation();
   
   // Check if this link should be active based on the current path
@@ -49,16 +57,17 @@ export function SidebarLink({ icon, label, to, children, isActive: forcedActive 
       to={to}
       className={({ isActive: navActive }) => 
         cn(
-          "flex items-center gap-3 px-4 py-3 rounded-md transition-colors hover:bg-cyrela-gray-lighter",
-          (checkActive() || navActive) && "bg-primary text-white hover:bg-primary hover:bg-opacity-90"
+          "transition-all duration-300 flex items-center gap-3 px-4 py-3 rounded-md hover:bg-cyrela-gray-lighter",
+          (checkActive() || navActive) && "bg-primary text-white hover:bg-primary hover:bg-opacity-90",
+          className
         )
       }
       end
     >
       {children || (
         <>
-          {icon && <div className="text-lg">{icon}</div>}
-          {label && <span className="font-inter">{label}</span>}
+          {icon && <div className="text-lg transition-all duration-300">{icon}</div>}
+          {label && <span className="font-inter transition-all duration-300">{label}</span>}
         </>
       )}
     </NavLink>

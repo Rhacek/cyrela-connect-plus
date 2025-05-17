@@ -6,13 +6,14 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarLink } from "./sidebar-link";
 import { 
+  LayoutDashboard, 
   Home, 
+  Users, 
   Calendar, 
+  Share, 
+  BarChart2, 
+  ListChecks, 
   User, 
-  Mail, 
-  Check, 
-  Search, 
-  Bell,
   Settings
 } from "lucide-react";
 
@@ -28,8 +29,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/dashboard" 
             isActive={currentPath === "/broker/dashboard"}
+            className="flex items-center justify-center"
           >
-            <Home className="h-4 w-4" />
+            <LayoutDashboard className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -39,8 +41,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/properties" 
             isActive={currentPath === "/broker/properties"}
+            className="flex items-center justify-center"
           >
-            <Home className="h-4 w-4" />
+            <Home className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -50,8 +53,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/leads" 
             isActive={currentPath === "/broker/leads"}
+            className="flex items-center justify-center"
           >
-            <User className="h-4 w-4" />
+            <Users className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -61,8 +65,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/schedule" 
             isActive={currentPath === "/broker/schedule"}
+            className="flex items-center justify-center"
           >
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -72,8 +77,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/share" 
             isActive={currentPath === "/broker/share"}
+            className="flex items-center justify-center"
           >
-            <Mail className="h-4 w-4" />
+            <Share className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -83,8 +89,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/metrics" 
             isActive={currentPath === "/broker/metrics"}
+            className="flex items-center justify-center"
           >
-            <Bell className="h-4 w-4" />
+            <BarChart2 className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -94,8 +101,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/plans" 
             isActive={currentPath === "/broker/plans"}
+            className="flex items-center justify-center"
           >
-            <Check className="h-4 w-4" />
+            <ListChecks className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -105,8 +113,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/profile" 
             isActive={currentPath === "/broker/profile"}
+            className="flex items-center justify-center"
           >
-            <User className="h-4 w-4" />
+            <User className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -116,8 +125,9 @@ export const CollapsedNavLinks = ({ currentPath }: CollapsedNavLinksProps) => {
           <SidebarLink 
             to="/broker/settings" 
             isActive={currentPath === "/broker/settings"}
+            className="flex items-center justify-center"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-5 w-5" />
           </SidebarLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
