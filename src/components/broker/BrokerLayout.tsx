@@ -28,7 +28,7 @@ const BrokerLayout = memo(() => {
         return;
       }
     }
-  }, [session, pathname, navigate, loading]);
+  }, [loading, session, pathname, navigate]);
   
   // Show nothing while checking auth
   if (loading) {

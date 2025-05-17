@@ -59,7 +59,7 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
   };
 
   // If not authorized, redirect appropriately
-  if (isAuthorized === false) {
+  if (isAuthorized === false && !location.pathname.startsWith("/client")) {
     return handleUnauthorizedAccess();
   }
 
