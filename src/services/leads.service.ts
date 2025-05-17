@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Lead, LeadStatus } from '@/types';
 
@@ -7,7 +8,7 @@ const mapFromDbModel = (dbModel: any): Lead => ({
   name: dbModel.name,
   email: dbModel.email,
   phone: dbModel.phone,
-  status: dbModel.status as LeadStatus, // Fix: Cast to LeadStatus
+  status: dbModel.status as LeadStatus,
   notes: dbModel.notes,
   source: dbModel.source,
   isManual: dbModel.is_manual,
@@ -43,4 +44,61 @@ export const leadsService = {
       return [];
     }
   },
+
+  async updateLeadStatus(leadId: string, status: LeadStatus): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', leadId);
+      
+      if (error) {
+        console.error('Error updating lead status:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error in updateLeadStatus:', err);
+      return false;
+    }
+  },
+
+  async createLead(lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>): Promise<Lead | null> {
+    try {
+      const newLead = {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        status: lead.status,
+        notes: lead.notes,
+        source: lead.source,
+        is_manual: lead.isManual,
+        created_by_id: lead.createdById,
+        property_id: lead.propertyId,
+        assigned_to_id: lead.assignedToId,
+        desired_location: lead.desiredLocation,
+        preferred_bedrooms: lead.preferredBedrooms,
+        preferred_bathrooms: lead.preferredBathrooms,
+        budget: lead.budget,
+        target_move_date: lead.targetMoveDate?.toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('leads')
+        .insert(newLead)
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error creating lead:', error);
+        return null;
+      }
+      
+      return mapFromDbModel(data);
+    } catch (err) {
+      console.error('Error in createLead:', err);
+      return null;
+    }
+  }
 };

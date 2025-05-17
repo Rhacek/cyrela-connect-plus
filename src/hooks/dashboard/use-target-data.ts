@@ -46,27 +46,6 @@ export const useTargetData = (
     }
   }, [targetError]);
   
-  // Map database fields to our frontend models
-  const mapTargetData = (data: any): Target => {
-    if (!data) {
-      console.log("No target data found, using empty target object");
-      return emptyTarget;
-    }
-    
-    console.log("Mapping target data:", data);
-    return {
-      id: data.id || "",
-      brokerId: data.brokerId || brokerId || "", 
-      month: data.month || currentMonth,
-      year: data.year || currentYear,
-      shareTarget: data.shareTarget || 0,
-      leadTarget: data.leadTarget || 0,
-      scheduleTarget: data.scheduleTarget || 0,
-      visitTarget: data.visitTarget || 0,
-      saleTarget: data.saleTarget || 0
-    };
-  };
-  
   // Use actual data or fallback to empty data
   const currentTarget = target ? target : emptyTarget;
   

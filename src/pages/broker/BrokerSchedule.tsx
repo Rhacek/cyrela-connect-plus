@@ -1,40 +1,39 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
 import { Appointment } from "@/components/broker/schedule/appointment-item";
 import { CalendarCard } from "@/components/broker/schedule/calendar-card";
 import { AppointmentsCard } from "@/components/broker/schedule/appointments-card";
+import { useAuth } from "@/context/auth-context";
+import { appointmentsService } from "@/services/appointments.service";
 
 export default function BrokerSchedule() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: "1",
-      title: "Visita ao Jardim Europa",
-      client: "João Silva",
-      date: new Date(),
-      time: "09:30",
-      type: "visit"
-    },
-    {
-      id: "2",
-      title: "Reunião de alinhamento",
-      client: "Maria Oliveira",
-      date: new Date(),
-      time: "14:00",
-      type: "meeting"
-    },
-    {
-      id: "3",
-      title: "Ligação de acompanhamento",
-      client: "Carlos Santos",
-      date: new Date(Date.now() + 86400000), // Tomorrow
-      time: "10:15",
-      type: "call"
+  const { session } = useAuth();
+  const brokerId = session?.id;
+  
+  // Fetch appointments data from Supabase
+  const { 
+    data: appointments = [],
+    isLoading, 
+    error
+  } = useQuery({
+    queryKey: ['brokerAppointments', brokerId],
+    queryFn: () => appointmentsService.getBrokerAppointments(brokerId || ""),
+    enabled: !!brokerId
+  });
+  
+  // Show error toast if data fetch fails
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching appointments:", error);
+      toast.error("Não foi possível carregar os agendamentos");
     }
-  ]);
+  }, [error]);
 
   // Filter appointments for the selected date and type
   const filteredAppointments = appointments.filter(
@@ -67,12 +66,21 @@ export default function BrokerSchedule() {
         </div>
         
         <div className="md:col-span-7 lg:col-span-8">
-          <AppointmentsCard 
-            formattedSelectedDate={formattedSelectedDate}
-            filteredAppointments={filteredAppointments}
-            typeFilter={typeFilter}
-            setTypeFilter={setTypeFilter}
-          />
+          {isLoading ? (
+            <div className="cyrela-card p-6 flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyrela-blue mx-auto"></div>
+                <p className="mt-2 text-cyrela-gray-dark">Carregando agendamentos...</p>
+              </div>
+            </div>
+          ) : (
+            <AppointmentsCard 
+              formattedSelectedDate={formattedSelectedDate}
+              filteredAppointments={filteredAppointments}
+              typeFilter={typeFilter}
+              setTypeFilter={setTypeFilter}
+            />
+          )}
         </div>
       </div>
     </div>

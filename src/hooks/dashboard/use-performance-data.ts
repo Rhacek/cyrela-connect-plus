@@ -46,27 +46,6 @@ export const usePerformanceData = (
     }
   }, [performanceError]);
   
-  // Map database fields to our frontend models
-  const mapPerformanceData = (data: any): Performance => {
-    if (!data) {
-      console.log("No performance data found, using empty performance object");
-      return emptyPerformance;
-    }
-    
-    console.log("Mapping performance data:", data);
-    return {
-      id: data.id || "",
-      brokerId: data.brokerId || brokerId || "", 
-      month: data.month || currentMonth,
-      year: data.year || currentYear,
-      shares: data.shares || 0,
-      leads: data.leads || 0,
-      schedules: data.schedules || 0,
-      visits: data.visits || 0,
-      sales: data.sales || 0
-    };
-  };
-  
   // Use actual data or fallback to empty data
   const currentPerformance = performance ? performance : emptyPerformance;
   

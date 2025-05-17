@@ -1,106 +1,34 @@
 
-import { useAuth } from "@/context/auth-context";
-import { DashboardLoading } from "@/components/broker/dashboard/dashboard-loading";
 import { DashboardContent } from "@/components/broker/dashboard/dashboard-content";
-import { useDashboardData } from "@/hooks/use-dashboard-data";
-import { useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
-import { ensureCurrentMonthPerformance } from "@/services/performance";
-import { targetsService } from "@/services/targets.service";
-import { supabase } from "@/lib/supabase";
+import { DashboardLoading } from "@/components/broker/dashboard/dashboard-loading";
+import { useAuth } from "@/context/auth-context";
+import { useTargetData } from "@/hooks/dashboard/use-target-data";
+import { usePerformanceData } from "@/hooks/dashboard/use-performance-data";
+import { useLeadsData } from "@/hooks/dashboard/use-leads-data";
 
-const BrokerDashboard = () => {
-  const { session, initialized } = useAuth();
-  const { 
-    hasInitializedQueries,
-    isLoadingPerformance,
-    isLoadingTarget,
-    isLoadingLeads,
-    currentPerformance,
-    currentTarget,
-    recentLeads,
-    handleAddLead
-  } = useDashboardData();
-  
-  // Verify session on dashboard load for extra security - with throttling
-  useEffect(() => {
-    const checkSessionValid = async () => {
-      if (session?.id) {
-        try {
-          // Check at most once per minute
-          const lastCheck = sessionStorage.getItem('lastSessionCheck');
-          const now = Date.now();
-          
-          if (lastCheck && now - parseInt(lastCheck) < 60000) {
-            return; // Skip check if done recently
-          }
-          
-          sessionStorage.setItem('lastSessionCheck', now.toString());
-          
-          const { data, error } = await supabase.auth.getUser();
-          if (error || !data.user) {
-            console.error("Dashboard session verification failed:", error);
-            // Auth will handle redirect via periodic session check
-          } else {
-            console.log("Dashboard session verified valid");
-          }
-        } catch (err) {
-          console.error("Error verifying dashboard session:", err);
-        }
-      }
-    };
-    
-    checkSessionValid();
-  }, [session?.id]);
-  
-  // Check if performance and target data exists, and create them if not
-  useEffect(() => {
-    const ensureInitialData = async () => {
-      if (session?.id && hasInitializedQueries && !isLoadingPerformance && !isLoadingTarget) {
-        try {
-          // If currentPerformance or currentTarget are empty records (all zeros),
-          // we should ensure records exist in the database for future queries
-          const hasPerformanceData = Object.values(currentPerformance).some(val => 
-            typeof val === 'number' && val > 0 && val !== currentPerformance.month && val !== currentPerformance.year
-          );
-          
-          const hasTargetData = Object.values(currentTarget).some(val => 
-            typeof val === 'number' && val > 0 && val !== currentTarget.month && val !== currentTarget.year
-          );
-          
-          if (!hasPerformanceData) {
-            console.log("No performance data found, ensuring record exists in database");
-            await ensureCurrentMonthPerformance(session.id);
-          }
-          
-          if (!hasTargetData) {
-            console.log("No target data found, ensuring record exists in database");
-            await targetsService.ensureCurrentMonthTarget(session.id);
-          }
-          
-          if (!hasPerformanceData || !hasTargetData) {
-            toast.info("Dados iniciais criados. Os valores serão atualizados automaticamente com o seu uso do sistema.");
-          }
-        } catch (error) {
-          console.error("Error ensuring initial data:", error);
-        }
-      }
-    };
-    
-    ensureInitialData();
-  }, [session?.id, hasInitializedQueries, isLoadingPerformance, isLoadingTarget, currentPerformance, currentTarget]);
-  
-  // Get user name from session if available
-  const userName = session?.user_metadata?.name || "";
-  
-  // Show a more informative loading state if we're still verifying auth
-  if (!initialized || !hasInitializedQueries) {
+export default function BrokerDashboard() {
+  const { session } = useAuth();
+  const brokerId = session?.id;
+  const sessionEnabled = !!session;
+
+  // Fetch data from Supabase
+  const { currentTarget, isLoadingTarget } = useTargetData(brokerId, sessionEnabled);
+  const { currentPerformance, isLoadingPerformance } = usePerformanceData(brokerId, sessionEnabled);
+  const { recentLeads, isLoadingLeads } = useLeadsData(brokerId, sessionEnabled);
+
+  // Show loading state if any data is still loading
+  if (isLoadingTarget || isLoadingPerformance || isLoadingLeads) {
     return <DashboardLoading />;
   }
-  
+
+  const handleAddLead = () => {
+    // This will be implemented in the future
+    console.log("Add lead clicked");
+  };
+
   return (
     <DashboardContent
-      userName={userName}
+      userName={session?.user_metadata?.name || ""}
       performance={currentPerformance}
       target={currentTarget}
       leads={recentLeads}
@@ -110,6 +38,4 @@ const BrokerDashboard = () => {
       onAddLead={handleAddLead}
     />
   );
-};
-
-export default BrokerDashboard;
+}
