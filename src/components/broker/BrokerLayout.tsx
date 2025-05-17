@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -12,11 +12,17 @@ import { SidebarInset } from "@/components/ui/sidebar/sidebar-inset";
 /**
  * Layout component for the Broker section
  */
-const BrokerLayout = () => {
+const BrokerLayout = memo(() => {
   const { session } = useAuth();
   const location = useLocation();
+  const renderCount = useRef(0);
   
-  // Add periodic session check
+  // Increment render count for debugging
+  renderCount.current++;
+  
+  console.log(`BrokerLayout render #${renderCount.current}, path: ${location.pathname}`);
+  
+  // Add periodic session check without causing unnecessary rerenders
   usePeriodicSessionCheck(session !== null, location.pathname);
 
   return (
@@ -32,6 +38,8 @@ const BrokerLayout = () => {
       </div>
     </SidebarProvider>
   );
-};
+});
+
+BrokerLayout.displayName = "BrokerLayout";
 
 export default BrokerLayout;

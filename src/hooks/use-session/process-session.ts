@@ -10,14 +10,21 @@ export const handleExistingSession = async (
   setSession: React.Dispatch<React.SetStateAction<UserSession | null>>,
   setLastRefreshAttempt: React.Dispatch<React.SetStateAction<number>>
 ): Promise<void> => {
+  // Skip if the session was just validated
+  const now = Date.now();
+  if (now - lastRefreshAttempt < 10000) {
+    return;
+  }
+  
   // Update the last refresh attempt timestamp
-  setLastRefreshAttempt(Date.now());
+  setLastRefreshAttempt(now);
   
   // Validate the session
   const isValid = await validateSession(sessionToUse, lastRefreshAttempt);
   
   if (isValid) {
-    setSession(sessionToUse);
+    // No need to update session if it's already valid
+    // setSession(sessionToUse);
   } else if (!isRefreshing) {
     // Only try to refresh if we're not already refreshing
     console.warn("Session failed validation, attempting refresh...");
@@ -64,7 +71,7 @@ export const processSession = async (
   }
   
   // Mark as not loading when all checks are complete
-  if (allSessionChecksComplete(isRestoring, isListening, isChecking)) {
+  if (allSessionChecksComplete(isRestoring, isListening, isChecking) && !isRestoring && !isChecking) {
     console.log("All session checks complete, setting loading=false");
     setLoading(false);
     setInitialized(true);

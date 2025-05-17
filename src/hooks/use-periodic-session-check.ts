@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { debounce } from '@/lib/utils';
@@ -28,6 +28,8 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
   const { session, setSession } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   
   // Create a debounced redirect function to avoid multiple redirects
   const debouncedRedirect = useCallback(
@@ -40,6 +42,8 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
 
   // Function to handle session invalidation
   const handleInvalidSession = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     console.log('Session invalid or expired, redirecting to auth page');
     
     // Set session to null in auth context
@@ -58,9 +62,64 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
     debouncedRedirect(`/auth?${searchParams.toString()}`);
   }, [setSession, location.pathname, debouncedRedirect]);
 
+  // Function to validate the current session
+  const checkSession = useCallback(async () => {
+    if (!isMountedRef.current || isChecking) return;
+    
+    setIsChecking(true);
+    
+    try {
+      console.log('Periodic session check for route:', currentPath);
+      
+      // First check if we even have a session in context
+      if (!session) {
+        console.log('No session found during periodic check');
+        handleInvalidSession();
+        return;
+      }
+      
+      // Check if we are less than 30 seconds from expiry
+      if (session.expires_at) {
+        const now = Date.now();
+        const expiresAt = session.expires_at * 1000;
+        const timeUntilExpiry = expiresAt - now;
+        
+        if (timeUntilExpiry < 30000) { // Less than 30 seconds
+          console.log('Session about to expire, handling invalidation');
+          
+          // Try to refresh first before invalidating
+          if (!isRefreshing) {
+            const refreshedSession = await refreshSession();
+            if (!refreshedSession) {
+              handleInvalidSession();
+            }
+          }
+          return;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error checking session:', error);
+      
+      // Only invalidate session if we're sure it's invalid
+      // Check if we're getting authorization errors
+      if (error.message && (
+          error.message.includes('JWT expired') || 
+          error.message.includes('invalid token') ||
+          error.message.includes('not authorized')
+        )) {
+        handleInvalidSession();
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsChecking(false);
+      }
+    }
+  }, [session, currentPath, isChecking, handleInvalidSession]);
+
   useEffect(() => {
     // Skip if not authorized or already checking
-    if (!isAuthorized || isChecking) {
+    if (!isAuthorized) {
       return;
     }
     
@@ -69,8 +128,7 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
       return;
     }
     
-    let checkInterval: NodeJS.Timeout;
-    let isMounted = true;
+    isMountedRef.current = true;
     
     // Initialize a session check that runs periodically
     const initializePeriodicCheck = () => {
@@ -80,72 +138,17 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
       // the first interval check is triggered
       checkSession();
       
+      // Clear any existing interval to prevent multiple intervals
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+      
       // Set up periodic check - every 4 minutes
-      checkInterval = setInterval(() => {
-        if (isMounted) {
+      checkIntervalRef.current = setInterval(() => {
+        if (isMountedRef.current) {
           checkSession();
         }
       }, 4 * 60 * 1000); // Reduced from 5 to 4 minutes to prevent token expiry
-    };
-    
-    // Function to validate the current session
-    const checkSession = async () => {
-      if (!isMounted) return;
-      
-      if (isChecking) {
-        console.log('Session check already in progress, skipping');
-        return;
-      }
-      
-      setIsChecking(true);
-      
-      try {
-        console.log('Periodic session check for route:', currentPath);
-        
-        // First check if we even have a session in context
-        if (!session) {
-          console.log('No session found during periodic check');
-          handleInvalidSession();
-          return;
-        }
-        
-        // Check if we are less than 30 seconds from expiry
-        if (session.expires_at) {
-          const now = Date.now();
-          const expiresAt = session.expires_at * 1000;
-          const timeUntilExpiry = expiresAt - now;
-          
-          if (timeUntilExpiry < 30000) { // Less than 30 seconds
-            console.log('Session about to expire, handling invalidation');
-            
-            // Try to refresh first before invalidating
-            if (!isRefreshing) {
-              const refreshedSession = await refreshSession();
-              if (!refreshedSession) {
-                handleInvalidSession();
-              }
-            }
-            return;
-          }
-        }
-        
-      } catch (error) {
-        console.error('Error checking session:', error);
-        
-        // Only invalidate session if we're sure it's invalid
-        // Check if we're getting authorization errors
-        if (error.message && (
-            error.message.includes('JWT expired') || 
-            error.message.includes('invalid token') ||
-            error.message.includes('not authorized')
-          )) {
-          handleInvalidSession();
-        }
-      } finally {
-        if (isMounted) {
-          setIsChecking(false);
-        }
-      }
     };
     
     // Initialize the periodic check
@@ -153,15 +156,16 @@ export function usePeriodicSessionCheck(isAuthorized: boolean | null, currentPat
     
     // Cleanup on unmount
     return () => {
-      isMounted = false;
-      clearInterval(checkInterval);
+      isMountedRef.current = false;
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
     };
   }, [
     isAuthorized,
-    session,
     currentPath,
-    isChecking,
-    handleInvalidSession
+    checkSession
   ]);
   
   // No need to return anything as this hook is for side effects only

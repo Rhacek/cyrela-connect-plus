@@ -1,14 +1,13 @@
 
+import { memo } from "react";
 import { 
   Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
-  SidebarFooter,
+  SidebarContent,
   useSidebar
 } from "@/components/ui/sidebar";
 import { BrokerSidebarContent } from "./broker-sidebar-content";
 
-export const BrokerSidebar = () => {
+export const BrokerSidebar = memo(() => {
   const { state } = useSidebar();
   const isExpanded = state === "expanded";
 
@@ -18,7 +17,11 @@ export const BrokerSidebar = () => {
       side="left"
       collapsible="icon"
     >
-      <BrokerSidebarContent />
+      <SidebarContent className="flex flex-col h-full">
+        <BrokerSidebarContent />
+      </SidebarContent>
     </Sidebar>
   );
-};
+});
+
+BrokerSidebar.displayName = "BrokerSidebar";
