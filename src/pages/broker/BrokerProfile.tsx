@@ -7,7 +7,8 @@ import { ProfileImageUpload } from "@/components/broker/profile/profile-image-up
 import { ProfileForm } from "@/components/broker/profile/profile-form";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/auth-context";
-import { brokerService, BrokerProfile } from "@/services/broker.service";
+import { brokerService } from "@/services/broker.service";
+import type { BrokerProfile as BrokerProfileType } from "@/services/broker.service";
 
 const BrokerProfile = () => {
   const [isEditing, setIsEditing] = useState(false);

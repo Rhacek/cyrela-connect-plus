@@ -23,7 +23,7 @@ const BrokerLayout = () => {
       <div className="flex min-h-screen bg-slate-50 overflow-x-hidden w-full">
         <BrokerSidebar />
         <main className="flex-1 transition-all duration-300 overflow-y-auto overflow-x-hidden">
-          <div className="p-6 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 max-w-7xl mx-auto w-full">
             <Outlet />
           </div>
         </main>
