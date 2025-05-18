@@ -32,7 +32,7 @@ export function DashboardHeader({
         className="bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white whitespace-nowrap self-start sm:self-center text-xs sm:text-sm py-1.5 px-3 h-auto"
         onClick={onButtonClick}
       >
-        <Plus size={14} className="sm:size-16 mr-1.5 sm:mr-2" />
+        <Plus size={14} className="sm:size-4 mr-1.5 sm:mr-2" />
         {buttonLabel}
       </Button>
     </div>

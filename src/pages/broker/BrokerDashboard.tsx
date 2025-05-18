@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
 import { StatsGrid } from "@/components/broker/dashboard/stats-grid";
@@ -10,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useDashboardData } from "@/hooks/dashboard/use-dashboard-data";
 import { Performance, Target } from "@/types";
+import { CreateLeadDialog } from "@/components/broker/leads/create-lead-dialog";
 
 export default function BrokerDashboard() {
   const { session } = useAuth();
   const brokerId = session?.id;
+  const [isCreateLeadDialogOpen, setIsCreateLeadDialogOpen] = useState(false);
   
   // Fetch necessary data
   const {
@@ -29,6 +32,10 @@ export default function BrokerDashboard() {
   const handleLeadUpdated = () => {
     refetchLeads();
     refetchMetrics();
+  };
+
+  const handleAddLeadClick = () => {
+    setIsCreateLeadDialogOpen(true);
   };
 
   // Default empty performance and target objects for when data is still loading
@@ -75,7 +82,7 @@ export default function BrokerDashboard() {
         title="Dashboard" 
         description={`Bem-vindo${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}
         buttonLabel="Cadastrar lead"
-        onButtonClick={() => console.log("Cadastrar lead clicked")}
+        onButtonClick={handleAddLeadClick}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
@@ -139,6 +146,13 @@ export default function BrokerDashboard() {
           />
         </div>
       </div>
+      
+      {/* Add CreateLeadDialog component */}
+      <CreateLeadDialog 
+        open={isCreateLeadDialogOpen} 
+        onOpenChange={setIsCreateLeadDialogOpen}
+        onLeadCreated={handleLeadUpdated}
+      />
     </div>
   );
 }
