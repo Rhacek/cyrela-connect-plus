@@ -10,13 +10,28 @@ import { FeaturesFilter } from "./features-filter";
 import { ConstructionStageFilter } from "./construction-stage-filter";
 import { propertiesService } from "@/services/properties.service";
 import { useQuery } from "@tanstack/react-query";
+import { Property } from "@/types";
 
-export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredProperties: any[]) => void }) {
-  const [search, setSearch] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([500000, 5000000]);
-  const [locations, setLocations] = useState<string[]>([]);
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  const [stages, setStages] = useState<string[]>([]);
+interface PropertyFilterProps {
+  onFilterChange?: (filteredProperties: Property[]) => void;
+  initialFilters?: {
+    search?: string;
+    priceRange?: [number, number];
+    locations?: string[];
+    features?: string[];
+    stages?: string[];
+  };
+}
+
+export function PropertyFilter({ 
+  onFilterChange,
+  initialFilters
+}: PropertyFilterProps) {
+  const [search, setSearch] = useState(initialFilters?.search || "");
+  const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [500000, 5000000]);
+  const [locations, setLocations] = useState<string[]>(initialFilters?.locations || []);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>(initialFilters?.features || []);
+  const [stages, setStages] = useState<string[]>(initialFilters?.stages || []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Fetch all properties
@@ -40,12 +55,19 @@ export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredP
       // Price filter
       const priceMatches = property.price >= priceRange[0] && property.price <= priceRange[1];
 
-      // Location filter
+      // Location filter (city and neighborhood)
       const locationMatches = locations.length === 0 || 
         locations.some(loc => property.neighborhood === loc || property.city === loc);
 
-      // Features filter (simplified - would need proper feature property)
-      const featureMatches = selectedFeatures.length === 0;
+      // Features filter (based on bedrooms)
+      const featureMatches = selectedFeatures.length === 0 || 
+        selectedFeatures.some(feature => {
+          if (feature === "1") return property.bedrooms === 1;
+          if (feature === "2") return property.bedrooms === 2;
+          if (feature === "3") return property.bedrooms === 3;
+          if (feature === "4") return property.bedrooms >= 4;
+          return false;
+        });
 
       // Construction stage filter
       const stageMatches = stages.length === 0 || 
@@ -74,6 +96,11 @@ export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredP
         >
           <Filter size={16} />
           Filtros
+          {(locations.length > 0 || selectedFeatures.length > 0 || stages.length > 0) && (
+            <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+              {locations.length + selectedFeatures.length + stages.length}
+            </span>
+          )}
         </Button>
       </div>
       
@@ -92,13 +119,10 @@ export function PropertyFilter({ onFilterChange }: { onFilterChange?: (filteredP
             <LocationFilter 
               selected={locations} 
               onChange={setLocations} 
-              selectedFilters={{ city: [], zone: [], neighborhood: [] }}
-              selectedZone={null}
-              onFilterClick={() => {}}
             />
           </FilterButton>
           
-          <FilterButton title="Características">
+          <FilterButton title="Quartos">
             <FeaturesFilter 
               selected={selectedFeatures} 
               onChange={setSelectedFeatures} 

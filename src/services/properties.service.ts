@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Property, PropertyImage, PropertyStatus } from '@/types';
 
@@ -45,16 +46,63 @@ const mapPropertyFromDb = (dbModel: any, images: PropertyImage[] = []): Property
   images: images
 });
 
+interface PropertyFilter {
+  search?: string;
+  priceMin?: number;
+  priceMax?: number;
+  locations?: string[];
+  bedrooms?: number[];
+  constructionStages?: string[];
+  isActive?: boolean;
+}
+
 export const propertiesService = {
-  // New method to get all active properties
-  async getAllActiveProperties(): Promise<Property[]> {
+  // New method to get all active properties with filtering
+  async getAllActiveProperties(filters?: PropertyFilter): Promise<Property[]> {
     try {
-      // Fetch all active properties
-      const { data, error } = await supabase
+      // Create query builder
+      let query = supabase
         .from('properties')
         .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
+      
+      // Apply filters if provided
+      if (filters) {
+        // Price range filter
+        if (filters.priceMin !== undefined) {
+          query = query.gte('price', filters.priceMin);
+        }
+        
+        if (filters.priceMax !== undefined) {
+          query = query.lte('price', filters.priceMax);
+        }
+        
+        // Location filter (city or neighborhood)
+        if (filters.locations && filters.locations.length > 0) {
+          // This handles both city and neighborhood in a single OR condition
+          const locationConditions = filters.locations.map(loc => `city.eq.${loc},neighborhood.eq.${loc}`).join(',');
+          query = query.or(locationConditions);
+        }
+        
+        // Bedrooms filter
+        if (filters.bedrooms && filters.bedrooms.length > 0) {
+          // If multiple bedroom options are selected, we need an OR condition
+          if (filters.bedrooms.length > 1) {
+            const bedroomConditions = filters.bedrooms.map(b => `bedrooms.eq.${b}`).join(',');
+            query = query.or(bedroomConditions);
+          } else {
+            query = query.eq('bedrooms', filters.bedrooms[0]);
+          }
+        }
+        
+        // Construction stage filter
+        if (filters.constructionStages && filters.constructionStages.length > 0) {
+          query = query.in('construction_stage', filters.constructionStages);
+        }
+      }
+      
+      // Execute query with order by created_at
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching active properties:', error);
