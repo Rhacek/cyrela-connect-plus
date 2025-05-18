@@ -111,6 +111,57 @@ export const targetsService = {
   },
 
   /**
+   * Gets a specific target by broker, month, and year
+   */
+  async getTargetByDate(brokerId: string, month: number, year: number): Promise<Target | null> {
+    try {
+      const { data, error } = await supabase
+        .from('targets')
+        .select('*')
+        .eq('broker_id', brokerId)
+        .eq('month', month)
+        .eq('year', year)
+        .single();
+      
+      if (error) {
+        if (error.code !== 'PGRST116') { // Not found is not really an error
+          console.error('Error fetching target by date:', error);
+        }
+        return null;
+      }
+      
+      return mapTargetFromDb(data);
+    } catch (error) {
+      console.error('Error in getTargetByDate:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Gets all targets for a broker
+   */
+  async getBrokerTargets(brokerId: string): Promise<Target[]> {
+    try {
+      const { data, error } = await supabase
+        .from('targets')
+        .select('*')
+        .eq('broker_id', brokerId)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching broker targets:', error);
+        return [];
+      }
+      
+      return data ? data.map(target => mapTargetFromDb(target)) : [];
+    } catch (error) {
+      console.error('Error in getBrokerTargets:', error);
+      return [];
+    }
+  },
+
+  /**
    * Ensures a target record exists for the current month
    */
   async ensureCurrentMonthTarget(brokerId: string): Promise<Target> {
@@ -147,6 +198,40 @@ export const targetsService = {
     } catch (error) {
       console.error('Error in updateTarget:', error);
       return false;
+    }
+  },
+
+  /**
+   * Creates a new target for a broker
+   */
+  async createTarget(targetData: Omit<Target, 'id'>): Promise<Target | null> {
+    try {
+      const dbData = {
+        broker_id: targetData.brokerId,
+        month: targetData.month,
+        year: targetData.year,
+        share_target: targetData.shareTarget,
+        lead_target: targetData.leadTarget,
+        schedule_target: targetData.scheduleTarget,
+        visit_target: targetData.visitTarget,
+        sale_target: targetData.saleTarget
+      };
+      
+      const { data, error } = await supabase
+        .from('targets')
+        .insert(dbData)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error creating target:', error);
+        return null;
+      }
+      
+      return mapTargetFromDb(data);
+    } catch (error) {
+      console.error('Error in createTarget:', error);
+      return null;
     }
   }
 };

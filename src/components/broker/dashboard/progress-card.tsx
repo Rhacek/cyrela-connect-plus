@@ -4,6 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Performance, Target } from "@/types";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProgressCardProps {
   performance: Performance;
@@ -17,6 +19,14 @@ export function ProgressCard({ performance, target, className, isLoading = false
     if (target === 0) return 0;
     return Math.min(100, Math.round((value / target) * 100));
   };
+  
+  // Check if all targets are zero (might indicate no targets have been set)
+  const hasNoTargets = 
+    target.shareTarget === 0 && 
+    target.leadTarget === 0 && 
+    target.scheduleTarget === 0 && 
+    target.visitTarget === 0 && 
+    target.saleTarget === 0;
   
   const metrics = [
     { name: "Compartilhamentos", value: performance.shares, target: target.shareTarget },
@@ -46,6 +56,13 @@ export function ProgressCard({ performance, target, className, isLoading = false
               </div>
             ))}
           </div>
+        ) : hasNoTargets ? (
+          <Alert className="mb-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Nenhuma meta definida para o período atual. Contate seu administrador para definir suas metas mensais.
+            </AlertDescription>
+          </Alert>
         ) : (
           <div className="space-y-6">
             {metrics.map((metric, index) => {

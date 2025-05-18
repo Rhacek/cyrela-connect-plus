@@ -1,35 +1,42 @@
 
-import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { BrokerSearchBar } from "./BrokerSearchBar";
+import { useNavigate } from "react-router-dom";
+import { UserPlus, Target } from "lucide-react";
 
 interface BrokerListHeaderProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
+  totalBrokers: number;
 }
 
-export const BrokerListHeader = ({ searchQuery, onSearchChange }: BrokerListHeaderProps) => {
-  return (
-    <>
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Gerenciamento de Corretores</h1>
-        <p className="text-muted-foreground mt-2">Gerencie todos os corretores do sistema.</p>
-      </div>
+export function BrokerListHeader({ totalBrokers }: BrokerListHeaderProps) {
+  const navigate = useNavigate();
 
-      <div className="flex items-center gap-4 mb-6">
-        <BrokerSearchBar 
-          searchQuery={searchQuery} 
-          onSearchChange={onSearchChange} 
-        />
-        
-        <Button asChild>
-          <Link to="/admin/brokers/new">
-            <Plus size={18} className="mr-2" />
-            Novo Corretor
-          </Link>
+  return (
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Corretores</h1>
+        <p className="text-muted-foreground">
+          {totalBrokers === 0
+            ? "Nenhum corretor cadastrado."
+            : totalBrokers === 1
+            ? "1 corretor cadastrado."
+            : `${totalBrokers} corretores cadastrados.`}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/admin/brokers/targets/')}
+          className="flex items-center gap-2"
+        >
+          <Target size={16} />
+          <span>Gerenciar Metas</span>
+        </Button>
+        <Button onClick={() => navigate("/admin/brokers/new/")} className="flex items-center gap-2">
+          <UserPlus size={16} />
+          <span>Novo Corretor</span>
         </Button>
       </div>
-    </>
+    </div>
   );
-};
+}

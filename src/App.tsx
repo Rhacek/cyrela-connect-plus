@@ -39,6 +39,7 @@ import AdminProperties from "./pages/admin/AdminProperties";
 import AdminPropertyForm from "./pages/admin/AdminPropertyForm";
 import AdminBrokers from "./pages/admin/AdminBrokers";
 import AdminBrokerForm from "./pages/admin/AdminBrokerForm";
+import AdminBrokerTargets from "./pages/admin/AdminBrokerTargets"; // Import the new page
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminPlans from "./pages/admin/AdminPlans";
 
@@ -107,6 +108,7 @@ const App = () => (
               <Route path="brokers/" element={<AdminBrokers />} />
               <Route path="brokers/new/" element={<AdminBrokerForm />} />
               <Route path="brokers/:id/edit/" element={<AdminBrokerForm />} />
+              <Route path="brokers/targets/" element={<AdminBrokerTargets />} /> {/* Add new route */}
               <Route path="settings/" element={<AdminSettings />} />
               <Route path="plans/" element={<AdminPlans />} />
             </Route>
@@ -115,6 +117,7 @@ const App = () => (
             <Route path="/admin" element={<Navigate to="/admin/" replace />} />
             <Route path="/admin/properties" element={<Navigate to="/admin/properties/" replace />} />
             <Route path="/admin/brokers" element={<Navigate to="/admin/brokers/" replace />} />
+            <Route path="/admin/brokers/targets" element={<Navigate to="/admin/brokers/targets/" replace />} /> {/* Add redirect */}
             <Route path="/admin/plans" element={<Navigate to="/admin/plans/" replace />} />
             <Route path="/admin/settings" element={<Navigate to="/admin/settings/" replace />} />
             
