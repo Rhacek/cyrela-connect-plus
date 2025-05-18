@@ -66,11 +66,14 @@ export default function BrokerDashboard() {
     { name: "Jun", visits: 0, sales: 0 },
   ];
   
+  // Get the user's name from the session metadata if available
+  const userName = session?.user?.user_metadata?.name || "";
+  
   return (
     <div className="w-full">
       <DashboardHeader 
         title="Dashboard" 
-        description={`Bem-vindo ${session?.name ? ', ' + session.name : ''}! Aqui está o resumo do seu desempenho.`}
+        description={`Bem-vindo${userName ? ', ' + userName : ''}! Aqui está o resumo do seu desempenho.`}
         buttonLabel="Cadastrar lead"
         onButtonClick={() => console.log("Cadastrar lead clicked")}
       />

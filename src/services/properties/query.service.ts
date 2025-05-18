@@ -1,118 +1,139 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Property } from "@/types";
-import { mapPropertyFromDb, mapImageFromDb } from "./mappers";
-import { PropertyFilter } from "./types";
+import { supabase } from '@/integrations/supabase/client';
+import { Property } from '@/types';
+
+// Define property filter interface
+export interface PropertyFilter {
+  highlighted?: boolean;
+  isActive?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  minBedrooms?: number;
+  maxBedrooms?: number;
+  minBathrooms?: number;
+  maxBathrooms?: number;
+  city?: string;
+  neighborhood?: string | string[];
+  propertyType?: string | string[];
+}
 
 export const queryService = {
-  // Get all properties
-  getAll: async (): Promise<Property[]> => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        *,
-        images:property_images(*)
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    return data.map((prop: any) => {
-      const images = prop.images.map(mapImageFromDb);
-      return mapPropertyFromDb(prop, images);
-    });
-  },
-
-  // Get active properties with filter support
-  getAllActiveProperties: async (filter?: PropertyFilter): Promise<Property[]> => {
-    let query = supabase
-      .from('properties')
-      .select(`
-        *,
-        images:property_images(*)
-      `)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-    
-    // Apply filters if provided
-    if (filter) {
-      // Text search
-      if (filter.search) {
-        query = query.or(
-          `title.ilike.%${filter.search}%,description.ilike.%${filter.search}%,neighborhood.ilike.%${filter.search}%,city.ilike.%${filter.search}%`
-        );
+  async getAllActiveProperties(filters: PropertyFilter = {}): Promise<Property[]> {
+    try {
+      let query = supabase
+        .from('properties')
+        .select(`
+          *,
+          images:property_images(*)
+        `)
+        .eq('is_active', filters.isActive !== undefined ? filters.isActive : true);
+      
+      // Apply filters
+      if (filters.highlighted !== undefined) {
+        query = query.eq('is_highlighted', filters.highlighted);
       }
       
-      // Price range
-      if (filter.priceMin) query = query.gte('price', filter.priceMin);
-      if (filter.priceMax) query = query.lte('price', filter.priceMax);
-      
-      // Locations (neighborhoods or cities)
-      if (filter.locations && filter.locations.length > 0) {
-        query = query.or(
-          filter.locations.map(loc => `neighborhood.eq.${loc},city.eq.${loc}`).join(',')
-        );
+      if (filters.minPrice) {
+        query = query.gte('price', filters.minPrice);
       }
       
-      // Bedrooms 
-      if (filter.bedrooms && filter.bedrooms.length > 0) {
-        query = query.in('bedrooms', filter.bedrooms);
+      if (filters.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
       }
       
-      // Construction stages
-      if (filter.constructionStages && filter.constructionStages.length > 0) {
-        query = query.in('construction_stage', filter.constructionStages);
+      if (filters.minBedrooms) {
+        query = query.gte('bedrooms', filters.minBedrooms);
       }
       
-      // Active property filter can be controlled
-      if (filter.isActive !== undefined) {
-        query = query.eq('is_active', filter.isActive);
+      if (filters.maxBedrooms) {
+        query = query.lte('bedrooms', filters.maxBedrooms);
       }
+      
+      if (filters.minBathrooms) {
+        query = query.gte('bathrooms', filters.minBathrooms);
+      }
+      
+      if (filters.maxBathrooms) {
+        query = query.lte('bathrooms', filters.maxBathrooms);
+      }
+      
+      if (filters.city) {
+        query = query.eq('city', filters.city);
+      }
+      
+      if (filters.neighborhood) {
+        if (Array.isArray(filters.neighborhood)) {
+          query = query.in('neighborhood', filters.neighborhood);
+        } else {
+          query = query.eq('neighborhood', filters.neighborhood);
+        }
+      }
+      
+      if (filters.propertyType) {
+        if (Array.isArray(filters.propertyType)) {
+          query = query.in('type', filters.propertyType);
+        } else {
+          query = query.eq('type', filters.propertyType);
+        }
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching properties:', error);
+        return [];
+      }
+      
+      // Transform DB data to match our Property interface
+      return data.map((item) => ({
+        id: item.id,
+        title: item.title,
+        developmentName: item.development_name,
+        description: item.description,
+        type: item.type,
+        price: item.price,
+        promotionalPrice: item.promotional_price,
+        area: item.area,
+        bedrooms: item.bedrooms,
+        bathrooms: item.bathrooms,
+        suites: item.suites,
+        parkingSpaces: item.parking_spaces,
+        address: item.address,
+        neighborhood: item.neighborhood,
+        city: item.city,
+        state: item.state,
+        zipCode: item.zip_code,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        constructionStage: item.construction_stage,
+        youtubeUrl: item.youtube_url,
+        
+        // Broker fields
+        commission: item.commission,
+        brokerNotes: item.broker_notes,
+        
+        // System fields
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+        createdById: item.created_by_id,
+        isActive: item.is_active,
+        isHighlighted: item.is_highlighted,
+        viewCount: item.view_count,
+        shareCount: item.share_count,
+        
+        // Related data
+        images: (item.images || []).map((img: any) => ({
+          id: img.id,
+          propertyId: img.property_id,
+          url: img.url,
+          description: img.description || '',
+          isMain: img.is_main,
+          order: img.order
+        }))
+      }));
+    } catch (error) {
+      console.error('Error in getAllActiveProperties:', error);
+      return [];
     }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-
-    return data.map((prop: any) => {
-      const images = prop.images.map(mapImageFromDb);
-      return mapPropertyFromDb(prop, images);
-    });
-  },
-
-  // Get properties for a specific broker
-  getBrokerProperties: async (brokerId: string): Promise<Property[]> => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        *,
-        images:property_images(*)
-      `)
-      .eq('created_by_id', brokerId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    return data.map((prop: any) => {
-      const images = prop.images.map(mapImageFromDb);
-      return mapPropertyFromDb(prop, images);
-    });
-  },
-
-  // Get a property by ID
-  getById: async (id: string): Promise<Property> => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select(`
-        *,
-        images:property_images(*)
-      `)
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-
-    const images = data.images.map(mapImageFromDb);
-    return mapPropertyFromDb(data, images);
   }
 };

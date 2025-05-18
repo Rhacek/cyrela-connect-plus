@@ -1,4 +1,6 @@
 
+export type AppointmentStatus = 'AGENDADA' | 'CONFIRMADA' | 'CANCELADA' | 'CONCLUIDA';
+
 export interface Appointment {
   id: string;
   title: string;
@@ -13,4 +15,13 @@ export interface Appointment {
   clientPhone: string;
 }
 
-export type AppointmentStatus = 'AGENDADA' | 'CONFIRMADA' | 'CANCELADA' | 'CONCLUIDA';
+// For insert/update operations
+export type AppointmentInput = Partial<Omit<Appointment, 'id'>> & {
+  propertyId: string;
+  date: Date;
+  time: string;
+  title: string;
+  client: string;
+  clientEmail: string;
+  status?: AppointmentStatus;
+};

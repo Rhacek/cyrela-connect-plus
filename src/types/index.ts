@@ -1,4 +1,3 @@
-
 // Define main types for the application
 
 export enum UserRole {
@@ -126,6 +125,15 @@ export interface Lead {
   preferredBathrooms?: number;
   targetMoveDate?: Date;
 }
+
+// For insert/update operations
+export type LeadInput = Partial<Omit<Lead, 'id' | 'createdAt' | 'updatedAt'>> & {
+  status: LeadStatus;
+  name: string;
+  email: string;
+  phone: string;
+  source: string;
+};
 
 export interface Target {
   id: string;
