@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "./search-input";
 import { FilterButton } from "./filter-button";
@@ -10,6 +10,7 @@ import { FeaturesFilter } from "./features-filter";
 import { ConstructionStageFilter } from "./construction-stage-filter";
 import { Property } from "@/types";
 import { useLocationFilter } from "@/hooks/use-location-filter";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface PropertyFilterProps {
   onFilterChange?: (filteredProperties: Property[]) => void;
@@ -44,6 +45,11 @@ export function PropertyFilter({
   
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>(initialFilters?.features || []);
   const [stages, setStages] = useState<string[]>(initialFilters?.stages || []);
+
+  // Get active filters count for the badge
+  const getActiveFiltersCount = () => {
+    return locations.length + selectedFeatures.length + stages.length;
+  };
 
   // Apply filters and notify parent
   const applyFilters = () => {
@@ -85,9 +91,9 @@ export function PropertyFilter({
   };
 
   // Apply filters when any filter changes
-  useState(() => {
+  useEffect(() => {
     applyFilters();
-  });
+  }, [search, priceRange, locations, selectedFeatures, stages]);
 
   return (
     <div className="w-full space-y-4">
@@ -96,73 +102,78 @@ export function PropertyFilter({
           value={search} 
           onChange={(value) => {
             setSearch(value);
-            applyFilters();
           }} 
           className="flex-1" 
           isLoading={isLoading}
         />
         
-        <Button 
-          variant="outline" 
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="flex items-center gap-2"
+        <Collapsible 
+          open={isFilterOpen} 
+          onOpenChange={setIsFilterOpen}
+          className="w-full sm:w-auto"
         >
-          <Filter size={16} />
-          Filtros
-          {(locations.length > 0 || selectedFeatures.length > 0 || stages.length > 0) && (
-            <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-              {locations.length + selectedFeatures.length + stages.length}
-            </span>
-          )}
-        </Button>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="flex w-full sm:w-auto justify-between items-center gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>Filtros</span>
+                {getActiveFiltersCount() > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                    {getActiveFiltersCount()}
+                  </span>
+                )}
+              </div>
+              {isFilterOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </Button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="w-full data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              <FilterButton title="Preço">
+                <PriceRangeFilter 
+                  value={priceRange} 
+                  onChange={(value) => {
+                    setPriceRange(value);
+                  }} 
+                  min={500000} 
+                  max={5000000} 
+                />
+              </FilterButton>
+              
+              <FilterButton title="Localização">
+                <LocationFilter 
+                  selected={locations} 
+                  onChange={(values) => {
+                    setLocations(values);
+                  }}
+                  selectedZone={selectedZone}
+                />
+              </FilterButton>
+              
+              <FilterButton title="Quartos">
+                <FeaturesFilter 
+                  selected={selectedFeatures} 
+                  onChange={(values) => {
+                    setSelectedFeatures(values);
+                  }} 
+                />
+              </FilterButton>
+              
+              <FilterButton title="Estágio">
+                <ConstructionStageFilter 
+                  selected={stages} 
+                  onChange={(values) => {
+                    setStages(values);
+                  }} 
+                />
+              </FilterButton>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
-      
-      {isFilterOpen && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <FilterButton title="Preço">
-            <PriceRangeFilter 
-              value={priceRange} 
-              onChange={(value) => {
-                setPriceRange(value);
-                applyFilters();
-              }} 
-              min={500000} 
-              max={5000000} 
-            />
-          </FilterButton>
-          
-          <FilterButton title="Localização">
-            <LocationFilter 
-              selected={locations} 
-              onChange={(values) => {
-                setLocations(values);
-                applyFilters();
-              }}
-              selectedZone={selectedZone}
-            />
-          </FilterButton>
-          
-          <FilterButton title="Quartos">
-            <FeaturesFilter 
-              selected={selectedFeatures} 
-              onChange={(values) => {
-                setSelectedFeatures(values);
-                applyFilters();
-              }} 
-            />
-          </FilterButton>
-          
-          <FilterButton title="Estágio">
-            <ConstructionStageFilter 
-              selected={stages} 
-              onChange={(values) => {
-                setStages(values);
-                applyFilters();
-              }} 
-            />
-          </FilterButton>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, MapPin, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FilterButton } from "@/components/client/property-filter/filter-button";
 import { constructionStages, bedrooms, cities, zones } from "@/components/client/property-filter/filter-data";
@@ -8,20 +8,27 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
 import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface UnifiedFilterCardProps {
   selectedFilters: Record<FilterCategory, string[]>;
   onFilterChange: (category: FilterCategory, id: string) => void;
+  onResetFilters?: () => void;
 }
 
 export function UnifiedFilterCard({
   selectedFilters,
-  onFilterChange
+  onFilterChange,
+  onResetFilters
 }: UnifiedFilterCardProps) {
   const isMobile = useIsMobile();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  
+  // Collapsible sections state
+  const [isLocationExpanded, setIsLocationExpanded] = useState(true);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(true);
   
   // Check if scroll arrows should be visible
   useEffect(() => {
@@ -59,6 +66,15 @@ export function UnifiedFilterCard({
     }, 300);
   };
   
+  const handleResetFilters = () => {
+    if (onResetFilters) {
+      onResetFilters();
+    }
+  };
+  
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(selectedFilters).some(filters => filters.length > 0);
+  
   return (
     <Card className="relative bg-white overflow-hidden shadow-sm border border-cyrela-gray-lighter">
       <div className="p-4 border-b border-cyrela-gray-lighter">
@@ -71,6 +87,8 @@ export function UnifiedFilterCard({
             variant="outline" 
             size="sm" 
             className="text-sm bg-white hover:bg-cyrela-gray-lighter"
+            onClick={handleResetFilters}
+            disabled={!hasActiveFilters}
           >
             Limpar filtros
           </Button>
@@ -102,91 +120,109 @@ export function UnifiedFilterCard({
               }}
             >
               {/* Location Filter Section */}
-              <div className="mb-6">
-                <div className="flex-none font-medium text-sm text-cyrela-gray-dark flex items-center mb-3">
-                  <MapPin size={16} className="mr-1" />
-                  Localização
+              <Collapsible open={isLocationExpanded} onOpenChange={setIsLocationExpanded} className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex-none font-medium text-sm text-cyrela-gray-dark flex items-center">
+                    <MapPin size={16} className="mr-1" />
+                    Localização
+                  </div>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      {isLocationExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </Button>
+                  </CollapsibleTrigger>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-                  <div className="col-span-2">
-                    <div className="text-xs text-cyrela-gray-dark mb-1">Cidade</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {cities.slice(0, 2).map((city) => (
-                        <FilterButton
-                          key={city.id}
-                          id={city.id}
-                          label={city.label}
-                          selected={selectedFilters.city.includes(city.id)}
-                          onClick={() => onFilterChange("city", city.id)}
-                          variant="compact"
-                          className="w-full whitespace-nowrap"
-                        />
-                      ))}
+                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                    <div className="col-span-2">
+                      <div className="text-xs text-cyrela-gray-dark mb-1">Cidade</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {cities.slice(0, 2).map((city) => (
+                          <FilterButton
+                            key={city.id}
+                            id={city.id}
+                            label={city.label}
+                            selected={selectedFilters.city.includes(city.id)}
+                            onClick={() => onFilterChange("city", city.id)}
+                            variant="compact"
+                            className="w-full whitespace-nowrap"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="col-span-4">
+                      <div className="text-xs text-cyrela-gray-dark mb-1">Zona</div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {zones.slice(0, 4).map((zone) => (
+                          <FilterButton
+                            key={zone.id}
+                            id={zone.id}
+                            label={zone.label}
+                            selected={selectedFilters.zone.includes(zone.id)}
+                            onClick={() => onFilterChange("zone", zone.id)}
+                            variant="compact"
+                            className="w-full"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="col-span-4">
-                    <div className="text-xs text-cyrela-gray-dark mb-1">Zona</div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {zones.slice(0, 4).map((zone) => (
-                        <FilterButton
-                          key={zone.id}
-                          id={zone.id}
-                          label={zone.label}
-                          selected={selectedFilters.zone.includes(zone.id)}
-                          onClick={() => onFilterChange("zone", zone.id)}
-                          variant="compact"
-                          className="w-full"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
               
               {/* Quick Filters Section */}
-              <div>
-                <div className="flex-none font-medium text-sm text-cyrela-gray-dark flex items-center mb-3">
-                  Filtros Rápidos
+              <Collapsible open={isFiltersExpanded} onOpenChange={setIsFiltersExpanded}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex-none font-medium text-sm text-cyrela-gray-dark flex items-center">
+                    Filtros Rápidos
+                  </div>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                      {isFiltersExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </Button>
+                  </CollapsibleTrigger>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-cyrela-gray-dark mb-1">Estágio</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {constructionStages.map((stage) => (
-                        <FilterButton
-                          key={stage.id}
-                          id={stage.id}
-                          label={stage.label}
-                          selected={selectedFilters.constructionStage.includes(stage.id)}
-                          onClick={() => onFilterChange("constructionStage", stage.id)}
-                          variant="compact"
-                          className="w-full whitespace-nowrap"
-                        />
-                      ))}
+                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-cyrela-gray-dark mb-1">Estágio</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {constructionStages.map((stage) => (
+                          <FilterButton
+                            key={stage.id}
+                            id={stage.id}
+                            label={stage.label}
+                            selected={selectedFilters.constructionStage.includes(stage.id)}
+                            onClick={() => onFilterChange("constructionStage", stage.id)}
+                            variant="compact"
+                            className="w-full whitespace-nowrap"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-xs text-cyrela-gray-dark mb-1">Dormitórios</div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {bedrooms.map((bedroom) => (
+                          <FilterButton
+                            key={bedroom.id}
+                            id={bedroom.id}
+                            label={bedroom.label}
+                            selected={selectedFilters.bedrooms.includes(bedroom.id)}
+                            onClick={() => onFilterChange("bedrooms", bedroom.id)}
+                            variant="compact"
+                            className="w-full"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <div className="text-xs text-cyrela-gray-dark mb-1">Dormitórios</div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {bedrooms.map((bedroom) => (
-                        <FilterButton
-                          key={bedroom.id}
-                          id={bedroom.id}
-                          label={bedroom.label}
-                          selected={selectedFilters.bedrooms.includes(bedroom.id)}
-                          onClick={() => onFilterChange("bedrooms", bedroom.id)}
-                          variant="compact"
-                          className="w-full"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </ScrollArea>
           

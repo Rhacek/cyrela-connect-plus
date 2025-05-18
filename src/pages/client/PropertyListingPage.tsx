@@ -10,6 +10,8 @@ import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
 import { UnifiedFilterCard } from "@/components/client/property/unified-filter-card";
 import { usePropertyFilters } from "@/hooks/use-property-filters";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Mock broker phone number - in a real app, this would come from a context or API
 const BROKER_PHONE = "(11) 98765-4321";
@@ -100,28 +102,35 @@ const PropertyListingPage = () => {
           <UnifiedFilterCard
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
+            onResetFilters={handleResetFilters}
           />
         </div>
         
+        {/* Mobile filter overlay */}
+        {isMobileFilterOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setIsMobileFilterOpen(false)} />
+        )}
+        
         {/* Sidebar filters - Only visible in mobile when filter is open */}
         <div className={`
-          ${isMobileFilterOpen ? 'fixed' : 'hidden'} 
-          lg:hidden lg:relative top-[133px] lg:top-0 left-0 w-full h-[calc(100vh-133px)] lg:h-auto lg:w-auto
+          fixed lg:relative top-[133px] lg:top-0 left-0 
+          w-full md:w-3/4 lg:w-auto h-[calc(100vh-133px)] lg:h-auto
           z-50 bg-cyrela-gray-lightest lg:bg-transparent
+          transition-transform duration-300 ease-in-out
+          transform ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           overflow-y-auto lg:overflow-visible p-4 lg:p-0
         `}>
           <div className="sticky top-4">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 lg:hidden">
               <h2 className="text-lg font-semibold">Filtros</h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-cyrela-gray-dark hover:text-cyrela-blue"
                 onClick={() => setIsMobileFilterOpen(false)}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
+                <X size={20} />
+              </Button>
             </div>
             <PropertyFilter 
               properties={mockProperties}

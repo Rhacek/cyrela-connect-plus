@@ -1,7 +1,6 @@
 
 import { useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search, Filter, Calendar, CheckSquare, X } from "lucide-react";
+import { Search, Filter, Calendar, CheckSquare, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
@@ -13,6 +12,7 @@ import { DateRangeFilter } from "./date-range-filter";
 import { LeadStatus } from "@/types";
 import { LeadStatusBadge } from "./lead-status-badge";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LeadsFilterProps {
   searchTerm: string;
@@ -38,6 +38,7 @@ export function LeadsFilter({
   onClearDateFilters
 }: LeadsFilterProps) {
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const statuses: Array<{ value: LeadStatus | "ALL", label: string }> = [
@@ -100,55 +101,65 @@ export function LeadsFilter({
           onClear={onClearDateFilters}
         />
         
-        <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-          <PopoverTrigger asChild>
+        <Collapsible 
+          open={isFilterExpanded} 
+          onOpenChange={setIsFilterExpanded}
+          className="w-full sm:w-auto"
+        >
+          <CollapsibleTrigger asChild>
             <Button 
               variant="outline" 
-              className="sm:w-auto w-full flex items-center gap-2 border-cyrela-gray-lighter"
+              className="sm:w-auto w-full flex items-center justify-between gap-2 border-cyrela-gray-lighter"
             >
-              <Filter size={16} />
-              <span>Filtros</span>
-              {getActiveFiltersCount() > 0 && (
-                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyrela-blue text-[10px] font-medium text-white">
-                  {getActiveFiltersCount()}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>Filtros</span>
+                {getActiveFiltersCount() > 0 && (
+                  <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyrela-blue text-[10px] font-medium text-white">
+                    {getActiveFiltersCount()}
+                  </span>
+                )}
+              </div>
+              {isFilterExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80">
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm">Filtros Avançados</h3>
-              
-              <div className="space-y-2">
-                <h4 className="text-xs font-medium text-cyrela-gray-dark">Status</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {statuses.map((status) => (
-                    <div key={status.value} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`status-${status.value}`}
-                        checked={statusFilter === status.value}
-                        onCheckedChange={() => {
-                          onStatusChange(status.value);
-                        }}
-                      />
-                      <label
-                        htmlFor={`status-${status.value}`}
-                        className="text-sm font-medium flex items-center cursor-pointer"
-                      >
-                        {status.value !== "ALL" && (
-                          <span className="mr-1">
-                            <LeadStatusBadge status={status.value} showLabel={false} size="xs" />
-                          </span>
-                        )}
-                        {status.label}
-                      </label>
-                    </div>
-                  ))}
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="w-full sm:w-80 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+            <div className="p-4 border border-cyrela-gray-lighter rounded-md mt-2 bg-white shadow-sm">
+              <div className="space-y-4">
+                <h3 className="font-medium text-sm">Filtros Avançados</h3>
+                
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-cyrela-gray-dark">Status</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {statuses.map((status) => (
+                      <div key={status.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`status-${status.value}`}
+                          checked={statusFilter === status.value}
+                          onCheckedChange={() => {
+                            onStatusChange(status.value);
+                          }}
+                        />
+                        <label
+                          htmlFor={`status-${status.value}`}
+                          className="text-sm font-medium flex items-center cursor-pointer"
+                        >
+                          {status.value !== "ALL" && (
+                            <span className="mr-1">
+                              <LeadStatusBadge status={status.value} showLabel={false} size="xs" />
+                            </span>
+                          )}
+                          {status.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );
