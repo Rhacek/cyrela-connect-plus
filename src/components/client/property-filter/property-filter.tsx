@@ -33,6 +33,7 @@ export function PropertyFilter({
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>(initialFilters?.features || []);
   const [stages, setStages] = useState<string[]>(initialFilters?.stages || []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
   // Fetch all properties
   const { data: properties = [], isLoading } = useQuery({
@@ -79,6 +80,26 @@ export function PropertyFilter({
     onFilterChange(filtered);
   }, [properties, search, priceRange, locations, selectedFeatures, stages, onFilterChange]);
 
+  // Handle zone selection
+  const handleZoneSelection = (zone: string | null) => {
+    setSelectedZone(zone);
+    // If zone changes, reset neighborhood selections
+    if (zone !== selectedZone) {
+      setLocations([]);
+    }
+  };
+
+  // Handle filter click for location
+  const handleFilterClick = (filter: string) => {
+    setLocations(prev => {
+      if (prev.includes(filter)) {
+        return prev.filter(item => item !== filter);
+      } else {
+        return [...prev, filter];
+      }
+    });
+  };
+
   return (
     <div className="w-full space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
@@ -118,7 +139,10 @@ export function PropertyFilter({
           <FilterButton title="Localização">
             <LocationFilter 
               selected={locations} 
-              onChange={setLocations} 
+              onChange={setLocations}
+              selectedFilters={locations}
+              selectedZone={selectedZone}
+              onFilterClick={handleFilterClick}
             />
           </FilterButton>
           
