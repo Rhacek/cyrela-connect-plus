@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { SharedLink } from '@/types/share';
+import { SharedLink, ShareStats } from '@/types/share';
 
 // Type mapper functions
 const mapFromDbModel = (dbModel: any): SharedLink => ({
@@ -31,6 +31,7 @@ const mapToDbModel = (model: Partial<SharedLink>) => ({
   notes: model.notes,
 });
 
+// Core service functions
 export const sharesService = {
   async getAll(): Promise<SharedLink[]> {
     const { data, error } = await supabase
@@ -122,7 +123,7 @@ export const sharesService = {
       .from('shares')
       .select(`
         *,
-        property:properties(*)
+        properties:property_id (title, development_name, images:property_images(url))
       `)
       .eq('broker_id', brokerId)
       .order('created_at', { ascending: false });
@@ -132,7 +133,46 @@ export const sharesService = {
       throw error;
     }
 
-    return data.map(mapFromDbModel);
+    return data.map((share: any): SharedLink => ({
+      id: share.id,
+      brokerId: share.broker_id,
+      propertyId: share.property_id,
+      property: share.properties ? {
+        id: share.property_id,
+        title: share.properties.title || "Imóvel sem título",
+        developmentName: share.properties.development_name || "",
+        images: share.properties.images || [],
+        // Add missing required Property fields with default values
+        description: "",
+        type: "",
+        price: 0,
+        area: 0,
+        bedrooms: 0,
+        bathrooms: 0,
+        suites: 0,
+        parkingSpaces: 0,
+        address: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdById: "",
+        isActive: true,
+        isHighlighted: false,
+        viewCount: 0,
+        shareCount: 0
+      } : undefined,
+      code: share.code,
+      url: share.url,
+      createdAt: share.created_at,
+      clicks: share.clicks,
+      isActive: share.is_active,
+      notes: share.notes,
+      lastClickedAt: share.last_clicked_at || undefined,
+      expiresAt: share.expires_at || undefined
+    }));
   },
 
   async incrementClickCount(code: string): Promise<void> {
@@ -144,7 +184,7 @@ export const sharesService = {
     }
   },
 
-  async getShareStats(brokerId: string) {
+  async getShareStats(brokerId: string): Promise<ShareStats> {
     const { data, error } = await supabase.rpc('get_broker_share_stats', { broker_id: brokerId });
 
     if (error) {
@@ -152,6 +192,77 @@ export const sharesService = {
       throw error;
     }
 
-    return data;
+    if (!data || data.length === 0) {
+      return {
+        totalShares: 0,
+        totalClicks: 0,
+        activeLinks: 0,
+        averageClicksPerShare: 0,
+        mostSharedProperty: null
+      };
+    }
+
+    // Safely handle the most_shared_property which can be of different types
+    let mostSharedProperty = null;
+    if (data[0].most_shared_property) {
+      const msProperty = data[0].most_shared_property;
+      if (typeof msProperty === 'object' && msProperty !== null) {
+        if ('id' in msProperty && 'name' in msProperty && 'count' in msProperty) {
+          mostSharedProperty = {
+            id: String(msProperty.id || ''),
+            name: String(msProperty.name || ''),
+            count: Number(msProperty.count || 0)
+          };
+        }
+      }
+    }
+
+    return {
+      totalShares: data[0].total_shares || 0,
+      totalClicks: data[0].total_clicks || 0,
+      activeLinks: data[0].active_links || 0,
+      averageClicksPerShare: data[0].average_clicks_per_share || 0,
+      mostSharedProperty
+    };
+  },
+
+  async createShareLink({ 
+    brokerId, 
+    propertyId, 
+    notes 
+  }: { 
+    brokerId: string; 
+    propertyId: string; 
+    notes?: string 
+  }): Promise<SharedLink> {
+    if (!brokerId) throw new Error("Broker ID not found");
+    
+    // Generate a random code
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const url = `https://living.com.br/s/${code}`;
+    
+    const { data, error } = await supabase
+      .from('shares')
+      .insert({
+        broker_id: brokerId,
+        property_id: propertyId,
+        code,
+        url,
+        notes,
+        is_active: true
+      })
+      .select(`
+        id, code, url, created_at, clicks, is_active, notes,
+        property_id, broker_id,
+        properties:property_id (title, development_name)
+      `)
+      .single();
+    
+    if (error) throw error;
+    
+    // Increment property share count
+    await supabase.rpc('increment_property_shares', { property_id: propertyId });
+    
+    return mapFromDbModel(data);
   }
 };
