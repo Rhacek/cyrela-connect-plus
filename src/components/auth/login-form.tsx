@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,8 +63,8 @@ export function LoginForm({ onLoginAttempt }: LoginFormProps) {
       
       console.log("Login successful, session established:", data.session.user.id);
       
-      // Transform user data to our expected format
-      const userSession = transformUserData(data.session.user);
+      // Transform user data to our expected format - properly await the result
+      const userSession = await transformUserData(data.session.user);
       
       // Set the session in auth context
       setSession(userSession);
