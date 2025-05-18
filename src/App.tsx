@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/auth-context";
+import { SubscriptionProvider } from "@/context/subscription-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { UserRole } from "@/types";
 
@@ -55,77 +56,79 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            
-            {/* Broker routes - protected for broker role and using BrokerLayout */}
-            <Route 
-              path="/broker" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                  <BrokerLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/broker/dashboard" replace />} />
-              <Route path="dashboard" element={<BrokerDashboard />} />
-              <Route path="profile" element={<BrokerProfile />} />
-              <Route path="properties" element={<BrokerProperties />} />
-              <Route path="schedule" element={<BrokerSchedule />} />
-              <Route path="leads" element={<BrokerLeads />} />
-              <Route path="metrics" element={<BrokerMetrics />} />
-              <Route path="share" element={<BrokerShare />} />
-              <Route path="plans" element={<BrokerPlans />} />
-              <Route path="settings" element={<BrokerSettings />} />
-            </Route>
-            
-            {/* Client routes */}
-            <Route path="/client/welcome" element={<WelcomePage />} />
-            <Route path="/client/broker" element={<BrokerIntroPage />} />
-            <Route path="/client/onboarding" element={<OnboardingPage />} />
-            <Route path="/client/results" element={<PropertyListingPage />} />
-            <Route path="/client/property/:id" element={<PropertyDetailPage />} />
-            
-            {/* Admin routes - protected for admin role */}
-            <Route 
-              path="/admin/*" 
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="dashboard" element={<Navigate to="/admin/" replace />} />
-              <Route path="properties/" element={<AdminProperties />} />
-              <Route path="properties/new/" element={<AdminPropertyForm />} />
-              <Route path="properties/:id/edit/" element={<AdminPropertyForm />} />
-              <Route path="brokers/" element={<AdminBrokers />} />
-              <Route path="brokers/new/" element={<AdminBrokerForm />} />
-              <Route path="brokers/:id/edit/" element={<AdminBrokerForm />} />
-              <Route path="brokers/targets/" element={<AdminBrokerTargets />} /> {/* Add new route */}
-              <Route path="settings/" element={<AdminSettings />} />
-              <Route path="plans/" element={<AdminPlans />} />
-            </Route>
-            
-            {/* Redirects to ensure consistent trailing slashes */}
-            <Route path="/admin" element={<Navigate to="/admin/" replace />} />
-            <Route path="/admin/properties" element={<Navigate to="/admin/properties/" replace />} />
-            <Route path="/admin/brokers" element={<Navigate to="/admin/brokers/" replace />} />
-            <Route path="/admin/brokers/targets" element={<Navigate to="/admin/brokers/targets/" replace />} /> {/* Add redirect */}
-            <Route path="/admin/plans" element={<Navigate to="/admin/plans/" replace />} />
-            <Route path="/admin/settings" element={<Navigate to="/admin/settings/" replace />} />
-            
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <SubscriptionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<AuthPage />} />
+              
+              {/* Broker routes - protected for broker role and using BrokerLayout */}
+              <Route 
+                path="/broker" 
+                element={
+                  <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
+                    <BrokerLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/broker/dashboard" replace />} />
+                <Route path="dashboard" element={<BrokerDashboard />} />
+                <Route path="profile" element={<BrokerProfile />} />
+                <Route path="properties" element={<BrokerProperties />} />
+                <Route path="schedule" element={<BrokerSchedule />} />
+                <Route path="leads" element={<BrokerLeads />} />
+                <Route path="metrics" element={<BrokerMetrics />} />
+                <Route path="share" element={<BrokerShare />} />
+                <Route path="plans" element={<BrokerPlans />} />
+                <Route path="settings" element={<BrokerSettings />} />
+              </Route>
+              
+              {/* Client routes */}
+              <Route path="/client/welcome" element={<WelcomePage />} />
+              <Route path="/client/broker" element={<BrokerIntroPage />} />
+              <Route path="/client/onboarding" element={<OnboardingPage />} />
+              <Route path="/client/results" element={<PropertyListingPage />} />
+              <Route path="/client/property/:id" element={<PropertyDetailPage />} />
+              
+              {/* Admin routes - protected for admin role */}
+              <Route 
+                path="/admin/*" 
+                element={
+                  <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="dashboard" element={<Navigate to="/admin/" replace />} />
+                <Route path="properties/" element={<AdminProperties />} />
+                <Route path="properties/new/" element={<AdminPropertyForm />} />
+                <Route path="properties/:id/edit/" element={<AdminPropertyForm />} />
+                <Route path="brokers/" element={<AdminBrokers />} />
+                <Route path="brokers/new/" element={<AdminBrokerForm />} />
+                <Route path="brokers/:id/edit/" element={<AdminBrokerForm />} />
+                <Route path="brokers/targets/" element={<AdminBrokerTargets />} /> {/* Add new route */}
+                <Route path="settings/" element={<AdminSettings />} />
+                <Route path="plans/" element={<AdminPlans />} />
+              </Route>
+              
+              {/* Redirects to ensure consistent trailing slashes */}
+              <Route path="/admin" element={<Navigate to="/admin/" replace />} />
+              <Route path="/admin/properties" element={<Navigate to="/admin/properties/" replace />} />
+              <Route path="/admin/brokers" element={<Navigate to="/admin/brokers/" replace />} />
+              <Route path="/admin/brokers/targets" element={<Navigate to="/admin/brokers/targets/" replace />} /> {/* Add redirect */}
+              <Route path="/admin/plans" element={<Navigate to="/admin/plans/" replace />} />
+              <Route path="/admin/settings" element={<Navigate to="/admin/settings/" replace />} />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

@@ -1,92 +1,88 @@
 
-import { useState } from "react";
 import { plans } from "@/types/plan";
-import { PlanCard } from "@/components/client/plans/PlanCard";
-import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { SubscriptionCard } from "@/components/broker/plans/SubscriptionCard";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { RefreshCw } from "lucide-react";
+import { useSubscription } from "@/context/subscription-context";
+import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
-const BrokerPlans = () => {
-  const [currentPlanId, setCurrentPlanId] = useState("free-plan"); // Default to free plan
+export default function BrokerPlans() {
+  const { checkSubscription, isLoading } = useSubscription();
+  const [refreshing, setRefreshing] = useState(false);
+  const location = useLocation();
   
-  const handleSelectPlan = (planId: string) => {
-    // In a real app, this would call an API to update the user's plan
-    setCurrentPlanId(planId);
-    toast.success("Plano selecionado com sucesso!");
+  // Check for success or canceled query params from Stripe redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const success = params.get('success');
+    const canceled = params.get('canceled');
+    
+    if (success === 'true') {
+      toast.success("Assinatura realizada com sucesso!");
+      // Refresh subscription status after successful payment
+      handleRefreshSubscription();
+    }
+    
+    if (canceled === 'true') {
+      toast.error("Processo de assinatura cancelado");
+    }
+    
+    // Clean up URL parameters
+    if (success || canceled) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location]);
+  
+  const handleRefreshSubscription = async () => {
+    setRefreshing(true);
+    try {
+      await checkSubscription();
+      toast.success("Status de assinatura atualizado");
+    } catch (error) {
+      console.error("Error refreshing subscription:", error);
+      toast.error("Erro ao atualizar status de assinatura");
+    } finally {
+      setRefreshing(false);
+    }
   };
   
   return (
-    <div className="w-full h-full">
-      <h1 className="text-2xl font-bold tracking-tight mb-6">Meu Plano</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Atualize seu Plano</CardTitle>
-              <CardDescription>
-                Melhore seu acesso com nossos planos premium
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                {plans.map((plan) => (
-                  <PlanCard
-                    key={plan.id}
-                    plan={plan}
-                    currentPlan={currentPlanId}
-                    onSelect={() => handleSelectPlan(plan.id)}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Benefícios do Plano Pro</CardTitle>
-              <CardDescription>
-                Por que atualizar para o Plano Pro?
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-medium">Mais Leads</h3>
-                <p className="text-sm text-muted-foreground">
-                  Receba leads qualificados diretamente em seu painel
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Ferramentas Avançadas</h3>
-                <p className="text-sm text-muted-foreground">
-                  Acesse relatórios e ferramentas de marketing exclusivas
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium">Suporte Prioritário</h3>
-                <p className="text-sm text-muted-foreground">
-                  Obtenha ajuda rápida sempre que precisar
-                </p>
-              </div>
-              
-              <div className="pt-4">
-                <Button className="w-full" onClick={() => handleSelectPlan("pro-plan")}>
-                  Atualizar Agora
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <h1 className="text-2xl font-bold">Planos de Assinatura</h1>
+          <p className="text-gray-500">
+            Escolha o plano ideal para suas necessidades
+          </p>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefreshSubscription}
+          disabled={refreshing || isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+          Atualizar Status
+        </Button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {plans.map((plan) => (
+          <SubscriptionCard key={plan.id} plan={plan} />
+        ))}
+      </div>
+      
+      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-2">Sobre os Planos</h3>
+        <p className="text-sm text-gray-600">
+          Todos os planos são cobrados mensalmente e podem ser cancelados a qualquer momento.
+          O plano PRO oferece recursos avançados para corretores que desejam maximizar suas vendas.
+          Para mais informações sobre os planos ou suporte personalizado, entre em contato com nosso time de atendimento.
+        </p>
       </div>
     </div>
   );
-};
-
-export default BrokerPlans;
+}
