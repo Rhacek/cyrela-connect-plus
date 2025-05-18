@@ -8,6 +8,13 @@ export const brokerProfileService = {
    */
   async getPublicProfile(brokerId: string): Promise<BrokerProfile | null> {
     try {
+      console.log('Fetching broker profile data for ID:', brokerId);
+      
+      if (!brokerId) {
+        console.error('No broker ID provided');
+        return null;
+      }
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -20,8 +27,11 @@ export const brokerProfileService = {
       }
       
       if (!data) {
+        console.log('No broker profile found for ID:', brokerId);
         return null;
       }
+      
+      console.log('Broker profile data retrieved:', data);
       
       return {
         id: data.id,

@@ -109,7 +109,7 @@ const BrokerIntroPage = () => {
                 <Avatar className="w-32 h-32 mb-4 border-4 border-white shadow-lg">
                   <AvatarImage src={broker?.profileImage} alt={broker?.name} />
                   <AvatarFallback className="text-3xl bg-cyrela-red text-white">
-                    {broker?.name.split(' ').map(n => n[0]).join('')}
+                    {broker?.name?.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 
