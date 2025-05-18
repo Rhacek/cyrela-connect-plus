@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Appointment } from '@/types/appointment';
+import { Appointment, AppointmentStatus } from '@/types/appointment';
 import { format } from 'date-fns';
 
 export const appointmentsService = {
@@ -80,7 +80,7 @@ export const appointmentsService = {
     }
   },
 
-  async updateAppointmentStatus(appointmentId: string, status: string): Promise<boolean> {
+  async updateAppointmentStatus(appointmentId: string, status: AppointmentStatus): Promise<boolean> {
     try {
       const { error } = await supabase
         .rpc('update_appointment_status', {

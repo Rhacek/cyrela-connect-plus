@@ -54,7 +54,7 @@ export default function BrokerSchedule() {
   );
 
   // Handle creating a new appointment
-  const handleCreateAppointment = async () => {
+  const handleCreateAppointment = () => {
     setIsCreateDialogOpen(true);
   };
 
@@ -63,6 +63,12 @@ export default function BrokerSchedule() {
     refetch();
     setIsCreateDialogOpen(false);
     toast.success("Agendamento criado com sucesso");
+  };
+
+  // Handle status update (confirmation, cancellation)
+  const handleStatusUpdate = () => {
+    refetch();
+    toast.success("Status do agendamento atualizado com sucesso");
   };
 
   // Format the selected date for display
@@ -94,6 +100,7 @@ export default function BrokerSchedule() {
               typeFilter={typeFilter}
               setTypeFilter={setTypeFilter}
               onNewAppointment={handleCreateAppointment}
+              onStatusUpdate={handleStatusUpdate}
             />
           )}
         </div>

@@ -45,9 +45,9 @@ export function ScheduleVisitDialog({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState("14:00");
   const [notes, setNotes] = useState("");
-  const [name, setName] = useState(session?.user?.user_metadata?.name || "");
-  const [email, setEmail] = useState(session?.user?.email || "");
-  const [phone, setPhone] = useState(session?.user?.user_metadata?.phone || "");
+  const [name, setName] = useState(session?.user_metadata?.name || "");
+  const [email, setEmail] = useState(session?.email || "");
+  const [phone, setPhone] = useState(session?.user_metadata?.phone || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +74,7 @@ export function ScheduleVisitDialog({
       const result = await appointmentsService.createAppointment({
         propertyId,
         brokerId,
-        clientId: session?.user?.id,
+        clientId: session?.id,
         title: `Visita: ${propertyTitle}`,
         date,
         time,

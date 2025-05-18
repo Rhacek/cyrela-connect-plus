@@ -12,6 +12,7 @@ interface AppointmentsCardProps {
   typeFilter: string[];
   setTypeFilter: (types: string[]) => void;
   onNewAppointment: () => void;
+  onStatusUpdate: () => void;
 }
 
 export function AppointmentsCard({ 
@@ -19,7 +20,8 @@ export function AppointmentsCard({
   filteredAppointments,
   typeFilter,
   setTypeFilter,
-  onNewAppointment
+  onNewAppointment,
+  onStatusUpdate
 }: AppointmentsCardProps) {
   return (
     <Card className="h-full border-cyrela-gray-lighter shadow-md">
@@ -44,11 +46,7 @@ export function AppointmentsCard({
         <AppointmentsList 
           appointments={filteredAppointments} 
           onNewAppointment={onNewAppointment}
-          onStatusUpdate={() => {
-            // This will be passed down to the appointment item component
-            // and called when an appointment status is updated
-            // It will trigger a refetch of the appointments data
-          }}
+          onStatusUpdate={onStatusUpdate}
         />
       </CardContent>
     </Card>

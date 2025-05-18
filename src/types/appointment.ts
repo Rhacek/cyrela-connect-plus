@@ -6,7 +6,7 @@ export interface Appointment {
   date: Date;
   time: string;
   type: 'visit' | 'meeting' | 'call';
-  status: string;
+  status: AppointmentStatus;
   notes: string;
   propertyId: string;
   clientEmail: string;

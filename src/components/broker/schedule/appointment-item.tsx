@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Clock, Check, X, CalendarX, User, Mail, Phone } from "lucide-react";
-import { Appointment } from "@/types/appointment";
+import { Appointment, AppointmentStatus } from "@/types/appointment";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { appointmentsService } from "@/services/appointments.service";
@@ -28,35 +28,42 @@ interface AppointmentItemProps {
 export function AppointmentItem({ appointment, onStatusUpdate }: AppointmentItemProps) {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleConfirm = async () => {
+  const updateAppointmentStatus = async (status: AppointmentStatus) => {
     setIsUpdating(true);
-    const success = await appointmentsService.updateAppointmentStatus(appointment.id, "CONFIRMADA");
+    const success = await appointmentsService.updateAppointmentStatus(appointment.id, status);
     setIsUpdating(false);
     
     if (success) {
-      toast.success("Visita confirmada com sucesso");
+      const statusMessages = {
+        CONFIRMADA: "Visita confirmada com sucesso",
+        CANCELADA: "Visita cancelada com sucesso",
+        CONCLUIDA: "Visita marcada como concluída com sucesso"
+      };
+      
+      toast.success(statusMessages[status]);
       onStatusUpdate();
     } else {
-      toast.error("Erro ao confirmar a visita");
+      const errorMessages = {
+        CONFIRMADA: "Erro ao confirmar a visita",
+        CANCELADA: "Erro ao cancelar a visita",
+        CONCLUIDA: "Erro ao concluir a visita"
+      };
+      
+      toast.error(errorMessages[status]);
     }
+    
+    // Close all dialogs
     setIsConfirmDialogOpen(false);
+    setIsCancelDialogOpen(false);
+    setIsCompleteDialogOpen(false);
   };
 
-  const handleCancel = async () => {
-    setIsUpdating(true);
-    const success = await appointmentsService.updateAppointmentStatus(appointment.id, "CANCELADA");
-    setIsUpdating(false);
-    
-    if (success) {
-      toast.success("Visita cancelada com sucesso");
-      onStatusUpdate();
-    } else {
-      toast.error("Erro ao cancelar a visita");
-    }
-    setIsCancelDialogOpen(false);
-  };
+  const handleConfirm = () => updateAppointmentStatus("CONFIRMADA");
+  const handleCancel = () => updateAppointmentStatus("CANCELADA");
+  const handleComplete = () => updateAppointmentStatus("CONCLUIDA");
 
   const getStatusStyle = () => {
     switch (appointment.status) {
@@ -163,6 +170,28 @@ export function AppointmentItem({ appointment, onStatusUpdate }: AppointmentItem
                     </Button>
                   </div>
                 )}
+
+                {appointment.status === "CONFIRMADA" && (
+                  <div className="flex gap-2 mt-3">
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setIsCompleteDialogOpen(true)}
+                    >
+                      <Check className="h-4 w-4 mr-1" />
+                      Concluir Visita
+                    </Button>
+                    
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => setIsCancelDialogOpen(true)}
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </AccordionContent>
@@ -212,6 +241,30 @@ export function AppointmentItem({ appointment, onStatusUpdate }: AppointmentItem
               disabled={isUpdating}
             >
               {isUpdating ? "Cancelando..." : "Cancelar visita"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Dialog */}
+      <Dialog open={isCompleteDialogOpen} onOpenChange={setIsCompleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Concluir visita</DialogTitle>
+            <DialogDescription>
+              Você está marcando como concluída a visita de {appointment.client} para o dia {appointment.date.toLocaleDateString()} às {appointment.time}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCompleteDialogOpen(false)} disabled={isUpdating}>
+              Voltar
+            </Button>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={handleComplete}
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Concluindo..." : "Concluir visita"}
             </Button>
           </DialogFooter>
         </DialogContent>
