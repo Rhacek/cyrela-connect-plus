@@ -3,20 +3,32 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { leadsService } from "@/services/leads.service";
+import { LeadStatus } from "@/types";
+
+interface LeadFilters {
+  name?: string;
+  status?: LeadStatus | "ALL";
+  fromDate?: string;
+  toDate?: string;
+}
 
 export const useLeadsData = (
   brokerId: string | undefined, 
-  enabled: boolean
+  enabled: boolean,
+  filters?: LeadFilters
 ) => {
-  // Fetch recent leads
+  // Convert filters to a serialized string for query key
+  const filtersKey = filters ? JSON.stringify(filters) : "default";
+  
+  // Fetch leads with filters
   const { 
     data: leads, 
     isLoading: isLoadingLeads,
     error: leadsError,
     refetch: refetchLeads
   } = useQuery({
-    queryKey: ['brokerLeads', brokerId],
-    queryFn: () => leadsService.getBrokerLeads(brokerId || ""),
+    queryKey: ['brokerLeads', brokerId, filtersKey],
+    queryFn: () => leadsService.getBrokerLeads(brokerId || "", filters),
     enabled: !!brokerId && enabled
   });
   

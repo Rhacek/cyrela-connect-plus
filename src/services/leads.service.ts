@@ -24,14 +24,49 @@ const mapFromDbModel = (dbModel: any): Lead => ({
   targetMoveDate: dbModel.target_move_date ? new Date(dbModel.target_move_date) : undefined
 });
 
+interface LeadFilters {
+  name?: string;
+  status?: LeadStatus | "ALL";
+  fromDate?: string;
+  toDate?: string;
+}
+
 export const leadsService = {
-  async getBrokerLeads(brokerId: string): Promise<Lead[]> {
+  async getBrokerLeads(brokerId: string, filters?: LeadFilters): Promise<Lead[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('leads')
         .select('*')
-        .eq('assigned_to_id', brokerId)
-        .order('created_at', { ascending: false });
+        .eq('assigned_to_id', brokerId);
+      
+      // Apply filters if provided
+      if (filters) {
+        // Filter by name (search in name, email, and phone)
+        if (filters.name && filters.name.trim() !== '') {
+          const searchTerm = `%${filters.name.toLowerCase()}%`;
+          query = query.or(`name.ilike.${searchTerm},email.ilike.${searchTerm},phone.ilike.${searchTerm}`);
+        }
+        
+        // Filter by status
+        if (filters.status && filters.status !== 'ALL') {
+          query = query.eq('status', filters.status);
+        }
+        
+        // Filter by date range
+        if (filters.fromDate) {
+          query = query.gte('created_at', filters.fromDate);
+        }
+        
+        if (filters.toDate) {
+          // Add one day to include the end date fully
+          const nextDay = new Date(filters.toDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          query = query.lt('created_at', nextDay.toISOString());
+        }
+      }
+      
+      // Always sort by creation date (newest first)
+      const { data, error } = await query.order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching broker leads:', error);
