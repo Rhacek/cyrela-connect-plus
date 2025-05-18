@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/auth-context";
 import { Json } from "@/integrations/supabase/types";
 
-export type BrokerSettingsCategory = 'profile' | 'notifications';
+export type BrokerSettingsCategory = 'profile' | 'notifications' | 'shares';
 
 export interface BrokerProfileSettings {
   showPhone: boolean;
@@ -22,6 +22,15 @@ export interface BrokerNotificationSettings {
   notifyOnShareClick: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+}
+
+export interface BrokerShareSettings {
+  defaultExpirationEnabled: boolean;
+  defaultExpirationDays: number;
+  autoGenerateNotes: boolean;
+  notifyOnShareClick: boolean;
+  defaultShareMode: "standard" | "short" | "branded";
+  appendUTMParameters: boolean;
 }
 
 export const brokerSettingsService = {
@@ -121,11 +130,31 @@ export const brokerSettingsService = {
     }
   },
 
+  async getBrokerShareSettings(): Promise<BrokerShareSettings> {
+    try {
+      return await this.getBrokerSettings("shares");
+    } catch (error) {
+      // Return default settings if not found
+      return {
+        defaultExpirationEnabled: true,
+        defaultExpirationDays: 30,
+        autoGenerateNotes: false,
+        notifyOnShareClick: true,
+        defaultShareMode: "standard",
+        appendUTMParameters: true
+      };
+    }
+  },
+
   async updateBrokerProfileSettings(settings: BrokerProfileSettings): Promise<void> {
     return this.updateBrokerSettings("profile", settings);
   },
 
   async updateBrokerNotificationSettings(settings: BrokerNotificationSettings): Promise<void> {
     return this.updateBrokerSettings("notifications", settings);
+  },
+
+  async updateBrokerShareSettings(settings: BrokerShareSettings): Promise<void> {
+    return this.updateBrokerSettings("shares", settings);
   }
 };

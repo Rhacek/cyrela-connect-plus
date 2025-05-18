@@ -5,21 +5,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   brokerSettingsService, 
   BrokerProfileSettings,
-  BrokerNotificationSettings
+  BrokerNotificationSettings,
+  BrokerShareSettings
 } from "@/services/broker-settings.service";
 import { toast } from "sonner";
 import { ProfileSettingsForm } from "@/components/broker/settings/ProfileSettingsForm";
 import { NotificationSettingsForm } from "@/components/broker/settings/NotificationSettingsForm";
+import { ShareSettingsForm } from "@/components/broker/settings/ShareSettingsForm";
 
 const BrokerSettings = () => {
   const [loading, setLoading] = useState({
     profile: true,
-    notifications: true
+    notifications: true,
+    shares: true
   });
   
   const [activeTab, setActiveTab] = useState("profile");
   const [profileSettings, setProfileSettings] = useState<BrokerProfileSettings | undefined>();
   const [notificationSettings, setNotificationSettings] = useState<BrokerNotificationSettings | undefined>();
+  const [shareSettings, setShareSettings] = useState<BrokerShareSettings | undefined>();
 
   // Load profile settings
   useEffect(() => {
@@ -57,6 +61,24 @@ const BrokerSettings = () => {
     loadNotificationSettings();
   }, []);
 
+  // Load share settings
+  useEffect(() => {
+    const loadShareSettings = async () => {
+      try {
+        setLoading((prev) => ({ ...prev, shares: true }));
+        const settings = await brokerSettingsService.getBrokerShareSettings();
+        setShareSettings(settings);
+      } catch (error) {
+        console.error("Erro ao carregar configurações de compartilhamento:", error);
+        toast.error("Erro ao carregar configurações de compartilhamento");
+      } finally {
+        setLoading((prev) => ({ ...prev, shares: false }));
+      }
+    };
+
+    loadShareSettings();
+  }, []);
+
   const refreshProfileSettings = async () => {
     try {
       const settings = await brokerSettingsService.getBrokerProfileSettings();
@@ -75,12 +97,21 @@ const BrokerSettings = () => {
     }
   };
 
+  const refreshShareSettings = async () => {
+    try {
+      const settings = await brokerSettingsService.getBrokerShareSettings();
+      setShareSettings(settings);
+    } catch (error) {
+      console.error("Erro ao atualizar configurações de compartilhamento:", error);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
         <p className="text-muted-foreground mt-2">
-          Gerencie suas preferências de perfil e notificações.
+          Gerencie suas preferências de perfil, notificações e compartilhamento.
         </p>
       </div>
 
@@ -90,9 +121,10 @@ const BrokerSettings = () => {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
+          <TabsTrigger value="shares">Compartilhamento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -120,6 +152,21 @@ const BrokerSettings = () => {
                 loading={loading.notifications} 
                 initialData={notificationSettings}
                 onSuccess={refreshNotificationSettings}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="shares" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Compartilhamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ShareSettingsForm 
+                loading={loading.shares} 
+                initialData={shareSettings}
+                onSuccess={refreshShareSettings}
               />
             </CardContent>
           </Card>
