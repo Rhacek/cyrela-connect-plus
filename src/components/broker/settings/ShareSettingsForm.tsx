@@ -38,7 +38,7 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
   const onSubmit = async (values: ShareFormValues) => {
     try {
       setIsSubmitting(true);
-      await brokerSettingsService.updateBrokerShareSettings(values);
+      await brokerSettingsService.updateBrokerShareSettings(values as BrokerShareSettings);
       toast.success("Configurações de compartilhamento atualizadas com sucesso!");
       onSuccess?.();
     } catch (error) {
