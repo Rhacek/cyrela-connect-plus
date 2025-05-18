@@ -17,8 +17,28 @@ export const forceSessionRestore = async (retryCount = 0) => {
     
     if (data.session) {
       console.log("Session found through getSession:", data.session.user.id);
-      emitSessionUpdate(data.session);
-      return data.session;
+      
+      // Verify session expiration
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+      if (data.session.expires_at && data.session.expires_at > currentTimeInSeconds) {
+        console.log("Session is valid, expires in:", 
+          (data.session.expires_at - currentTimeInSeconds), "seconds");
+        emitSessionUpdate(data.session);
+        return data.session;
+      } else if (data.session.expires_at) {
+        console.log("Session is expired, attempting refresh");
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (!refreshError && refreshData.session) {
+          console.log("Session refreshed successfully");
+          emitSessionUpdate(refreshData.session);
+          return refreshData.session;
+        }
+      } else {
+        // If no expiration is provided, trust the session
+        emitSessionUpdate(data.session);
+        return data.session;
+      }
     }
     
     console.log("No session found through getSession, trying manual recovery");
@@ -84,12 +104,28 @@ export const forceSessionRestore = async (retryCount = 0) => {
   }
 };
 
-// Initialize session on module load
+// Initialize session on module load with enhanced logging
 export const initializeSession = async () => {
+  console.log("Starting session initialization...");
   const session = await forceSessionRestore();
+  
   if (session) {
-    console.log("Session initialized on module load");
+    console.log("Session initialized successfully for user:", session.user.id);
+    // Store user ID in sessionStorage for cross-tab synchronization
+    try {
+      sessionStorage.setItem('current_user_id', session.user.id);
+    } catch (err) {
+      console.error("Error storing user ID in sessionStorage:", err);
+    }
   } else {
     console.log("No session found during initialization");
+    // Clear sessionStorage marker
+    try {
+      sessionStorage.removeItem('current_user_id');
+    } catch (err) {
+      console.error("Error removing user ID from sessionStorage:", err);
+    }
   }
+  
+  return session;
 };

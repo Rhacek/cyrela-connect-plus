@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSessionVerification } from "@/hooks/use-session-verification";
 import { UserRole } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
@@ -12,9 +13,24 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { session, loading } = useAuth();
+  const { session, loading, initialized } = useAuth();
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
   const location = useLocation();
+  
+  // Debug logging for troubleshooting session issues
+  useEffect(() => {
+    console.log("ProtectedRoute state:", {
+      path: location.pathname,
+      sessionExists: !!session,
+      sessionId: session?.id,
+      userRole: session?.user_metadata?.role,
+      loading,
+      initialized,
+      isVerifying,
+      isAuthorized,
+      allowedRoles
+    });
+  }, [session, loading, initialized, isVerifying, isAuthorized, location.pathname, allowedRoles]);
   
   // Check if the current path is a protected route
   const isProtectedRoute = location.pathname.startsWith('/broker') || 
@@ -27,7 +43,7 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
   }
   
   // Show loading state while verifying
-  if (loading || isVerifying) {
+  if (loading || isVerifying || !initialized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md space-y-4">
@@ -45,13 +61,15 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
     if (location.pathname.startsWith('/admin') && session?.user_metadata?.role !== UserRole.ADMIN) {
       toast.error("Você não tem permissão para acessar esta página");
       
-      // Redirect to auth page
-      return <Navigate to="/auth" replace />;
+      // Redirect to auth page with return URL
+      const returnUrl = encodeURIComponent(location.pathname);
+      return <Navigate to={`/auth?redirect=${returnUrl}`} replace />;
     }
     
     // Only redirect to auth if this is a protected route
     if (isProtectedRoute) {
-      return <Navigate to="/auth" replace />;
+      const returnUrl = encodeURIComponent(location.pathname);
+      return <Navigate to={`/auth?redirect=${returnUrl}`} replace />;
     }
     
     // If not a protected route, allow access

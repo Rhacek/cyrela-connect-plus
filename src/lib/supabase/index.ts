@@ -1,3 +1,4 @@
+
 // Re-export the Supabase client from the integrations folder
 // This centralizes our Supabase client to a single implementation
 export { 
@@ -25,9 +26,19 @@ export {
   initializeSession 
 } from './session-helpers';
 
-// Continue to initialize the session during module import
+// Initialize the session during module import
+// Make sure we handle errors properly and don't block the app
 import { initializeSession } from './session-helpers';
 
-initializeSession().catch(err => {
-  console.error("Error during session initialization:", err);
-});
+// Use a proper named function for better stack traces in error scenarios
+const initializeGlobalSession = async () => {
+  try {
+    await initializeSession();
+    console.log("Global session initialization completed");
+  } catch (err) {
+    console.error("Error during global session initialization:", err);
+  }
+};
+
+// Call the initialization function
+initializeGlobalSession();

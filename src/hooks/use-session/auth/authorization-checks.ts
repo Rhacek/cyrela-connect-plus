@@ -4,6 +4,7 @@ import { UserRole } from '@/types';
 import { updateSessionCache } from '../cache/session-cache';
 import { redirectBasedOnRole, isProtectedRoute } from '../routing/role-redirection';
 import { hasRolePermission } from './permission-checks';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Primary function to check if a user is authorized for a specific route
@@ -54,17 +55,62 @@ export const checkAuthorization = async (
     path: pathname
   });
   
+  // Special handling for admin routes
+  const isAdminRoute = pathname.startsWith('/admin');
+  if (isAdminRoute && session) {
+    // For admin routes, first verify the stored session is actually valid
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error || !data.session) {
+        console.warn("Session verification failed for admin route:", error);
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
+      // Explicit check for admin role
+      const userRole = data.session.user.user_metadata?.role;
+      
+      if (userRole !== UserRole.ADMIN) {
+        console.warn("User role is not ADMIN for admin route");
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
+        return;
+      }
+      
+      // Admin user is authorized for admin routes
+      if (isMounted) {
+        console.log("Admin user verified for admin route");
+        setIsAuthorized(true);
+        setIsVerifying(false);
+        
+        // Update session cache for admin routes
+        updateSessionCache(session, pathname);
+      }
+      return;
+    } catch (err) {
+      console.error("Error verifying admin session:", err);
+      if (isMounted) {
+        setIsAuthorized(false);
+        setIsVerifying(false);
+      }
+      return;
+    }
+  }
+  
+  // Standard authorization for non-admin routes follows below
+  
   // If we have a session but no allowed roles, it's protected but open to all authenticated
   if (!allowedRoles && session) {
     console.log("Route is protected but open to all authenticated users");
     if (isMounted) {
       setIsAuthorized(true);
       setIsVerifying(false);
-      
-      // Update session cache if on admin route
-      if (pathname.startsWith('/admin')) {
-        updateSessionCache(session, pathname);
-      }
     }
     return;
   }
@@ -141,10 +187,8 @@ export const checkAuthorization = async (
       setIsAuthorized(true);
       setIsVerifying(false);
       
-      // Update session cache for admin routes
-      if (pathname.startsWith('/admin')) {
-        updateSessionCache(session, pathname);
-      }
+      // Update session cache
+      updateSessionCache(session, pathname);
     }
   }
 };

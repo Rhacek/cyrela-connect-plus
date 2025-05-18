@@ -9,16 +9,20 @@ import { UserSession } from "@/types/auth";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
+import { UserRole } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 // Helper function to map Session to UserSession
 const mapToUserSession = (session: any): UserSession => {
   if (!session) return null;
   
   return {
-    id: session.id,
-    email: session.email || session.user?.email,
-    expires_at: session.expires_at, 
-    user_metadata: session.user_metadata || session.user?.user_metadata || {}
+    id: session.user?.id,
+    email: session.user?.email,
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: session.expires_at,
+    user_metadata: session.user?.user_metadata || {}
   };
 };
 
@@ -26,7 +30,7 @@ const mapToUserSession = (session: any): UserSession => {
  * Layout component for the Admin section, includes sidebar, header and outlet
  */
 const AdminLayout = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, initialized, setSession } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { hasValidCache, updateSessionCache } = useSessionCache(location.pathname);
@@ -34,68 +38,115 @@ const AdminLayout = () => {
   // Add the periodic session check to ensure token validity
   usePeriodicSessionCheck(session !== null, location.pathname);
   
-  // Effect to handle path verification and route adjustments
+  // Check for valid admin session on mount and when location changes
   useEffect(() => {
-    // Extract current path without query params
+    // Skip if still loading or no session yet
+    if (loading || !initialized) return;
+    
+    const verifyAdminSession = async () => {
+      // If we already have a valid session in the auth context
+      if (session && session.user_metadata?.role === UserRole.ADMIN) {
+        // Check with Supabase if session is still valid
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error || !data.session) {
+            console.error("Admin session verification failed:", error);
+            // Try to refresh the session
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError || !refreshData.session) {
+              console.error("Failed to refresh admin session:", refreshError);
+              toast.error("Sua sessão expirou. Redirecionando para login...");
+              navigate("/auth?redirect=/admin/", { replace: true });
+              return;
+            }
+            
+            // Session refreshed, update in context
+            const userSession = mapToUserSession(refreshData.session);
+            setSession(userSession);
+            
+            // Ensure it's an admin
+            if (userSession.user_metadata?.role !== UserRole.ADMIN) {
+              toast.error("Você não tem permissão para acessar esta página");
+              navigate("/auth", { replace: true });
+            }
+          } else {
+            // Session is still valid, update cache
+            updateSessionCache(session, location.pathname);
+          }
+        } catch (err) {
+          console.error("Error checking admin session:", err);
+        }
+      } else if (!session) {
+        // No session at all, try to restore from Supabase
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (!error && data.session) {
+            const userSession = mapToUserSession(data.session);
+            
+            // Only set the session if it's an admin
+            if (userSession.user_metadata?.role === UserRole.ADMIN) {
+              setSession(userSession);
+              updateSessionCache(userSession, location.pathname);
+            } else {
+              // Not an admin, redirect
+              toast.error("Você não tem permissão para acessar esta página");
+              navigate("/auth", { replace: true });
+            }
+          } else {
+            // No valid session found
+            navigate("/auth?redirect=/admin/", { replace: true });
+          }
+        } catch (err) {
+          console.error("Error restoring admin session:", err);
+        }
+      } else if (session && session.user_metadata?.role !== UserRole.ADMIN) {
+        // Has session but not an admin
+        toast.error("Você não tem permissão para acessar esta página");
+        navigate("/auth", { replace: true });
+      }
+    };
+    
+    // Verify the admin session if we don't have a valid cache
+    if (!hasValidCache) {
+      verifyAdminSession();
+    }
+    
+    // Handle path standardization
     const currentPath = location.pathname;
     
     // Only run navigation checks for admin routes
     if (!currentPath.startsWith("/admin")) return;
     
-    console.log(`AdminLayout - Path check for ${currentPath}`);
-    
-    // Check if we have a valid cache for this route
-    if (hasValidCache) {
-      console.log(`AdminLayout - Using cached session for ${currentPath}`);
-      return;
-    }
-    
     // Ensure the path ends with a trailing slash unless it's /admin
-    // This is to standardize all admin routes
     if (
       currentPath !== "/admin" && 
       currentPath !== "/admin/" && 
       !currentPath.endsWith("/")
     ) {
-      console.log(`AdminLayout - Redirecting to path with trailing slash: ${currentPath}/`);
       navigate(`${currentPath}/`, { replace: true });
       return;
     }
     
     // Check if this is /admin without trailing slash, standardize to /admin/
     if (currentPath === "/admin") {
-      console.log(`AdminLayout - Redirecting /admin to /admin/`);
       navigate("/admin/", { replace: true });
-      return;
     }
-    
-    // If we have a session and it's verified
-    if (session) {
-      // Update session cache to avoid future checks on this path
-      const userRole = session.user_metadata?.role;
-      
-      if (userRole === "ADMIN") {
-        console.log(`AdminLayout - Path ${currentPath} already verified, caching`);
-        updateSessionCache(mapToUserSession(session), currentPath);
-      } else {
-        // If user is not an admin, redirect to appropriate dashboard
-        console.log(`AdminLayout - User is ${userRole}, not ADMIN, redirecting`);
-        toast.error("Você não tem permissão para acessar esta página");
-        
-        if (userRole === "BROKER") {
-          navigate("/broker/dashboard/", { replace: true });
-        } else if (userRole === "CLIENT") {
-          navigate("/client/welcome/", { replace: true });
-        } else {
-          navigate("/auth", { replace: true });
-        }
-      }
-    }
-  }, [location.pathname, hasValidCache, session, navigate, updateSessionCache]);
+  }, [location.pathname, hasValidCache, session, navigate, updateSessionCache, loading, initialized, setSession]);
 
-  // Show nothing while checking auth
-  if (loading) {
-    return null;
+  // Show nothing while checking auth or if not authenticated
+  if (loading || !initialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="w-full max-w-md space-y-4 p-8 bg-white rounded-lg shadow-md">
+          <div className="h-8 w-3/4 mx-auto bg-slate-200 animate-pulse rounded"></div>
+          <div className="h-32 w-full bg-slate-200 animate-pulse rounded"></div>
+          <div className="h-8 w-1/2 mx-auto bg-slate-200 animate-pulse rounded"></div>
+        </div>
+      </div>
+    );
   }
   
   // Show nothing if not authenticated on admin route

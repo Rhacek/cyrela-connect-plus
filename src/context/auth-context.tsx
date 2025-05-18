@@ -1,10 +1,11 @@
 
-import { createContext, useContext, ReactNode, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { UserSession } from '@/types/auth';
 import { useSessionInit } from '@/hooks/use-session-init';
 import { useAuthActions } from '@/hooks/use-auth-actions';
 import { isAdmin, isBroker, isClient } from '@/utils/auth-utils';
 import { signOutAndCleanup } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   session: UserSession | null;
@@ -36,6 +37,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signUp, 
     createAdmin 
   } = useAuthActions(setSession, setLoading);
+  
+  // Set up auth state change listener
+  useEffect(() => {
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, supabaseSession) => {
+      console.log(`Auth state changed: ${event}`);
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (supabaseSession) {
+          // Transform Supabase session to our format
+          const userSession: UserSession = {
+            id: supabaseSession.user.id,
+            email: supabaseSession.user.email || '',
+            access_token: supabaseSession.access_token,
+            refresh_token: supabaseSession.refresh_token,
+            expires_at: supabaseSession.expires_at,
+            user_metadata: {
+              name: supabaseSession.user.user_metadata?.name || '',
+              role: supabaseSession.user.user_metadata?.role,
+              brokerCode: supabaseSession.user.user_metadata?.brokerCode,
+              brokerage: supabaseSession.user.user_metadata?.brokerage,
+              creci: supabaseSession.user.user_metadata?.creci,
+              company: supabaseSession.user.user_metadata?.company,
+              city: supabaseSession.user.user_metadata?.city,
+              zone: supabaseSession.user.user_metadata?.zone,
+              profile_image: supabaseSession.user.user_metadata?.profile_image
+            }
+          };
+          
+          setSession(userSession);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+      }
+    });
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setSession]);
   
   // Improved signOut function that uses our enhanced cleanup
   const signOut = useCallback(async () => {

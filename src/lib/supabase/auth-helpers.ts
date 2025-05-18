@@ -1,5 +1,6 @@
 
-import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate } from '@/integrations/supabase/client';
+import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate, refreshSession } from '@/integrations/supabase/client';
+import { UserSession } from '@/types/auth';
 
 // Helper to log auth state for debugging
 export const logAuthState = async () => {
@@ -16,6 +17,13 @@ export const getCurrentSession = async () => {
       console.error("Error getting session:", error);
       return null;
     }
+    
+    if (!data.session) {
+      console.log("No active session found via getSession");
+      return null;
+    }
+    
+    console.log("Found active session for user:", data.session.user.id);
     return data.session;
   } catch (error) {
     console.error("Unexpected error getting session:", error);
@@ -23,7 +31,7 @@ export const getCurrentSession = async () => {
   }
 };
 
-// Verify session validity more thoroughly
+// Verify session validity more thoroughly with explicit token checks
 export const verifySession = async (session: any) => {
   if (!session) return false;
   
@@ -32,6 +40,19 @@ export const verifySession = async (session: any) => {
     if (!session.access_token) {
       console.log("Session missing access token");
       return false;
+    }
+    
+    // Check for token expiration if expires_at is available
+    if (session.expires_at) {
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = session.expires_at - currentTimeInSeconds;
+      
+      // If token is expired or about to expire in the next minute, try to refresh
+      if (timeUntilExpiry <= 60) {
+        console.log("Access token expired or about to expire, attempting refresh");
+        const refreshedSession = await refreshSession();
+        return !!refreshedSession;
+      }
     }
     
     // Verify the session by checking user data
@@ -68,22 +89,29 @@ export const signOutAndCleanup = async () => {
     // Manually clear localStorage regardless of the signOut result
     localStorage.removeItem(storageKey);
     
+    // Also clear any other auth-related items in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('supabase') || key.includes('auth') || key.includes('session'))) {
+        localStorage.removeItem(key);
+      }
+    }
+    
+    // Clear sessionStorage as well for completeness
+    sessionStorage.removeItem('lastAuthCheck');
+    
     // Emit session removal event
     emitSessionRemoval();
     
-    // Check if we successfully cleared everything
+    // Double-check if we successfully cleared everything
     const sessionCheck = await getCurrentSession();
     if (sessionCheck) {
       console.warn("Session still exists after logout, forcing removal");
-      // More targeted cleanup
       try {
-        const parsedSession = JSON.parse(localStorage.getItem(storageKey) || '{}');
-        if (parsedSession && Object.keys(parsedSession).length > 0) {
-          localStorage.removeItem(storageKey);
-        }
+        // One more attempt to clear storage
+        localStorage.clear();
       } catch (e) {
-        // If parsing fails, clear the item anyway
-        localStorage.removeItem(storageKey);
+        console.error("Error clearing localStorage:", e);
       }
     } else {
       console.log("Signout successful, no session remains");

@@ -4,7 +4,9 @@ import { UserRole } from "@/types";
 export interface UserSession {
   id: string;
   email: string;
-  expires_at?: number; // Add expires_at property to support session expiration checks
+  access_token?: string;  // Add access_token property to track token validity
+  refresh_token?: string; // Add refresh_token for session refreshing
+  expires_at?: number;    
   user_metadata: {
     name: string;
     role: UserRole;
@@ -14,6 +16,6 @@ export interface UserSession {
     company?: string;
     city?: string;
     zone?: string;
-    profile_image?: string; // Add profile_image property
+    profile_image?: string;
   }
 }
