@@ -7,7 +7,6 @@ import { getMonthlyPerformance, getYearlyPerformance } from "@/services/performa
 import { targetsService } from "@/services/targets.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PerformanceChart } from "@/components/broker/metrics/performance-chart";
 import { PerformanceTable } from "@/components/broker/metrics/performance-table";
 import { PerformanceComparison } from "@/components/broker/metrics/performance-comparison";
 import { PerformanceMetrics } from "@/components/broker/metrics/performance-metrics";
@@ -15,6 +14,10 @@ import { mockMonthlyPerformance, mockHistoricalPerformance } from "@/mocks/perfo
 import { mockMonthlyTargets } from "@/mocks/target-data";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
+import { EnhancedPerformanceChart } from "@/components/broker/metrics/enhanced-performance-chart";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { exportPerformanceData } from "@/utils/export-utils";
 
 const BrokerMetrics = () => {
   const { session } = useAuth();
@@ -61,6 +64,21 @@ const BrokerMetrics = () => {
     setSelectedYear(year);
   };
   
+  // Export data functions
+  const handleExportMonthlyData = () => {
+    const dataToExport = monthlyPerformance || mockMonthlyPerformance;
+    exportPerformanceData.toCSV(dataToExport, `desempenho-mensal-${selectedYear}.csv`);
+  };
+  
+  const handleExportYearlyData = () => {
+    const dataToExport = yearlyPerformance || mockHistoricalPerformance;
+    exportPerformanceData.toPDF(
+      dataToExport, 
+      `Relatório de Desempenho Anual`,
+      `desempenho-anual.pdf`
+    );
+  };
+  
   // Use real data or fallback to mock data
   const performanceData = monthlyPerformance || mockMonthlyPerformance;
   const historicalData = yearlyPerformance || mockHistoricalPerformance;
@@ -90,23 +108,23 @@ const BrokerMetrics = () => {
               isLoading={isLoadingCurrent || isLoadingTarget}
             />
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Desempenho Mensal {selectedYear}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PerformanceChart 
-                  data={performanceData} 
-                  isLoading={isLoadingMonthly}
-                />
-              </CardContent>
-            </Card>
+            <EnhancedPerformanceChart 
+              data={performanceData} 
+              isLoading={isLoadingMonthly}
+              title="Desempenho Mensal"
+              description={`Visualização das métricas do ano ${selectedYear}`}
+            />
+            
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">Detalhamento Mensal</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleExportMonthlyData}>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar Dados
+              </Button>
+            </div>
             
             <Card>
-              <CardHeader>
-                <CardTitle>Detalhamento Mensal</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <PerformanceTable 
                   data={performanceData} 
                   isLoading={isLoadingMonthly}
@@ -116,26 +134,26 @@ const BrokerMetrics = () => {
           </TabsContent>
           
           <TabsContent value="yearly" className="space-y-4 mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Desempenho Anual</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PerformanceChart 
-                  data={historicalData.filter(item => item.year === selectedYear)} 
-                  isLoading={isLoadingYearly}
-                  isYearly
-                />
-              </CardContent>
-            </Card>
+            <EnhancedPerformanceChart 
+              data={historicalData} 
+              isLoading={isLoadingYearly}
+              isYearly
+              title="Desempenho Anual"
+              description="Visualização do desempenho ao longo dos anos"
+            />
+            
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">Resumo Anual</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleExportYearlyData}>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar Relatório
+              </Button>
+            </div>
             
             <Card>
-              <CardHeader>
-                <CardTitle>Resumo Anual</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <PerformanceTable 
-                  data={historicalData.filter(item => item.year === selectedYear)} 
+                  data={historicalData.filter(item => item.year >= selectedYear - 2)} 
                   isLoading={isLoadingYearly}
                   isYearly
                 />
