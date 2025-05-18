@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { UserRole } from "@/types";
@@ -93,6 +94,31 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
             
             // Update the session in auth context
             if (isMounted && data.session) {
+              // Use partial type for user metadata since we don't know if all fields exist
+              const metadata = data.session.user.user_metadata as Partial<{
+                name: string;
+                role: UserRole;
+                brokerCode?: string;
+                brokerage?: string;
+                creci?: string;
+                company?: string;
+                city?: string;
+                zone?: string;
+                profile_image?: string;
+              }>;
+              
+              // Add validation for required fields
+              const name = metadata.name || '';
+              const role = metadata.role as UserRole | undefined;
+              
+              // If role isn't valid, don't update session and treat as unauthorized
+              if (!role) {
+                console.error("Role missing in user metadata after refresh");
+                setIsAuthorized(false);
+                setIsVerifying(false);
+                return;
+              }
+              
               setSession({
                 id: data.session.user.id,
                 email: data.session.user.email || '',
@@ -100,26 +126,35 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
                 refresh_token: data.session.refresh_token,
                 expires_at: data.session.expires_at,
                 user_metadata: {
-                  name: data.session.user.user_metadata?.name || '',
-                  role: data.session.user.user_metadata?.role as UserRole,
-                  brokerCode: data.session.user.user_metadata?.brokerCode,
-                  brokerage: data.session.user.user_metadata?.brokerage,
-                  creci: data.session.user.user_metadata?.creci,
-                  company: data.session.user.user_metadata?.company,
-                  city: data.session.user.user_metadata?.city,
-                  zone: data.session.user.user_metadata?.zone,
-                  profile_image: data.session.user.user_metadata?.profile_image
+                  name,
+                  role,
+                  brokerCode: metadata.brokerCode,
+                  brokerage: metadata.brokerage,
+                  creci: metadata.creci,
+                  company: metadata.company,
+                  city: metadata.city,
+                  zone: metadata.zone,
+                  profile_image: metadata.profile_image
                 }
               });
               
               // Check if the refreshed session has ADMIN role
-              const refreshedRole = data.session.user.user_metadata?.role;
-              if (refreshedRole === UserRole.ADMIN) {
+              if (role === UserRole.ADMIN) {
                 setIsAuthorized(true);
                 updateSessionCache({
                   id: data.session.user.id,
                   email: data.session.user.email || '',
-                  user_metadata: data.session.user.user_metadata || {}
+                  user_metadata: {
+                    name,
+                    role,
+                    brokerCode: metadata.brokerCode,
+                    brokerage: metadata.brokerage,
+                    creci: metadata.creci,
+                    company: metadata.company,
+                    city: metadata.city,
+                    zone: metadata.zone,
+                    profile_image: metadata.profile_image
+                  }
                 }, currentPath);
               } else {
                 setIsAuthorized(false);
