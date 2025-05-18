@@ -8,7 +8,7 @@ import { MobileActions } from "@/components/client/property/mobile-actions";
 import { QuickFilters } from "@/components/client/property/quick-filters";
 import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
-import { UnifiedFilterCard } from "@/components/client/property/unified-filter-card";
+import { UnifiedFilterCard } from "@/components/client/property/filter-card";
 import { usePropertyFilters } from "@/hooks/use-property-filters";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
