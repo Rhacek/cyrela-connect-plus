@@ -28,7 +28,7 @@ export function ScheduleVisitButton({
     if (!session) {
       toast.warning("Você precisa estar logado para agendar uma visita", {
         action: {
-          altText: "Fazer login",
+          label: "Fazer login",
           onClick: () => navigate("/auth")
         }
       });

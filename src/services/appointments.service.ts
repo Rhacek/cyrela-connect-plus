@@ -25,7 +25,7 @@ export const appointmentsService = {
         date: new Date(appointment.date),
         time: appointment.time,
         type: getAppointmentType(appointment.status),
-        status: appointment.status,
+        status: appointment.status as AppointmentStatus,
         notes: appointment.notes || '',
         propertyId: appointment.property_id,
         clientEmail: appointment.client_email,

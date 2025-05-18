@@ -1,14 +1,13 @@
 
 import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { AdminHeader } from "@/components/admin/AdminHeader";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/context/auth-context";
 import { useSessionCache } from "@/hooks/use-session-cache";
 import { toast } from "@/hooks/use-toast";
 import { UserSession } from "@/types/auth"; 
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { usePeriodicSessionCheck } from "@/hooks/use-periodic-session-check";
 
 // Helper function to map Session to UserSession
@@ -27,7 +26,7 @@ const mapToUserSession = (session: any): UserSession => {
  * Layout component for the Admin section, includes sidebar, header and outlet
  */
 const AdminLayout = () => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { hasValidCache, updateSessionCache } = useSessionCache(location.pathname);
@@ -94,15 +93,24 @@ const AdminLayout = () => {
     }
   }, [location.pathname, hasValidCache, session, navigate, updateSessionCache]);
 
+  // Show nothing while checking auth
+  if (loading) {
+    return null;
+  }
+  
+  // Show nothing if not authenticated on admin route
+  if (!session && location.pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex min-h-screen bg-slate-50 overflow-x-hidden w-full">
         <AdminSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <AdminHeader />
-          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+        <div className="flex-1 p-0 bg-slate-50">
+          <div className="max-w-7xl mx-auto w-full p-4 sm:p-6">
             <Outlet />
-          </main>
+          </div>
         </div>
         <Toaster />
       </div>
