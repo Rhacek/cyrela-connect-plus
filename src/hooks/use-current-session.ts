@@ -31,7 +31,8 @@ export const useCurrentSession = () => {
         if (data.session?.user) {
           console.log("Found existing session for user:", data.session.user.id);
           if (isMounted) {
-            setCurrentSession(transformUserData(data.session.user));
+            const userSession = await transformUserData(data.session.user);
+            setCurrentSession(userSession);
           }
         } else {
           console.log("No existing session found via getSession");
@@ -45,7 +46,8 @@ export const useCurrentSession = () => {
             } else if (refreshData.session) {
               console.log("Session refreshed successfully");
               if (isMounted) {
-                setCurrentSession(transformUserData(refreshData.session.user));
+                const userSession = await transformUserData(refreshData.session.user);
+                setCurrentSession(userSession);
               }
             }
           } catch (refreshErr) {

@@ -38,7 +38,7 @@ export const getCurrentSession = async (): Promise<UserSession | null> => {
     }
     
     const user = data.session.user;
-    const userSession = transformUserData(user);
+    const userSession = await transformUserData(user);
     
     // Add token information
     userSession.access_token = data.session.access_token;

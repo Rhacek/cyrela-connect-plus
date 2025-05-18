@@ -38,7 +38,7 @@ export function AuthForm() {
           console.log("Auth form found session directly:", data.session.user.id);
           
           // Transform user data to our expected format
-          const userSession = transformUserData(data.session.user);
+          const userSession = await transformUserData(data.session.user);
           
           // Update the auth context with the session
           setSession(userSession);

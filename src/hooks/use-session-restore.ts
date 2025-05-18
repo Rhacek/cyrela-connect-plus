@@ -27,7 +27,8 @@ export const useSessionRestore = () => {
           console.log("Session restored successfully for user:", existingSession.user.id);
           
           if (isMounted) {
-            setRestoredSession(transformUserData(existingSession.user));
+            const userSession = await transformUserData(existingSession.user);
+            setRestoredSession(userSession);
             setIsRestoring(false);
           }
         } else {

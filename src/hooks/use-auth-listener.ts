@@ -14,7 +14,7 @@ export function useAuthListener() {
     console.log("Setting up auth state change listener");
     
     // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`Auth state changed: ${event}`, session?.user?.id);
       
       // Process auth events of interest
@@ -23,7 +23,7 @@ export function useAuthListener() {
           console.log(`Processing auth event ${event} with user ${session.user.id}`);
           
           // Transform the user data to our UserSession format
-          const userSession = transformUserData(session.user);
+          const userSession = await transformUserData(session.user);
           setSessionFromEvent(userSession);
         }
       } else if (event === 'SIGNED_OUT') {
@@ -35,10 +35,10 @@ export function useAuthListener() {
     });
     
     // Subscribe to custom session events
-    const handleSessionUpdate = (event: any) => {
+    const handleSessionUpdate = async (event: any) => {
       if (isMounted && event.detail?.session) {
         console.log("Received session update event");
-        const userSession = transformUserData(event.detail.session.user);
+        const userSession = await transformUserData(event.detail.session.user);
         setSessionFromEvent(userSession);
       }
     };
