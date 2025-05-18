@@ -12,14 +12,21 @@ import { useNavigate } from "react-router-dom";
 import { UserRole } from "@/types";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { PropertyListings } from "@/components/client/property/property-listings";
+import { usePropertyFilters } from "@/hooks/use-property-filters";
 
 export default function BrokerProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const { session } = useAuth();
   const navigate = useNavigate();
+  
+  // Use our custom hook for filtering
+  const { 
+    filters, 
+    setFilters, 
+    filteredProperties 
+  } = usePropertyFilters(properties);
   
   // Fetch all active properties
   useEffect(() => {
@@ -28,7 +35,6 @@ export default function BrokerProperties() {
         setIsLoading(true);
         const data = await propertiesService.getAllActiveProperties();
         setProperties(data);
-        setFilteredProperties(data);
       } catch (error) {
         console.error("Error fetching properties:", error);
         toast.error("Não foi possível carregar os imóveis.");
@@ -47,11 +53,6 @@ export default function BrokerProperties() {
   const handleViewDetails = (propertyId: string) => {
     navigate(`/broker/properties/${propertyId}`);
   };
-  
-  // Handle filter changes
-  const handleFilterChange = (filtered: Property[]) => {
-    setFilteredProperties(filtered);
-  };
 
   return (
     <div className="w-full">
@@ -60,7 +61,20 @@ export default function BrokerProperties() {
       <div className="bg-white rounded-lg shadow-sm border border-cyrela-gray-lighter p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div className="w-full">
-            <PropertyFilter onFilterChange={handleFilterChange} />
+            <PropertyFilter 
+              properties={properties}
+              isLoading={isLoading}
+              initialFilters={{
+                search: filters.search,
+                priceRange: filters.priceRange,
+                locations: filters.locations,
+                features: filters.selectedFeatures,
+                stages: filters.stages
+              }}
+              onFilterChange={(filtered) => {
+                // We don't need to do anything here since we're using the hook
+              }}
+            />
           </div>
           
           {/* Only show "Novo Imóvel" button for admin users */}

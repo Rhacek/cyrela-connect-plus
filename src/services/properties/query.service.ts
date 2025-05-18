@@ -1,219 +1,118 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { Property } from '@/types';
-import { mapImageFromDb, mapPropertyFromDb } from './mappers';
-import { PropertyFilter } from './types';
+import { supabase } from "@/integrations/supabase/client";
+import { Property } from "@/types";
+import { mapPropertyFromDb, mapImageFromDb } from "./mappers";
+import { PropertyFilter } from "./types";
 
 export const queryService = {
-  async getAllActiveProperties(filters?: PropertyFilter): Promise<Property[]> {
-    try {
-      // Create query builder
-      let query = supabase
-        .from('properties')
-        .select('*')
-        .eq('is_active', true);
-      
-      // Apply filters if provided
-      if (filters) {
-        // Price range filter
-        if (filters.priceMin !== undefined) {
-          query = query.gte('price', filters.priceMin);
-        }
-        
-        if (filters.priceMax !== undefined) {
-          query = query.lte('price', filters.priceMax);
-        }
-        
-        // Location filter (city or neighborhood)
-        if (filters.locations && filters.locations.length > 0) {
-          // This handles both city and neighborhood in a single OR condition
-          const locationConditions = filters.locations.map(loc => `city.eq.${loc},neighborhood.eq.${loc}`).join(',');
-          query = query.or(locationConditions);
-        }
-        
-        // Bedrooms filter
-        if (filters.bedrooms && filters.bedrooms.length > 0) {
-          // If multiple bedroom options are selected, we need an OR condition
-          if (filters.bedrooms.length > 1) {
-            const bedroomConditions = filters.bedrooms.map(b => `bedrooms.eq.${b}`).join(',');
-            query = query.or(bedroomConditions);
-          } else {
-            query = query.eq('bedrooms', filters.bedrooms[0]);
-          }
-        }
-        
-        // Construction stage filter
-        if (filters.constructionStages && filters.constructionStages.length > 0) {
-          query = query.in('construction_stage', filters.constructionStages);
-        }
-      }
-      
-      // Execute query with order by created_at
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching active properties:', error);
-        return [];
-      }
-      
-      if (!data || data.length === 0) {
-        return [];
-      }
-      
-      // Get property IDs to fetch images
-      const propertyIds = data.map(property => property.id);
-      
-      // Fetch all images for these properties
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('property_images')
-        .select('*')
-        .in('property_id', propertyIds)
-        .order('order', { ascending: true });
-      
-      if (imagesError) {
-        console.error('Error fetching property images:', imagesError);
-      }
-      
-      const imagesById = (imagesData || []).reduce((acc: Record<string, any[]>, img) => {
-        if (!acc[img.property_id]) {
-          acc[img.property_id] = [];
-        }
-        acc[img.property_id].push(mapImageFromDb(img));
-        return acc;
-      }, {});
-      
-      // Map properties with their images
-      return data.map(property => mapPropertyFromDb(property, imagesById[property.id] || []));
-    } catch (err) {
-      console.error('Error in getAllActiveProperties:', err);
-      return [];
-    }
+  // Get all properties
+  getAll: async (): Promise<Property[]> => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        images:property_images(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map((prop: any) => {
+      const images = prop.images.map(mapImageFromDb);
+      return mapPropertyFromDb(prop, images);
+    });
   },
 
-  async getBrokerProperties(brokerId: string): Promise<Property[]> {
-    try {
-      // Fetch properties created by this broker
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('created_by_id', brokerId)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching broker properties:', error);
-        return [];
+  // Get active properties with filter support
+  getAllActiveProperties: async (filter?: PropertyFilter): Promise<Property[]> => {
+    let query = supabase
+      .from('properties')
+      .select(`
+        *,
+        images:property_images(*)
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    
+    // Apply filters if provided
+    if (filter) {
+      // Text search
+      if (filter.search) {
+        query = query.or(
+          `title.ilike.%${filter.search}%,description.ilike.%${filter.search}%,neighborhood.ilike.%${filter.search}%,city.ilike.%${filter.search}%`
+        );
       }
       
-      if (!data || data.length === 0) {
-        return [];
+      // Price range
+      if (filter.priceMin) query = query.gte('price', filter.priceMin);
+      if (filter.priceMax) query = query.lte('price', filter.priceMax);
+      
+      // Locations (neighborhoods or cities)
+      if (filter.locations && filter.locations.length > 0) {
+        query = query.or(
+          filter.locations.map(loc => `neighborhood.eq.${loc},city.eq.${loc}`).join(',')
+        );
       }
       
-      // Get property IDs to fetch images
-      const propertyIds = data.map(property => property.id);
-      
-      // Fetch all images for these properties
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('property_images')
-        .select('*')
-        .in('property_id', propertyIds)
-        .order('order', { ascending: true });
-      
-      if (imagesError) {
-        console.error('Error fetching property images:', imagesError);
+      // Bedrooms 
+      if (filter.bedrooms && filter.bedrooms.length > 0) {
+        query = query.in('bedrooms', filter.bedrooms);
       }
       
-      const imagesById = (imagesData || []).reduce((acc: Record<string, any[]>, img) => {
-        if (!acc[img.property_id]) {
-          acc[img.property_id] = [];
-        }
-        acc[img.property_id].push(mapImageFromDb(img));
-        return acc;
-      }, {});
+      // Construction stages
+      if (filter.constructionStages && filter.constructionStages.length > 0) {
+        query = query.in('construction_stage', filter.constructionStages);
+      }
       
-      // Map properties with their images
-      return data.map(property => mapPropertyFromDb(property, imagesById[property.id] || []));
-    } catch (err) {
-      console.error('Error in getBrokerProperties:', err);
-      return [];
+      // Active property filter can be controlled
+      if (filter.isActive !== undefined) {
+        query = query.eq('is_active', filter.isActive);
+      }
     }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+
+    return data.map((prop: any) => {
+      const images = prop.images.map(mapImageFromDb);
+      return mapPropertyFromDb(prop, images);
+    });
   },
 
-  async getById(propertyId: string): Promise<Property | null> {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('id', propertyId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching property:', error);
-        return null;
-      }
-      
-      // Fetch images for this property
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('property_images')
-        .select('*')
-        .eq('property_id', propertyId)
-        .order('order', { ascending: true });
-      
-      if (imagesError) {
-        console.error('Error fetching property images:', imagesError);
-      }
-      
-      const images = (imagesData || []).map(img => mapImageFromDb(img));
-      
-      return mapPropertyFromDb(data, images);
-    } catch (err) {
-      console.error('Error in getById:', err);
-      return null;
-    }
+  // Get properties for a specific broker
+  getBrokerProperties: async (brokerId: string): Promise<Property[]> => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        images:property_images(*)
+      `)
+      .eq('created_by_id', brokerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map((prop: any) => {
+      const images = prop.images.map(mapImageFromDb);
+      return mapPropertyFromDb(prop, images);
+    });
   },
 
-  async getAll(): Promise<Property[]> {
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching properties:', error);
-        return [];
-      }
-      
-      if (!data || data.length === 0) {
-        return [];
-      }
-      
-      // Get property IDs to fetch images
-      const propertyIds = data.map(property => property.id);
-      
-      // Fetch all images for these properties
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('property_images')
-        .select('*')
-        .in('property_id', propertyIds)
-        .eq('is_main', true);
-      
-      if (imagesError) {
-        console.error('Error fetching property images:', imagesError);
-      }
-      
-      const imagesById = (imagesData || []).reduce((acc: Record<string, any[]>, img) => {
-        if (!acc[img.property_id]) {
-          acc[img.property_id] = [];
-        }
-        acc[img.property_id].push(mapImageFromDb(img));
-        return acc;
-      }, {});
-      
-      // Map properties with their images
-      return data.map(property => mapPropertyFromDb(property, imagesById[property.id] || []));
-    } catch (err) {
-      console.error('Error in getAll:', err);
-      return [];
-    }
+  // Get a property by ID
+  getById: async (id: string): Promise<Property> => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        images:property_images(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    const images = data.images.map(mapImageFromDb);
+    return mapPropertyFromDb(data, images);
   }
 };

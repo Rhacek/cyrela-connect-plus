@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "./search-input";
@@ -8,9 +8,8 @@ import { PriceRangeFilter } from "./price-range-filter";
 import { LocationFilter } from "./location-filter";
 import { FeaturesFilter } from "./features-filter";
 import { ConstructionStageFilter } from "./construction-stage-filter";
-import { propertiesService } from "@/services/properties.service";
-import { useQuery } from "@tanstack/react-query";
 import { Property } from "@/types";
+import { useLocationFilter } from "@/hooks/use-location-filter";
 
 interface PropertyFilterProps {
   onFilterChange?: (filteredProperties: Property[]) => void;
@@ -21,28 +20,33 @@ interface PropertyFilterProps {
     features?: string[];
     stages?: string[];
   };
+  properties?: Property[];
+  isLoading?: boolean;
 }
 
 export function PropertyFilter({ 
   onFilterChange,
-  initialFilters
+  initialFilters,
+  properties = [],
+  isLoading = false
 }: PropertyFilterProps) {
   const [search, setSearch] = useState(initialFilters?.search || "");
   const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [500000, 5000000]);
-  const [locations, setLocations] = useState<string[]>(initialFilters?.locations || []);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Use the location filter hook
+  const {
+    selectedZone,
+    locations,
+    handleZoneSelection,
+    setLocations
+  } = useLocationFilter(initialFilters?.locations || []);
+  
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>(initialFilters?.features || []);
   const [stages, setStages] = useState<string[]>(initialFilters?.stages || []);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
-  // Fetch all properties
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ['properties'],
-    queryFn: () => propertiesService.getAll(),
-  });
-
-  // Apply filters
-  useEffect(() => {
+  // Apply filters and notify parent
+  const applyFilters = () => {
     if (!onFilterChange) return;
 
     const filtered = properties.filter((property) => {
@@ -78,34 +82,22 @@ export function PropertyFilter({
     });
 
     onFilterChange(filtered);
-  }, [properties, search, priceRange, locations, selectedFeatures, stages, onFilterChange]);
-
-  // Handle zone selection
-  const handleZoneSelection = (zone: string | null) => {
-    setSelectedZone(zone);
-    // If zone changes, reset neighborhood selections
-    if (zone !== selectedZone) {
-      setLocations([]);
-    }
   };
 
-  // Handle filter click for location
-  const handleFilterClick = (filter: string) => {
-    setLocations(prev => {
-      if (prev.includes(filter)) {
-        return prev.filter(item => item !== filter);
-      } else {
-        return [...prev, filter];
-      }
-    });
-  };
+  // Apply filters when any filter changes
+  useState(() => {
+    applyFilters();
+  });
 
   return (
     <div className="w-full space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchInput 
           value={search} 
-          onChange={setSearch} 
+          onChange={(value) => {
+            setSearch(value);
+            applyFilters();
+          }} 
           className="flex-1" 
           isLoading={isLoading}
         />
@@ -130,7 +122,10 @@ export function PropertyFilter({
           <FilterButton title="Preço">
             <PriceRangeFilter 
               value={priceRange} 
-              onChange={setPriceRange} 
+              onChange={(value) => {
+                setPriceRange(value);
+                applyFilters();
+              }} 
               min={500000} 
               max={5000000} 
             />
@@ -139,24 +134,31 @@ export function PropertyFilter({
           <FilterButton title="Localização">
             <LocationFilter 
               selected={locations} 
-              onChange={setLocations}
-              selectedFilters={locations}
+              onChange={(values) => {
+                setLocations(values);
+                applyFilters();
+              }}
               selectedZone={selectedZone}
-              onFilterClick={handleFilterClick}
             />
           </FilterButton>
           
           <FilterButton title="Quartos">
             <FeaturesFilter 
               selected={selectedFeatures} 
-              onChange={setSelectedFeatures} 
+              onChange={(values) => {
+                setSelectedFeatures(values);
+                applyFilters();
+              }} 
             />
           </FilterButton>
           
           <FilterButton title="Estágio">
             <ConstructionStageFilter 
               selected={stages} 
-              onChange={setStages} 
+              onChange={(values) => {
+                setStages(values);
+                applyFilters();
+              }} 
             />
           </FilterButton>
         </div>

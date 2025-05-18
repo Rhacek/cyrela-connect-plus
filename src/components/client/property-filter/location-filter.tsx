@@ -1,51 +1,49 @@
+
 import { FilterButton } from "./filter-button";
 import { cities, zones, zoneNeighborhoods } from "./filter-data";
-import { useState, useEffect } from "react";
-import { toast } from "@/hooks/use-toast";
+import { useLocationFilter } from "@/hooks/use-location-filter";
 
 interface LocationFilterProps {
-  selectedFilters: {
+  selectedFilters?: {
     city: string[];
     zone: string[];
     neighborhood: string[];
   };
-  selectedZone: string | null;
-  onFilterClick: (category: "city" | "zone" | "neighborhood", id: string) => void;
+  selectedZone?: string | null;
+  onFilterClick?: (category: "city" | "zone" | "neighborhood", id: string) => void;
   selected?: string[];
   onChange?: (values: string[]) => void;
 }
 
 export function LocationFilter({ 
   selectedFilters, 
-  selectedZone, 
+  selectedZone: externalSelectedZone, 
   onFilterClick,
   selected,
   onChange
 }: LocationFilterProps) {
+  // Use the custom hook if we're using the new API
+  const {
+    selectedZone,
+    locations,
+    handleZoneSelection,
+    handleFilterClick
+  } = useLocationFilter(
+    selected, 
+    externalSelectedZone || null
+  );
+  
   // Support both APIs
-  const handleNeighborhoodClick = (id: string) => {
+  const handleNeighborhoodSelection = (id: string) => {
     // Handle the old API
     if (selectedFilters && onFilterClick) {
-      // Check if neighborhood is already selected, in which case we'll remove it
-      if (selectedFilters.neighborhood.includes(id)) {
-        onFilterClick("neighborhood", id);
-        return;
-      }
-      
-      // Don't allow more than 3 neighborhoods
-      if (selectedFilters.neighborhood.length >= 3) {
-        toast.error("Limite atingido", {
-          description: "Você só pode selecionar até 3 bairros"
-        });
-        return;
-      }
-      
-      // Otherwise add the neighborhood
       onFilterClick("neighborhood", id);
+      return;
     }
     
     // Handle the new API
-    if (selected && onChange) {
+    if (selected !== undefined && onChange) {
+      handleFilterClick(id);
       const updatedSelection = selected.includes(id)
         ? selected.filter(item => item !== id)
         : [...selected, id];
@@ -54,7 +52,7 @@ export function LocationFilter({
   };
 
   // Use for compatibility with the property-filter component
-  if (selected && onChange) {
+  if (selected !== undefined && onChange) {
     return (
       <div className="space-y-3">
         {cities.map((city) => (
@@ -85,8 +83,8 @@ export function LocationFilter({
             key={city.id}
             id={city.id}
             label={city.label}
-            selected={selectedFilters.city.includes(city.id)}
-            onClick={() => onFilterClick("city", city.id)}
+            selected={selectedFilters?.city.includes(city.id) || false}
+            onClick={() => onFilterClick && onFilterClick("city", city.id)}
           />
         ))}
       </div>
@@ -98,8 +96,13 @@ export function LocationFilter({
             key={zone.id}
             id={zone.id}
             label={zone.label}
-            selected={selectedFilters.zone.includes(zone.id)}
-            onClick={() => onFilterClick("zone", zone.id)}
+            selected={selectedFilters?.zone.includes(zone.id) || false}
+            onClick={() => {
+              if (onFilterClick) onFilterClick("zone", zone.id);
+              if (externalSelectedZone === undefined) {
+                handleZoneSelection(selectedZone === zone.id ? null : zone.id);
+              }
+            }}
           />
         ))}
       </div>
@@ -115,13 +118,13 @@ export function LocationFilter({
                 key={neighborhood.id}
                 id={neighborhood.id}
                 label={neighborhood.label}
-                selected={selectedFilters.neighborhood.includes(neighborhood.id)}
-                onClick={() => handleNeighborhoodClick(neighborhood.id)}
+                selected={selectedFilters?.neighborhood.includes(neighborhood.id) || false}
+                onClick={() => handleNeighborhoodSelection(neighborhood.id)}
               />
             ))}
           </div>
           <div className="mt-1 text-xs text-cyrela-gray-dark">
-            {selectedFilters.neighborhood.length}/3 bairros selecionados
+            {(selectedFilters?.neighborhood.length || 0)}/3 bairros selecionados
           </div>
         </>
       )}

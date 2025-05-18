@@ -9,13 +9,19 @@ import { QuickFilters } from "@/components/client/property/quick-filters";
 import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
 import { UnifiedFilterCard } from "@/components/client/property/unified-filter-card";
+import { usePropertyFilters } from "@/hooks/use-property-filters";
 
 // Mock broker phone number - in a real app, this would come from a context or API
 const BROKER_PHONE = "(11) 98765-4321";
 
 const PropertyListingPage = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [filteredProperties, setFilteredProperties] = useState(mockProperties);
+  const { 
+    filters, 
+    setFilters, 
+    filteredProperties 
+  } = usePropertyFilters(mockProperties);
+  
   const [selectedFilters, setSelectedFilters] = useState<Record<FilterCategory, string[]>>({
     constructionStage: [],
     city: [],
@@ -64,15 +70,6 @@ const PropertyListingPage = () => {
         }
       }
     });
-  };
-  
-  const handleApplyFilters = (filters: any) => {
-    console.log("Applied filters:", filters);
-    // Here you would filter the properties based on the selected filters
-  };
-
-  const handleFilteredPropertiesChange = (properties: any[]) => {
-    setFilteredProperties(properties);
   };
   
   const handleResetFilters = () => {
@@ -127,7 +124,14 @@ const PropertyListingPage = () => {
               </button>
             </div>
             <PropertyFilter 
-              onFilterChange={handleFilteredPropertiesChange}
+              properties={mockProperties}
+              initialFilters={{
+                search: filters.search,
+                priceRange: filters.priceRange,
+                locations: filters.locations,
+                features: filters.selectedFeatures,
+                stages: filters.stages
+              }}
             />
           </div>
         </div>
