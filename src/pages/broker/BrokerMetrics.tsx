@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +17,7 @@ import { EnhancedPerformanceChart } from "@/components/broker/metrics/enhanced-p
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { exportPerformanceData } from "@/utils/export-utils";
+import { Performance } from "@/types";
 
 const BrokerMetrics = () => {
   const { session } = useAuth();
@@ -64,25 +64,78 @@ const BrokerMetrics = () => {
     setSelectedYear(year);
   };
   
+  // Use real data or fallback to mock data
+  const getFormattedMonthlyPerformance = (): Performance[] => {
+    const mockData = mockMonthlyPerformance;
+    
+    // If we have real data from the API, use it
+    if (monthlyPerformance) {
+      return monthlyPerformance;
+    }
+    
+    // Otherwise, transform the mock data to match the Performance type
+    const brokerId = session?.id || "broker1";
+    const currentYear = new Date().getFullYear();
+    
+    return mockData.map((item, index) => ({
+      id: `mock-perf-${index}`,
+      brokerId: brokerId,
+      year: currentYear,
+      month: index + 1, // Assuming months are 1-indexed in the mock data
+      shares: item.shares,
+      leads: item.leads,
+      schedules: item.schedules,
+      visits: item.visits,
+      sales: item.sales
+    }));
+  };
+  
+  const getFormattedYearlyPerformance = (): Performance[] => {
+    const mockData = mockHistoricalPerformance;
+    
+    // If we have real data from the API, use it
+    if (yearlyPerformance) {
+      return yearlyPerformance;
+    }
+    
+    // Create a set of unique years from the mock data
+    const uniqueYears = [...new Set(mockData.map(item => item.year))];
+    const brokerId = session?.id || "broker1";
+    
+    // For each year, aggregate the data
+    return uniqueYears.map(year => {
+      const yearData = mockData.filter(item => item.year === year);
+      
+      return {
+        id: `mock-yearly-${year}`,
+        brokerId: brokerId,
+        year: year,
+        month: 0, // Set to 0 for yearly data
+        shares: yearData.reduce((sum, item) => sum + item.shares, 0),
+        leads: yearData.reduce((sum, item) => sum + item.leads, 0),
+        schedules: yearData.reduce((sum, item) => sum + item.schedules, 0),
+        visits: yearData.reduce((sum, item) => sum + item.visits, 0),
+        sales: yearData.reduce((sum, item) => sum + item.sales, 0)
+      };
+    });
+  };
+  
+  const performanceData = getFormattedMonthlyPerformance();
+  const historicalData = getFormattedYearlyPerformance();
+  const targetData = mockMonthlyTargets; // Replace with real target data when available
+  
   // Export data functions
   const handleExportMonthlyData = () => {
-    const dataToExport = monthlyPerformance || mockMonthlyPerformance;
-    exportPerformanceData.toCSV(dataToExport, `desempenho-mensal-${selectedYear}.csv`);
+    exportPerformanceData.toCSV(performanceData, `desempenho-mensal-${selectedYear}.csv`);
   };
   
   const handleExportYearlyData = () => {
-    const dataToExport = yearlyPerformance || mockHistoricalPerformance;
     exportPerformanceData.toPDF(
-      dataToExport, 
+      historicalData, 
       `Relatório de Desempenho Anual`,
       `desempenho-anual.pdf`
     );
   };
-  
-  // Use real data or fallback to mock data
-  const performanceData = monthlyPerformance || mockMonthlyPerformance;
-  const historicalData = yearlyPerformance || mockHistoricalPerformance;
-  const targetData = mockMonthlyTargets; // Replace with real target data when available
   
   return (
     <ScrollArea className="h-full w-full">

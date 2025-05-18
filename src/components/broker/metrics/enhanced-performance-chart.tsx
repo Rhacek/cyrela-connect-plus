@@ -22,7 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ChartBarIcon, ChartLineIcon, Download, FileText, FileCsv } from "lucide-react";
+import { ChartBarIcon, ChartLineIcon, Download, FileText } from "lucide-react";
 import { exportPerformanceData } from "@/utils/export-utils";
 
 interface EnhancedPerformanceChartProps {
@@ -103,7 +103,7 @@ export function EnhancedPerformanceChart({
           </Tabs>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" onClick={handleExportCSV} title="Exportar CSV">
-              <FileCsv className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="icon" onClick={handleExportPDF} title="Exportar PDF">
               <FileText className="h-4 w-4" />
