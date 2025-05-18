@@ -1,18 +1,13 @@
 
 import { useState, useRef } from "react";
-import { Search, Filter, Calendar, CheckSquare, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DateRangeFilter } from "./date-range-filter";
 import { LeadStatus } from "@/types";
 import { LeadStatusBadge } from "./lead-status-badge";
 import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LeadsFilterProps {
   searchTerm: string;
@@ -37,7 +32,6 @@ export function LeadsFilter({
   onToDateChange,
   onClearDateFilters
 }: LeadsFilterProps) {
-  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
