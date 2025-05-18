@@ -103,7 +103,7 @@ export function DateRangeFilter({
                   selected={fromDate}
                   onSelect={onFromDateChange}
                   initialFocus
-                  maxDate={toDate || new Date()}
+                  toDate={toDate || new Date()}
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
@@ -127,8 +127,8 @@ export function DateRangeFilter({
                   selected={toDate}
                   onSelect={onToDateChange}
                   initialFocus
-                  minDate={fromDate}
-                  maxDate={new Date()}
+                  fromDate={fromDate}
+                  toDate={new Date()}
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
