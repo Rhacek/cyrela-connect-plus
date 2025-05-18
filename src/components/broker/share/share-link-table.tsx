@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SharedLink } from "@/types/share";
-import { Copy, ExternalLink, QrCode, Share } from "lucide-react";
+import { Copy, QrCode, Share } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { ShareQrCodeModal } from "./share-qr-code-modal";
@@ -36,7 +36,7 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
     setIsQrModalOpen(true);
   };
 
-  const formatDate = (date?: Date | string) => {
+  const formatDate = (date?: string) => {
     if (!date) return "--";
     return new Date(date).toLocaleDateString("pt-BR");
   };

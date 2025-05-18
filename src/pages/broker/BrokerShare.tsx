@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -7,7 +8,7 @@ import { ShareLinkTable } from "@/components/broker/share/share-link-table";
 import { CreateShareLinkDialog } from "@/components/broker/share/create-share-link-dialog";
 import { useAuth } from "@/context/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { SharedLink } from "@/mocks/share-data"; // Using type only, data will be from Supabase
+import { SharedLink } from "@/types/share"; // Import from types, not mocks
 import { Property } from "@/types";
 
 interface ShareStats {
@@ -90,12 +91,14 @@ export default function BrokerShare() {
           },
           code: share.code,
           url: share.url,
-          createdAt: new Date(share.created_at),
+          // Convert Date to string to match the expected type
+          createdAt: share.created_at,
           clicks: share.clicks,
           isActive: share.is_active,
           notes: share.notes,
-          lastClickedAt: share.last_clicked_at ? new Date(share.last_clicked_at) : undefined,
-          expiresAt: share.expires_at ? new Date(share.expires_at) : undefined
+          // Convert Date to string if defined
+          lastClickedAt: share.last_clicked_at || undefined,
+          expiresAt: share.expires_at || undefined
         }));
       } catch (err) {
         console.error("Error fetching share links:", err);

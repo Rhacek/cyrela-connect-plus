@@ -1,21 +1,7 @@
 
 import { Property } from "@/types";
 import { mockProperties } from "./property-data";
-
-export interface SharedLink {
-  id: string;
-  brokerId: string;
-  propertyId: string;
-  property?: Property;
-  code: string;
-  url: string;
-  createdAt: Date;
-  expiresAt?: Date;
-  clicks: number;
-  lastClickedAt?: Date;
-  isActive: boolean;
-  notes?: string;
-}
+import { SharedLink } from "@/types/share";
 
 // Generate a random code for shared links
 const generateCode = () => {
@@ -25,6 +11,7 @@ const generateCode = () => {
 // Create mock data based on the properties
 export const mockSharedLinks: SharedLink[] = mockProperties.map((property, index) => {
   const code = generateCode();
+  const now = new Date();
   return {
     id: `share-${index + 1}`,
     brokerId: "broker-1",
@@ -32,10 +19,15 @@ export const mockSharedLinks: SharedLink[] = mockProperties.map((property, index
     property: property,
     code: code,
     url: `https://living.com.br/s/${code}`,
-    createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-    expiresAt: index % 3 === 0 ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : undefined,
+    // Convert Date objects to ISO strings to match our type definition
+    createdAt: new Date(now.getTime() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString(),
+    expiresAt: index % 3 === 0 
+      ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString() 
+      : undefined,
     clicks: Math.floor(Math.random() * 100),
-    lastClickedAt: Math.random() > 0.3 ? new Date(Date.now() - Math.floor(Math.random() * 5) * 24 * 60 * 60 * 1000) : undefined,
+    lastClickedAt: Math.random() > 0.3 
+      ? new Date(now.getTime() - Math.floor(Math.random() * 5) * 24 * 60 * 60 * 1000).toISOString() 
+      : undefined,
     isActive: Math.random() > 0.2,
     notes: index % 2 === 0 ? `Compartilhado com cliente ${index + 1}` : undefined,
   };
