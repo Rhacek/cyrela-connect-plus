@@ -1,28 +1,31 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { PropertyFilter } from "@/components/client/property-filter";
 import { PropertyHeader } from "@/components/client/property/property-header";
 import { PropertySearchBar } from "@/components/client/property/property-search-bar";
 import { PropertyListings } from "@/components/client/property/property-listings";
 import { MobileActions } from "@/components/client/property/mobile-actions";
 import { QuickFilters } from "@/components/client/property/quick-filters";
-import { mockProperties } from "@/mocks/property-data";
 import { FilterCategory } from "@/components/client/property-filter/filter-types";
 import { UnifiedFilterCard } from "@/components/client/property/filter-card";
 import { usePropertyFilters } from "@/hooks/use-property-filters";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Mock broker phone number - in a real app, this would come from a context or API
-const BROKER_PHONE = "(11) 98765-4321";
+import { useBrokerReferral } from "@/hooks/use-broker-referral";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PropertyListingPage = () => {
+  const location = useLocation();
+  const { brokerId } = useBrokerReferral();
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  
   const { 
     filters, 
     setFilters, 
-    filteredProperties 
-  } = usePropertyFilters(mockProperties);
+    filteredProperties,
+    isLoading
+  } = usePropertyFilters([]);
   
   const [selectedFilters, setSelectedFilters] = useState<Record<FilterCategory, string[]>>({
     constructionStage: [],
@@ -31,6 +34,10 @@ const PropertyListingPage = () => {
     neighborhood: [],
     bedrooms: [],
   });
+  
+  // Get broker phone from location state or use default
+  const locationState = location.state as any;
+  const BROKER_PHONE = brokerId ? "(11) 98765-4321" : ""; // In real app, fetch from broker profile
   
   const handleFilterChange = (category: FilterCategory, id: string) => {
     setSelectedFilters(prev => {
@@ -92,7 +99,24 @@ const PropertyListingPage = () => {
       
       <div className="flex-1 container mx-auto px-2 sm:px-3 md:px-4 py-2 md:py-4 max-w-full">
         {/* Properties Found - Moved to top */}
-        <PropertyListings properties={filteredProperties || mockProperties} />
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm p-4">
+                <Skeleton className="h-40 w-full rounded-md mb-4" />
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-2" />
+                <Skeleton className="h-4 w-2/3 mb-4" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <PropertyListings properties={filteredProperties} />
+        )}
         
         {/* Unified Filter Card - New Search Section */}
         <div className="mt-6">
@@ -133,7 +157,7 @@ const PropertyListingPage = () => {
               </Button>
             </div>
             <PropertyFilter 
-              properties={mockProperties}
+              properties={filteredProperties}
               initialFilters={{
                 search: filters.search,
                 priceRange: filters.priceRange,
@@ -146,13 +170,15 @@ const PropertyListingPage = () => {
         </div>
       </div>
       
-      {/* Mobile actions with WhatsApp button */}
-      <MobileActions 
-        isMobileFilterOpen={isMobileFilterOpen}
-        onOverlayClick={() => setIsMobileFilterOpen(false)}
-        onFilterClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-        brokerPhone={BROKER_PHONE}
-      />
+      {/* Mobile actions with WhatsApp button - Only show if broker referral */}
+      {brokerId && (
+        <MobileActions 
+          isMobileFilterOpen={isMobileFilterOpen}
+          onOverlayClick={() => setIsMobileFilterOpen(false)}
+          onFilterClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+          brokerPhone={BROKER_PHONE}
+        />
+      )}
     </div>
   );
 };

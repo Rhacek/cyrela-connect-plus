@@ -1,4 +1,3 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { OnboardingFormData } from "../types";
 import { FormContextProps } from "./formTypes";
@@ -55,13 +54,9 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }, 400);
     } else {
-      // Submit the form and redirect to results
+      // Submit the form instead of redirecting directly
       setIsLoading(true);
-      setTimeout(() => {
-        console.log("Form submitted:", formData);
-        // Redirect to results
-        window.location.href = "/client/results";
-      }, 600);
+      return formData;
     }
   };
 

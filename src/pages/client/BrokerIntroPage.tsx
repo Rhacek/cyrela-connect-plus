@@ -65,6 +65,11 @@ const BrokerIntroPage = () => {
     window.open(whatsappUrl, "_blank");
   };
   
+  const handleFindPropertyClick = () => {
+    // Navigate to onboarding with broker ID in the URL to maintain the referral
+    navigate(`/client/onboarding?ref=${brokerId}`);
+  };
+  
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-cyrela-gray-dark to-black">
       {/* Background image with overlay */}
@@ -148,7 +153,7 @@ const BrokerIntroPage = () => {
               
               <Button 
                 className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" 
-                onClick={() => navigate("/client/onboarding")}
+                onClick={handleFindPropertyClick}
               >
                 <Search className="mr-2 h-5 w-5" />
                 Encontrar meu imóvel
