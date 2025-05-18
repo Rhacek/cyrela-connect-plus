@@ -26,7 +26,9 @@ export function ScheduleVisitButton({
 
   const handleClick = () => {
     if (!session) {
-      toast.warning("Você precisa estar logado para agendar uma visita", {
+      toast({
+        title: "Você precisa estar logado para agendar uma visita",
+        variant: "warning",
         action: {
           label: "Fazer login",
           onClick: () => navigate("/auth")

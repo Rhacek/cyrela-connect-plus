@@ -47,24 +47,33 @@ export function ScheduleVisitDialog({
   const [notes, setNotes] = useState("");
   const [name, setName] = useState(session?.user_metadata?.name || "");
   const [email, setEmail] = useState(session?.email || "");
-  const [phone, setPhone] = useState(session?.user_metadata?.phone || "");
+  const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!date) {
-      toast.error("Selecione uma data para a visita");
+      toast({
+        title: "Selecione uma data para a visita",
+        variant: "destructive"
+      });
       return;
     }
 
     if (!name) {
-      toast.error("Nome é obrigatório");
+      toast({
+        title: "Nome é obrigatório",
+        variant: "destructive"
+      });
       return;
     }
 
     if (!email) {
-      toast.error("Email é obrigatório");
+      toast({
+        title: "Email é obrigatório",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -85,14 +94,26 @@ export function ScheduleVisitDialog({
       });
 
       if (result.success) {
-        toast.success("Visita agendada com sucesso! O corretor entrará em contato para confirmar.");
+        toast({
+          title: "Visita agendada com sucesso!",
+          description: "O corretor entrará em contato para confirmar.",
+          variant: "default"
+        });
         resetForm();
         onClose();
       } else {
-        toast.error(`Erro ao agendar visita: ${result.error}`);
+        toast({
+          title: "Erro ao agendar visita",
+          description: result.error,
+          variant: "destructive"
+        });
       }
     } catch (error: any) {
-      toast.error(`Erro ao agendar visita: ${error.message}`);
+      toast({
+        title: "Erro ao agendar visita",
+        description: error.message,
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
