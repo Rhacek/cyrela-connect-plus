@@ -1,17 +1,21 @@
-
-import { User, Phone, Mail, Calendar, Clock } from "lucide-react";
+import { useState } from "react";
+import { User, Phone, Mail, Calendar, Clock, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lead, LeadStatus } from "@/types";
 import { cn } from "@/lib/utils";
+import { ScheduleVisitDialog } from "../leads/schedule-visit-dialog";
 
 interface LeadCardProps {
   lead: Lead;
   showActions?: boolean;
   className?: string;
+  onLeadUpdated?: () => void;
 }
 
-export function LeadCard({ lead, showActions = true, className }: LeadCardProps) {
+export function LeadCard({ lead, showActions = true, className, onLeadUpdated }: LeadCardProps) {
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+
   const getStatusColor = (status: LeadStatus) => {
     switch (status) {
       case LeadStatus.NEW:
@@ -67,6 +71,12 @@ export function LeadCard({ lead, showActions = true, className }: LeadCardProps)
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleScheduleSuccess = () => {
+    if (onLeadUpdated) {
+      onLeadUpdated();
+    }
   };
 
   return (
@@ -136,11 +146,28 @@ export function LeadCard({ lead, showActions = true, className }: LeadCardProps)
             <span className="truncate">Email</span>
           </Button>
           
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-white text-xs px-2 py-1 h-auto"
+            onClick={() => setScheduleDialogOpen(true)}
+          >
+            <CalendarClock size={14} className="mr-1 sm:mr-2 shrink-0" />
+            <span className="truncate">Agendar visita</span>
+          </Button>
+          
           <Button className="ml-auto bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white shrink-0 text-xs px-2 py-1 h-auto" size="sm">
             Atualizar
           </Button>
         </div>
       )}
+      
+      <ScheduleVisitDialog
+        lead={lead}
+        isOpen={scheduleDialogOpen}
+        onClose={() => setScheduleDialogOpen(false)}
+        onSuccess={handleScheduleSuccess}
+      />
     </div>
   );
 }

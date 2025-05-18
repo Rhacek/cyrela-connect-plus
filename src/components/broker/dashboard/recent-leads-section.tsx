@@ -1,51 +1,58 @@
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lead } from "@/types";
+import { useState } from "react";
 import { LeadCard } from "./lead-card";
-import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import { Lead } from "@/types";
 
 interface RecentLeadsSectionProps {
   leads: Lead[];
-  className?: string;
   isLoading?: boolean;
+  onLeadUpdated?: () => void;
 }
 
-export function RecentLeadsSection({ leads, className, isLoading = false }: RecentLeadsSectionProps) {
+export function RecentLeadsSection({ leads, isLoading, onLeadUpdated }: RecentLeadsSectionProps) {
+  const [expandedLeads, setExpandedLeads] = useState<boolean>(false);
+  
+  // Show only first 3 leads by default
+  const displayCount = expandedLeads ? leads.length : Math.min(3, leads.length);
+  const displayedLeads = leads.slice(0, displayCount);
+  
+  if (isLoading) {
+    return (
+      <div className="animate-pulse mt-4 space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+        ))}
+      </div>
+    );
+  }
+  
+  if (leads.length === 0) {
+    return (
+      <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg">
+        <p className="text-center text-gray-500">Nenhum lead recente encontrado.</p>
+      </div>
+    );
+  }
+  
   return (
-    <Card className={cn("", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Leads Recentes</CardTitle>
-      </CardHeader>
+    <div className="mt-4 space-y-4">
+      {displayedLeads.map((lead) => (
+        <LeadCard 
+          key={lead.id} 
+          lead={lead} 
+          showActions={true}
+          onLeadUpdated={onLeadUpdated}
+        />
+      ))}
       
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        ) : leads && leads.length > 0 ? (
-          <div className="space-y-3">
-            {leads.slice(0, 3).map((lead) => (
-              <LeadCard key={lead.id} lead={lead} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-cyrela-gray-dark">
-            <p>Você ainda não tem leads.</p>
-            <p className="text-sm mt-2">Compartilhe imóveis para começar a gerar leads.</p>
-          </div>
-        )}
-      </CardContent>
-      
-      <CardFooter>
-        <Button asChild variant="outline" className="w-full">
-          <Link to="/broker/leads">Ver todos os leads</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+      {leads.length > 3 && (
+        <button
+          onClick={() => setExpandedLeads(!expandedLeads)}
+          className="w-full py-2 text-sm text-cyrela-blue hover:underline"
+        >
+          {expandedLeads ? "Ver menos" : `Ver mais ${leads.length - 3} leads`}
+        </button>
+      )}
+    </div>
   );
 }
