@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SharedLink } from "@/mocks/share-data";
+import { SharedLink } from "@/types/share";
 import { Copy, ExternalLink, QrCode, Share } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -36,7 +36,7 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
     setIsQrModalOpen(true);
   };
 
-  const formatDate = (date?: Date) => {
+  const formatDate = (date?: Date | string) => {
     if (!date) return "--";
     return new Date(date).toLocaleDateString("pt-BR");
   };
@@ -47,6 +47,21 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
     }
     return null;
   }
+
+  const shareLink = (link: SharedLink) => {
+    if (navigator.share) {
+      navigator.share({
+        title: link.property?.title || "Compartilhamento de imóvel",
+        text: `Confira este imóvel: ${link.property?.title || ""}`,
+        url: link.url,
+      }).catch((error) => {
+        console.error('Erro ao compartilhar:', error);
+        copyToClipboard(link.url);
+      });
+    } else {
+      copyToClipboard(link.url);
+    }
+  };
 
   return (
     <>
@@ -110,7 +125,7 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
                       <QrCode className="h-4 w-4" />
                       <span className="sr-only md:not-sr-only md:ml-2">QR Code</span>
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => shareLink(link)}>
                       <Share className="h-4 w-4" />
                       <span className="sr-only md:not-sr-only md:ml-2">Compartilhar</span>
                     </Button>

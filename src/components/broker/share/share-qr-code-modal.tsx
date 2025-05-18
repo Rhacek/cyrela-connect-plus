@@ -8,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SharedLink } from "@/mocks/share-data";
-import { Download } from "lucide-react";
-import { useState, useEffect } from "react";
+import { SharedLink } from "@/types/share";
+import { Download, Copy } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface ShareQrCodeModalProps {
   link: SharedLink | null;
@@ -20,6 +21,7 @@ interface ShareQrCodeModalProps {
 
 export function ShareQrCodeModal({ link, isOpen, onClose }: ShareQrCodeModalProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const qrCodeRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (link && isOpen) {
@@ -41,6 +43,58 @@ export function ShareQrCodeModal({ link, isOpen, onClose }: ShareQrCodeModalProp
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
+    
+    toast.success("QR Code baixado", {
+      description: "QR Code salvo em seus downloads"
+    });
+  };
+
+  const handleCopy = async () => {
+    try {
+      if (qrCodeRef.current) {
+        // Create a canvas and draw the image on it
+        const canvas = document.createElement("canvas");
+        canvas.width = qrCodeRef.current.width;
+        canvas.height = qrCodeRef.current.height;
+        const ctx = canvas.getContext("2d");
+        
+        if (ctx) {
+          ctx.drawImage(qrCodeRef.current, 0, 0);
+          
+          // Convert canvas to blob and copy to clipboard
+          canvas.toBlob(async (blob) => {
+            if (blob) {
+              try {
+                await navigator.clipboard.write([
+                  new ClipboardItem({
+                    [blob.type]: blob
+                  })
+                ]);
+                toast.success("QR Code copiado", {
+                  description: "Você pode colar o QR Code em qualquer editor"
+                });
+              } catch (err) {
+                console.error("Failed to copy: ", err);
+                fallbackCopy();
+              }
+            }
+          });
+        } else {
+          fallbackCopy();
+        }
+      }
+    } catch (err) {
+      console.error("Copy failed:", err);
+      fallbackCopy();
+    }
+  };
+
+  // Fallback copy method that just copies the URL instead of the image
+  const fallbackCopy = () => {
+    navigator.clipboard.writeText(link.url);
+    toast.success("Link copiado", {
+      description: "O link foi copiado para a área de transferência"
+    });
   };
 
   return (
@@ -55,7 +109,13 @@ export function ShareQrCodeModal({ link, isOpen, onClose }: ShareQrCodeModalProp
         
         <div className="flex justify-center p-4">
           {qrCodeUrl && (
-            <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
+            <img 
+              ref={qrCodeRef}
+              src={qrCodeUrl} 
+              alt="QR Code" 
+              className="w-64 h-64 border border-gray-200 rounded-md"
+              crossOrigin="anonymous"
+            />
           )}
         </div>
         
@@ -71,9 +131,13 @@ export function ShareQrCodeModal({ link, isOpen, onClose }: ShareQrCodeModalProp
           </a>
         </div>
         
-        <DialogFooter className="sm:justify-center">
+        <DialogFooter className="flex flex-row justify-center gap-2 sm:justify-center">
           <Button type="button" variant="outline" onClick={onClose}>
             Fechar
+          </Button>
+          <Button type="button" onClick={handleCopy}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copiar
           </Button>
           <Button type="button" onClick={handleDownload}>
             <Download className="mr-2 h-4 w-4" />
