@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { BrokerProfile } from "./broker.service";
+import { UserRole } from "@/types";
 
 export const brokerProfileService = {
   /**
@@ -44,11 +45,49 @@ export const brokerProfileService = {
         brokerage: data.brokerage || undefined,
         company: data.company || undefined,
         city: data.city || undefined,
-        zone: data.zone || undefined
+        zone: data.zone || undefined,
+        role: data.role as UserRole || UserRole.BROKER  // Garantir que temos informação de role
       };
     } catch (err) {
       console.error('Error in getPublicProfile:', err);
       return null;
+    }
+  },
+  
+  /**
+   * Verifies if user has broker role (checking both metadata and profiles table)
+   */
+  async verifyBrokerRole(userId: string): Promise<boolean> {
+    try {
+      if (!userId) return false;
+      
+      console.log('Verifying broker role for user ID:', userId);
+      
+      // Get the profile from the database
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error verifying broker role:', error);
+        return false;
+      }
+      
+      if (!data) {
+        console.log('No profile found for user ID:', userId);
+        return false;
+      }
+      
+      // Check if role is BROKER
+      const isBroker = data.role === UserRole.BROKER;
+      console.log('User broker verification result:', { userId, isBroker });
+      
+      return isBroker;
+    } catch (err) {
+      console.error('Error in verifyBrokerRole:', err);
+      return false;
     }
   }
 };

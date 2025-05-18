@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserSession } from '@/types/auth';
+import { UserRole } from '@/types';
 
 export interface BrokerProfile {
   id: string;
@@ -18,6 +19,7 @@ export interface BrokerProfile {
   company?: string;
   city?: string;
   zone?: string;
+  role?: UserRole; // Adicionado o campo role
 }
 
 export const brokerService = {
@@ -49,7 +51,8 @@ export const brokerService = {
         brokerage: data.brokerage || undefined,
         company: data.company || undefined,
         city: data.city || undefined,
-        zone: data.zone || undefined
+        zone: data.zone || undefined,
+        role: data.role as UserRole || undefined
       };
     } catch (err) {
       console.error('Error in getBrokerProfile:', err);
@@ -69,7 +72,8 @@ export const brokerService = {
         brokerage: profileData.brokerage,
         company: profileData.company,
         city: profileData.city,
-        zone: profileData.zone
+        zone: profileData.zone,
+        role: profileData.role // Adicionar role ao update
       };
       
       // Remove undefined values

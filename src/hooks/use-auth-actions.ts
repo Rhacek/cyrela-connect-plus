@@ -1,21 +1,21 @@
 
-import { 
-  supabase, 
-  refreshSession 
-} from '@/integrations/supabase/client';
-import { getCurrentSession } from '@/lib/supabase';
-import { toast } from '@/hooks/use-toast';
-import { transformUserData } from '@/utils/auth-utils';
+import { useState } from 'react';
 import { UserSession } from '@/types/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { UserRole } from '@/types';
+import { transformUserData } from '@/utils/auth-utils';
+import { toast } from './use-toast';
 
 export const useAuthActions = (
   setSession: (session: UserSession | null) => void,
   setLoading: (loading: boolean) => void
 ) => {
+  const [error, setError] = useState<string | null>(null);
+
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log("Signing in with email:", email);
+      setError(null);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -24,6 +24,7 @@ export const useAuthActions = (
 
       if (error) {
         console.error('Error signing in:', error);
+        setError(error.message);
         toast.error('Erro ao fazer login', {
           description: error.message,
         });
@@ -31,41 +32,24 @@ export const useAuthActions = (
       }
 
       if (data.session) {
-        console.log("Sign in successful:", data.session.user.id);
-        const transformedUser = transformUserData(data.session.user);
+        console.log("User signed in successfully");
         
-        // Validate the session immediately after login
-        const validationSession = await getCurrentSession();
+        // Get user role from profiles table if not in metadata
+        const userSession = await transformUserData(data.session.user);
         
-        if (!validationSession) {
-          console.error("Session validation failed immediately after login");
-          toast.error('Falha na autenticação', {
-            description: 'Não foi possível estabelecer a sessão.'
-          });
-          return;
-        }
+        // Adicionar informações de tokens
+        userSession.access_token = data.session.access_token;
+        userSession.refresh_token = data.session.refresh_token;
+        userSession.expires_at = data.session.expires_at;
         
-        console.log("Session validated after login");
-        setSession(transformedUser);
-        toast.success('Login realizado com sucesso!');
-
-        // Verify session persistence
-        setTimeout(async () => {
-          const sessionCheck = await getCurrentSession();
-          // Fix the incorrect property access
-          console.log("Session check after login:", !!sessionCheck?.id);
-        }, 500);
-      } else {
-        console.error("No session returned after successful login");
-        toast.error('Falha na autenticação', {
-          description: 'Login bem-sucedido, mas nenhuma sessão foi criada.'
-        });
+        setSession(userSession);
+        
+        toast.success('Login realizado com sucesso');
       }
-    } catch (error: any) {
-      console.error('Error signing in:', error);
-      toast.error('Erro ao fazer login', {
-        description: error?.message || 'Ocorreu um erro inesperado.'
-      });
+    } catch (error) {
+      console.error('Unexpected error during sign in:', error);
+      setError('An unexpected error occurred. Please try again.');
+      toast.error('Erro inesperado', { description: 'Tente novamente mais tarde' });
     } finally {
       setLoading(false);
     }
@@ -74,11 +58,10 @@ export const useAuthActions = (
   const signUp = async (email: string, password: string, name: string, brokerCode?: string) => {
     try {
       setLoading(true);
-      
-      // Determine the role based on whether a broker code was provided
-      const role = brokerCode ? "BROKER" : "CLIENT";
-      
-      console.log(`Signing up new user with email ${email} and role ${role}`);
+      setError(null);
+
+      // Role é BROKER se tiver brokerCode, senão é CLIENT
+      const role = brokerCode ? UserRole.BROKER : UserRole.CLIENT;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -87,83 +70,71 @@ export const useAuthActions = (
           data: {
             name,
             role,
-            ...(brokerCode && { brokerCode }),
+            brokerCode,
           },
-          emailRedirectTo: window.location.origin + '/auth',
         },
       });
 
       if (error) {
         console.error('Error signing up:', error);
+        setError(error.message);
         toast.error('Erro ao criar conta', {
           description: error.message,
         });
         return;
       }
 
-      if (data.user) {
-        console.log("Sign up successful for:", data.user.id);
-      }
-
-      toast.success('Conta criada com sucesso!', {
-        description: 'Verifique seu e-mail para confirmar sua conta.',
+      console.log('User signed up successfully', data);
+      toast.success('Conta criada com sucesso', {
+        description: 'Verifique seu email para confirmar sua conta.',
       });
-    } catch (error: any) {
-      console.error('Error signing up:', error);
-      toast.error('Erro ao criar conta', {
-        description: error?.message || 'Ocorreu um erro inesperado.'
-      });
+    } catch (error) {
+      console.error('Unexpected error during sign up:', error);
+      setError('An unexpected error occurred. Please try again.');
+      toast.error('Erro inesperado', { description: 'Tente novamente mais tarde' });
     } finally {
       setLoading(false);
     }
   };
 
+  // Specific function for creating admin accounts
   const createAdmin = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      
-      console.log(`Creating admin user with email ${email}`);
-      
+      setError(null);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
-            role: "ADMIN",
+            role: UserRole.ADMIN,
           },
-          emailRedirectTo: window.location.origin + '/auth',
         },
       });
 
       if (error) {
         console.error('Error creating admin:', error);
+        setError(error.message);
         toast.error('Erro ao criar administrador', {
           description: error.message,
         });
         return;
       }
 
-      if (data.user) {
-        console.log("Admin creation successful for:", data.user.id);
-      }
-
-      toast.success('Administrador criado com sucesso!', {
-        description: 'Verifique o e-mail do administrador para confirmar a conta.',
+      console.log('Admin created successfully', data);
+      toast.success('Administrador criado com sucesso', {
+        description: 'Verifique seu email para confirmar sua conta.',
       });
-    } catch (error: any) {
-      console.error('Error creating admin:', error);
-      toast.error('Erro ao criar administrador', {
-        description: error?.message || 'Ocorreu um erro inesperado.'
-      });
+    } catch (error) {
+      console.error('Unexpected error during admin creation:', error);
+      setError('An unexpected error occurred. Please try again.');
+      toast.error('Erro inesperado', { description: 'Tente novamente mais tarde' });
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    signIn,
-    signUp,
-    createAdmin,
-  };
+  return { signIn, signUp, createAdmin, error };
 };

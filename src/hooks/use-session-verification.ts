@@ -8,6 +8,7 @@ import { isClientRoute } from "./use-session/routing/role-redirection";
 import { useDebouncedNavigate } from "./use-session/routing/use-debounced-navigate";
 import { checkAuthorization } from "./use-session/auth/authorization-checks";
 import { supabase } from "@/lib/supabase";
+import { brokerProfileService } from "@/services/broker-profile.service";
 
 interface SessionVerificationResult {
   isAuthorized: boolean | null;
@@ -38,13 +39,11 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     
     console.log("Starting session verification with state:", {
       sessionExists: !!session,
+      userId: session?.id,
       loading,
       initialized,
       currentPath
     });
-    
-    // For admin routes, add extra verification
-    const isAdminRoute = currentPath.startsWith('/admin');
     
     // Check if we can use the cached session first
     if (isSessionCacheValid(location.pathname)) {
@@ -56,26 +55,66 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       return;
     }
     
-    // Function to verify admin session with Supabase directly
-    const verifyAdminSession = async () => {
-      if (!session || session.user_metadata?.role !== UserRole.ADMIN) {
-        return false;
-      }
-      
+    // Enhanced verification function that looks at both the session metadata AND the profiles table
+    const verifyUserAuthorization = async () => {
       try {
-        // Verify the session is still valid with Supabase
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error || !data.session) {
-          console.error("Admin session verification failed:", error);
+        // If no session, then definitely not authorized
+        if (!session || !session.id) {
+          console.log("No valid session found during verification");
           return false;
         }
         
-        // Ensure the session belongs to an admin
-        const userRole = data.session.user.user_metadata?.role;
-        return userRole === UserRole.ADMIN;
+        // First check user_metadata role if available
+        const metadataRole = session.user_metadata?.role;
+        
+        // For admin routes, we need special verification
+        const isAdminRoute = currentPath.startsWith('/admin');
+        const isBrokerRoute = currentPath.startsWith('/broker');
+        
+        // If we have role in metadata and it matches the route type, quick approve
+        if (metadataRole) {
+          if ((isAdminRoute && metadataRole === UserRole.ADMIN) || 
+              (isBrokerRoute && metadataRole === UserRole.BROKER)) {
+            return true;
+          }
+        }
+        
+        // If no metadata role or it doesn't match, check profiles table as backup
+        // Use the profile service to get the accurate role information
+        const profile = await brokerProfileService.getPublicProfile(session.id);
+        
+        if (!profile) {
+          console.warn("No profile found for user in profiles table:", session.id);
+          return false;
+        }
+        
+        console.log("Profile found in database:", {
+          userId: profile.id,
+          role: profile.role || "not set" 
+        });
+        
+        // Now check if the profile role matches the required role
+        if (isAdminRoute && profile.role === UserRole.ADMIN) {
+          return true;
+        }
+        
+        if (isBrokerRoute && profile.role === UserRole.BROKER) {
+          return true;
+        }
+        
+        // If no specific role is required, authorize any authenticated user with a profile
+        if (!allowedRoles || allowedRoles.length === 0) {
+          return true;
+        }
+        
+        // Check if profile role is in allowed roles
+        if (profile.role && allowedRoles.includes(profile.role)) {
+          return true;
+        }
+        
+        return false;
       } catch (err) {
-        console.error("Error verifying admin session:", err);
+        console.error("Error verifying user authorization:", err);
         return false;
       }
     };
@@ -84,133 +123,58 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     const performAuthCheck = async () => {
       if (!isMounted) return;
       
+      // Don't attempt verification if session is still loading or not initialized
+      if (loading || !initialized) {
+        console.log("Auth not ready yet, delaying verification");
+        verificationTimeout = setTimeout(performAuthCheck, 500);
+        return;
+      }
+      
       console.log("Performing auth check with state:", {
         sessionExists: !!session,
+        userId: session?.id,
         loading,
         initialized,
-        isAdminRoute,
         currentPath
       });
       
       try {
-        // For admin routes, do additional verification
-        if (isAdminRoute && session?.user_metadata?.role === UserRole.ADMIN) {
-          const isValidAdminSession = await verifyAdminSession();
-          
-          if (!isValidAdminSession) {
-            console.warn("Admin session verification failed, attempting to refresh session");
-            // Try refreshing the session
-            const { data, error } = await supabase.auth.refreshSession();
-            
-            if (error || !data.session) {
-              if (isMounted) {
-                console.error("Failed to refresh admin session:", error);
-                setIsAuthorized(false);
-                setIsVerifying(false);
-              }
-              return;
-            }
-            
-            // Update the session in auth context
-            if (isMounted && data.session) {
-              // Use partial type for user metadata since we don't know if all fields exist
-              const metadata = data.session.user.user_metadata as Partial<{
-                name: string;
-                role: UserRole;
-                brokerCode?: string;
-                brokerage?: string;
-                creci?: string;
-                company?: string;
-                city?: string;
-                zone?: string;
-                profile_image?: string;
-              }>;
-              
-              // Add validation for required fields
-              const name = metadata.name || '';
-              const role = metadata.role as UserRole | undefined;
-              
-              // If role isn't valid, don't update session and treat as unauthorized
-              if (!role) {
-                console.error("Role missing in user metadata after refresh");
-                setIsAuthorized(false);
-                setIsVerifying(false);
-                return;
-              }
-              
-              setSession({
-                id: data.session.user.id,
-                email: data.session.user.email || '',
-                access_token: data.session.access_token,
-                refresh_token: data.session.refresh_token,
-                expires_at: data.session.expires_at,
-                user_metadata: {
-                  name,
-                  role,
-                  brokerCode: metadata.brokerCode,
-                  brokerage: metadata.brokerage,
-                  creci: metadata.creci,
-                  company: metadata.company,
-                  city: metadata.city,
-                  zone: metadata.zone,
-                  profile_image: metadata.profile_image
-                }
-              });
-              
-              // Check if the refreshed session has ADMIN role
-              if (role === UserRole.ADMIN) {
-                console.log("Session refreshed successfully with ADMIN role");
-                setIsAuthorized(true);
-                updateSessionCache({
-                  id: data.session.user.id,
-                  email: data.session.user.email || '',
-                  user_metadata: {
-                    name,
-                    role,
-                    brokerCode: metadata.brokerCode,
-                    brokerage: metadata.brokerage,
-                    creci: metadata.creci,
-                    company: metadata.company,
-                    city: metadata.city,
-                    zone: metadata.zone,
-                    profile_image: metadata.profile_image
-                  }
-                }, currentPath);
-              } else {
-                console.warn("Session refreshed but user is not an admin");
-                setIsAuthorized(false);
-              }
-              
-              setIsVerifying(false);
-              return;
-            }
-          } else if (isMounted) {
-            // Admin session is valid
-            console.log("Admin session verified successfully");
+        // Try to directly verify if user is authorized
+        const isUserAuthorized = await verifyUserAuthorization();
+        
+        if (isUserAuthorized) {
+          console.log("User authorized based on verification");
+          if (isMounted) {
             setIsAuthorized(true);
-            updateSessionCache(session, currentPath);
             setIsVerifying(false);
-            return;
+            
+            // Update session cache with successful verification
+            if (session) {
+              updateSessionCache(session, currentPath);
+            }
           }
+          return;
         }
         
-        // Use the extracted authorization check logic for non-admin routes
-        // or admin routes that didn't pass the additional verification
-        checkAuthorization(
-          {
-            session,
-            initialized,
-            loading,
-            allowedRoles,
-            pathname: location.pathname,
-            debouncedNavigate,
-            isMounted
-          },
-          {
-            setIsAuthorized,
-            setIsVerifying
-          }
-        );
+        // If not directly authorized, use the standard authorization check
+        if (isMounted) {
+          // Use the extracted authorization check logic as fallback
+          checkAuthorization(
+            {
+              session,
+              initialized,
+              loading,
+              allowedRoles,
+              pathname: location.pathname,
+              debouncedNavigate,
+              isMounted
+            },
+            {
+              setIsAuthorized,
+              setIsVerifying
+            }
+          );
+        }
       } catch (error) {
         console.error("Error in performAuthCheck:", error);
         if (isMounted) {
