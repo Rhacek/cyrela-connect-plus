@@ -1,66 +1,46 @@
-
-import { useState } from "react";
-import { CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
 import { ScheduleVisitDialog } from "./schedule-visit-dialog";
-import { useAuth } from "@/context/auth-context";
-import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface ScheduleVisitButtonProps {
   propertyId: string;
-  propertyTitle: string;
-  brokerId: string;
-  className?: string;
+  brokerId?: string | null;
 }
 
-export function ScheduleVisitButton({
-  propertyId,
-  propertyTitle,
-  brokerId,
-  className
-}: ScheduleVisitButtonProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { session } = useAuth();
+export function ScheduleVisitButton({ propertyId, brokerId }: ScheduleVisitButtonProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const navigate = useNavigate();
-
-  const handleClick = () => {
-    if (!session) {
-      toast.warning("Você precisa estar logado para agendar uma visita", {
-        action: (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/auth")}
-          >
-            Fazer login
-          </Button>
-        )
-      });
-      return;
+  
+  const handleButtonClick = () => {
+    if (brokerId) {
+      // If we have a broker ID, open the scheduling dialog
+      setDialogOpen(true);
+    } else {
+      // Otherwise, navigate to the onboarding page to get a broker
+      navigate('/client/onboarding');
     }
-    
-    setIsDialogOpen(true);
   };
-
+  
   return (
     <>
       <Button 
-        onClick={handleClick} 
-        className={className}
-        size="lg"
+        className="w-full" 
+        onClick={handleButtonClick}
       >
-        <CalendarClock className="mr-2 h-5 w-5" />
+        <Calendar className="mr-2 h-4 w-4" />
         Agendar visita
       </Button>
-
-      <ScheduleVisitDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        propertyId={propertyId}
-        propertyTitle={propertyTitle}
-        brokerId={brokerId}
-      />
+      
+      {brokerId && (
+        <ScheduleVisitDialog 
+          open={dialogOpen} 
+          onOpenChange={setDialogOpen}
+          propertyId={propertyId}
+          brokerId={brokerId}
+        />
+      )}
     </>
   );
 }

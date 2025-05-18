@@ -5,11 +5,12 @@ import { FormController } from "./onboarding/FormController";
 import { useBrokerReferral } from "@/hooks/use-broker-referral";
 import { leadsService } from "@/services/leads.service";
 import { LeadStatus } from "@/types";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 export function OnboardingForm() {
   const navigate = useNavigate();
   const { brokerId } = useBrokerReferral();
+  const { toast } = useToast();
 
   const handleSubmitForm = async (formData: any) => {
     try {

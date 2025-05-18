@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { Property } from "@/types";
-import { PropertyFilter as PropertyFilterType } from "@/services/properties/types";
+import { PropertyFilter } from "@/services/properties/types";
 import { propertiesService } from "@/services/properties.service";
 
 export function usePropertyFilters(initialProperties: Property[] = []) {
@@ -48,7 +48,7 @@ export function usePropertyFilters(initialProperties: Property[] = []) {
       setLoading(true);
       try {
         // Create filter object for API
-        const filters: PropertyFilterType = {
+        const filters: PropertyFilter = {
           isActive: true
         };
         
@@ -130,17 +130,44 @@ export function usePropertyFilters(initialProperties: Property[] = []) {
   }, [properties, search, priceRange, locations, selectedFeatures, stages, loading]);
 
   // Build filter object for API requests
-  const getFilterObject = (): PropertyFilterType => ({
-    search: search || undefined,
-    minPrice: priceRange[0],
-    maxPrice: priceRange[1],
-    city: locations.length > 0 ? locations[0] : undefined,
-    neighborhood: locations.length > 0 ? locations : undefined,
-    minBedrooms: selectedFeatures.length > 0 
-      ? Math.min(...selectedFeatures.map(f => parseInt(f)).filter(n => !isNaN(n))) 
-      : undefined,
-    isActive: true
-  });
+  const getFilterObject = (): PropertyFilter => {
+    const filterObj: PropertyFilter = {
+      isActive: true
+    };
+    
+    if (search) {
+      filterObj.search = search;
+    }
+    
+    if (priceRange[0] !== 500000) {
+      filterObj.minPrice = priceRange[0];
+    }
+    
+    if (priceRange[1] !== 5000000) {
+      filterObj.maxPrice = priceRange[1];
+    }
+    
+    if (locations.length > 0) {
+      // Assign first location as city (simplified)
+      filterObj.city = locations[0];
+      
+      // Use all locations as potential neighborhoods
+      filterObj.neighborhood = locations;
+    }
+    
+    if (selectedFeatures.length > 0) {
+      // Get minimum bedroom count from features
+      const bedroomCounts = selectedFeatures
+        .map(f => parseInt(f))
+        .filter(n => !isNaN(n));
+        
+      if (bedroomCounts.length > 0) {
+        filterObj.minBedrooms = Math.min(...bedroomCounts);
+      }
+    }
+    
+    return filterObj;
+  };
 
   return {
     filters: {

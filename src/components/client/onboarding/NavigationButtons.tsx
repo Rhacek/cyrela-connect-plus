@@ -4,7 +4,7 @@ import { useFormContext } from "./context/FormContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface NavigationButtonsProps {
-  onSubmit?: () => void;
+  onSubmit?: () => boolean | void;
 }
 
 export function NavigationButtons({ onSubmit }: NavigationButtonsProps) {
@@ -20,9 +20,9 @@ export function NavigationButtons({ onSubmit }: NavigationButtonsProps) {
   
   const handleNextClick = () => {
     if (isLastStep && onSubmit) {
-      onSubmit();
+      return onSubmit();
     } else {
-      handleNext();
+      return handleNext();
     }
   };
   
