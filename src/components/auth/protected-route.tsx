@@ -12,6 +12,16 @@ interface ProtectedRouteProps {
   children?: React.ReactNode;
 }
 
+const LoadingSkeleton = () => (
+  <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="w-full max-w-md space-y-4">
+      <Skeleton className="h-8 w-3/4 mx-auto" />
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-8 w-1/2 mx-auto" />
+    </div>
+  </div>
+);
+
 export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   const { session, loading, initialized } = useAuth();
   const { isAuthorized, isVerifying } = useSessionVerification(allowedRoles);
@@ -42,21 +52,25 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
     return children ? <>{children}</> : <Outlet />;
   }
   
-  // Show loading state while verifying
+  // Show loading state while verifying - critical to avoid premature redirects
   if (loading || isVerifying || !initialized) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md space-y-4">
-          <Skeleton className="h-8 w-3/4 mx-auto" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-8 w-1/2 mx-auto" />
-        </div>
-      </div>
-    );
+    console.log("Showing loading state in ProtectedRoute:", { 
+      loading, 
+      isVerifying, 
+      initialized 
+    });
+    return <LoadingSkeleton />;
   }
 
-  // Handle error redirection based on user role
-  const handleUnauthorizedAccess = () => {
+  // Handle unauthorized access with proper redirects
+  if (isAuthorized === false && !location.pathname.startsWith("/client")) {
+    console.log("Unauthorized access, redirecting:", {
+      path: location.pathname,
+      sessionExists: !!session,
+      userRole: session?.user_metadata?.role,
+      isAuthorized
+    });
+    
     // Check if attempting to access admin routes without permission
     if (location.pathname.startsWith('/admin') && session?.user_metadata?.role !== UserRole.ADMIN) {
       toast.error("Você não tem permissão para acessar esta página");
@@ -74,11 +88,6 @@ export const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) 
     
     // If not a protected route, allow access
     return children ? <>{children}</> : <Outlet />;
-  };
-
-  // If not authorized, redirect appropriately
-  if (isAuthorized === false && !location.pathname.startsWith("/client")) {
-    return handleUnauthorizedAccess();
   }
 
   // Render the protected content

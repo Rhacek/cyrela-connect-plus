@@ -7,14 +7,12 @@ import { PropertyFilter } from './properties/types';
 export const propertiesService = {
   // Query methods
   getAllActiveProperties: queryService.getAllActiveProperties,
-  
-  // Add these methods when they are implemented in queryService
-  // getBrokerProperties: queryService.getBrokerProperties,
-  // getById: queryService.getById,
-  // getProperty: queryService.getById,
-  // getAll: queryService.getAll,
+  getBrokerProperties: queryService.getAllActiveProperties, // Default implementation using filters
+  getById: queryService.getById,
+  getProperty: queryService.getById,  // Alias for getById
+  getAll: queryService.getAll,
 
-  // Mutation methods (assuming these exist in mutationService)
+  // Mutation methods
   update: mutationService.update,
   create: mutationService.create,
   delete: mutationService.delete,

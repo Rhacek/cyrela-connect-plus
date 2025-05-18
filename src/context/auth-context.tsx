@@ -29,7 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession, 
     loading, 
     setLoading, 
-    initialized 
+    initialized,
+    setInitialized 
   } = useSessionInit();
   
   const { 
@@ -38,11 +39,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     createAdmin 
   } = useAuthActions(setSession, setLoading);
   
-  // Set up auth state change listener
+  // Set up auth state change listener and proactively get session
   useEffect(() => {
-    // Subscribe to auth state changes
+    let isMounted = true;
+    console.log("Setting up AuthProvider with auth state listener and session fetch");
+    
+    // First, set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, supabaseSession) => {
       console.log(`Auth state changed: ${event}`);
+      
+      if (!isMounted) return;
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (supabaseSession) {
@@ -73,11 +79,71 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
     
-    // Cleanup subscription
+    // Proactively fetch the current session
+    const fetchCurrentSession = async () => {
+      try {
+        console.log("Proactively fetching current session in AuthProvider");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          if (isMounted) {
+            setLoading(false);
+            setInitialized(true);
+          }
+          return;
+        }
+        
+        if (data.session) {
+          console.log("Session found in AuthProvider:", data.session.user.id);
+          // Transform Supabase session to our format
+          const userSession: UserSession = {
+            id: data.session.user.id,
+            email: data.session.user.email || '',
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+            user_metadata: {
+              name: data.session.user.user_metadata?.name || '',
+              role: data.session.user.user_metadata?.role,
+              brokerCode: data.session.user.user_metadata?.brokerCode,
+              brokerage: data.session.user.user_metadata?.brokerage,
+              creci: data.session.user.user_metadata?.creci,
+              company: data.session.user.user_metadata?.company,
+              city: data.session.user.user_metadata?.city,
+              zone: data.session.user.user_metadata?.zone,
+              profile_image: data.session.user.user_metadata?.profile_image
+            }
+          };
+          
+          if (isMounted) {
+            setSession(userSession);
+          }
+        } else {
+          console.log("No session found in AuthProvider");
+        }
+        
+        if (isMounted) {
+          setLoading(false);
+          setInitialized(true);
+        }
+      } catch (error) {
+        console.error("Error in fetchCurrentSession:", error);
+        if (isMounted) {
+          setLoading(false);
+          setInitialized(true);
+        }
+      }
+    };
+    
+    fetchCurrentSession();
+    
+    // Cleanup subscription and set mounted flag
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [setSession]);
+  }, [setSession, setLoading, setInitialized]);
   
   // Improved signOut function that uses our enhanced cleanup
   const signOut = useCallback(async () => {

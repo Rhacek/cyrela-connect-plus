@@ -34,6 +34,14 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
     }
     
     let isMounted = true;
+    let verificationTimeout: NodeJS.Timeout;
+    
+    console.log("Starting session verification with state:", {
+      sessionExists: !!session,
+      loading,
+      initialized,
+      currentPath
+    });
     
     // For admin routes, add extra verification
     const isAdminRoute = currentPath.startsWith('/admin');
@@ -72,9 +80,19 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
       }
     };
     
-    // Add a small timeout to prevent excessive checks during navigation
-    const authCheckTimer = setTimeout(async () => {
-      if (isMounted) {
+    // Actual auth check with a short delay to avoid race conditions
+    const performAuthCheck = async () => {
+      if (!isMounted) return;
+      
+      console.log("Performing auth check with state:", {
+        sessionExists: !!session,
+        loading,
+        initialized,
+        isAdminRoute,
+        currentPath
+      });
+      
+      try {
         // For admin routes, do additional verification
         if (isAdminRoute && session?.user_metadata?.role === UserRole.ADMIN) {
           const isValidAdminSession = await verifyAdminSession();
@@ -86,6 +104,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
             
             if (error || !data.session) {
               if (isMounted) {
+                console.error("Failed to refresh admin session:", error);
                 setIsAuthorized(false);
                 setIsVerifying(false);
               }
@@ -140,6 +159,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
               
               // Check if the refreshed session has ADMIN role
               if (role === UserRole.ADMIN) {
+                console.log("Session refreshed successfully with ADMIN role");
                 setIsAuthorized(true);
                 updateSessionCache({
                   id: data.session.user.id,
@@ -157,6 +177,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
                   }
                 }, currentPath);
               } else {
+                console.warn("Session refreshed but user is not an admin");
                 setIsAuthorized(false);
               }
               
@@ -165,6 +186,7 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
             }
           } else if (isMounted) {
             // Admin session is valid
+            console.log("Admin session verified successfully");
             setIsAuthorized(true);
             updateSessionCache(session, currentPath);
             setIsVerifying(false);
@@ -189,12 +211,22 @@ export function useSessionVerification(allowedRoles?: UserRole[]): SessionVerifi
             setIsVerifying
           }
         );
+      } catch (error) {
+        console.error("Error in performAuthCheck:", error);
+        if (isMounted) {
+          setIsAuthorized(false);
+          setIsVerifying(false);
+        }
       }
-    }, 100);
+    };
+    
+    // Add a short delay to prevent excessive checks during navigation
+    // and to allow session initialization to complete
+    verificationTimeout = setTimeout(performAuthCheck, 100);
     
     return () => {
       isMounted = false;
-      clearTimeout(authCheckTimer);
+      clearTimeout(verificationTimeout);
     };
   }, [
     session, 

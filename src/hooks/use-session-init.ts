@@ -92,6 +92,8 @@ export const useSessionInit = () => {
   useEffect(() => {
     let isMounted = true;
     
+    console.log("useSessionInit: Starting session initialization");
+    
     const processSessionsWrapper = async () => {
       if (isMounted) {
         await processSessions();
@@ -137,5 +139,6 @@ export const useSessionInit = () => {
     loading,
     setLoading,
     initialized,
+    setInitialized
   };
 };

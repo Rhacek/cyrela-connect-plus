@@ -1,134 +1,133 @@
 
-import { supabase, storageKey, emitSessionRemoval, emitSessionUpdate, refreshSession } from '@/integrations/supabase/client';
+import { supabase, SESSION_UPDATED, SESSION_REMOVED, emitSessionUpdate, emitSessionRemoval } from '@/integrations/supabase/client';
 import { UserSession } from '@/types/auth';
+import { transformUserData } from '@/utils/auth-utils';
 
-// Helper to log auth state for debugging
+/**
+ * Logs the current auth state for debugging purposes
+ */
 export const logAuthState = async () => {
-  const { data } = await supabase.auth.getSession();
-  console.log("Current auth session:", data.session);
-  return data.session;
-};
-
-// Enhanced get current user function with session
-export const getCurrentSession = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Error getting session:", error);
-      return null;
-    }
-    
-    if (!data.session) {
-      console.log("No active session found via getSession");
-      return null;
-    }
-    
-    console.log("Found active session for user:", data.session.user.id);
+    console.log("Current auth state:", {
+      hasSession: !!data.session,
+      error: error?.message
+    });
     return data.session;
-  } catch (error) {
-    console.error("Unexpected error getting session:", error);
+  } catch (err) {
+    console.error("Error logging auth state:", err);
     return null;
   }
 };
 
-// Verify session validity more thoroughly with explicit token checks
-export const verifySession = async (session: any) => {
-  if (!session) return false;
-  
+/**
+ * Gets the current Supabase session
+ */
+export const getCurrentSession = async (): Promise<UserSession | null> => {
   try {
-    // Check if the session has a valid access token
-    if (!session.access_token) {
-      console.log("Session missing access token");
-      return false;
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error("Error getting current session:", error);
+      return null;
     }
     
-    // Check for token expiration if expires_at is available
-    if (session.expires_at) {
-      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-      const timeUntilExpiry = session.expires_at - currentTimeInSeconds;
-      
-      // If token is expired or about to expire in the next minute, try to refresh
-      if (timeUntilExpiry <= 60) {
-        console.log("Access token expired or about to expire, attempting refresh");
-        const refreshedSession = await refreshSession();
-        return !!refreshedSession;
-      }
+    if (!data.session) {
+      console.log("No current session found");
+      return null;
     }
     
-    // Verify the session by checking user data
-    const { data, error } = await supabase.auth.getUser(session.access_token);
+    const user = data.session.user;
+    const userSession = transformUserData(user);
+    
+    // Add token information
+    userSession.access_token = data.session.access_token;
+    userSession.refresh_token = data.session.refresh_token;
+    userSession.expires_at = data.session.expires_at;
+    
+    return userSession;
+  } catch (err) {
+    console.error("Error in getCurrentSession:", err);
+    return null;
+  }
+};
+
+/**
+ * Verifies if the current session is valid
+ * @returns boolean indicating if session is valid
+ */
+export const verifySession = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
     
     if (error) {
       console.error("Error verifying session:", error);
       return false;
     }
     
-    if (data.user) {
-      return true;
+    const isValid = !!data.session;
+    
+    if (!isValid) {
+      // Try refreshing the session if it's invalid
+      try {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session) {
+          console.log("Session refresh failed:", refreshError?.message || "No new session");
+          emitSessionRemoval();
+          return false;
+        }
+        
+        console.log("Session refreshed successfully");
+        // Notify components that session was updated
+        emitSessionUpdate(refreshData.session);
+        return true;
+      } catch (refreshErr) {
+        console.error("Error refreshing session:", refreshErr);
+        return false;
+      }
     }
     
-    return false;
-  } catch (error) {
-    console.error("Unexpected error verifying session:", error);
+    return isValid;
+  } catch (err) {
+    console.error("Unexpected error in verifySession:", err);
     return false;
   }
 };
 
-// Improved logout function that cleans up everything
-export const signOutAndCleanup = async () => {
+/**
+ * Enhanced sign out that cleans up all application state
+ */
+export const signOutAndCleanup = async (): Promise<{ success: boolean; error?: Error }> => {
   try {
-    console.log("Starting full signout and cleanup");
+    console.log("Starting signOutAndCleanup process");
     
-    // First, sign out through Supabase
-    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    // Clear any local session stores first
+    try {
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('currentSession');
+      sessionStorage.removeItem('lastAuthCheck');
+      sessionStorage.removeItem('sessionCache');
+    } catch (err) {
+      console.warn("Error clearing local storage:", err);
+      // Continue despite errors with storage
+    }
+    
+    // Then sign out with Supabase
+    const { error } = await supabase.auth.signOut();
     
     if (error) {
-      console.error("Error during signout:", error);
+      console.error("Supabase signOut error:", error);
+      return { success: false, error };
     }
     
-    // Manually clear localStorage regardless of the signOut result
-    localStorage.removeItem(storageKey);
-    
-    // Also clear any other auth-related items in localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('auth') || key.includes('session'))) {
-        localStorage.removeItem(key);
-      }
-    }
-    
-    // Clear sessionStorage as well for completeness
-    sessionStorage.removeItem('lastAuthCheck');
-    
-    // Emit session removal event
+    // Emit a session removal event to notify all components
     emitSessionRemoval();
     
-    // Double-check if we successfully cleared everything
-    const sessionCheck = await getCurrentSession();
-    if (sessionCheck) {
-      console.warn("Session still exists after logout, forcing removal");
-      try {
-        // One more attempt to clear storage
-        localStorage.clear();
-      } catch (e) {
-        console.error("Error clearing localStorage:", e);
-      }
-    } else {
-      console.log("Signout successful, no session remains");
-    }
-    
+    console.log("Sign out completed successfully");
     return { success: true };
-  } catch (e) {
-    console.error("Error in signOutAndCleanup:", e);
-    
-    // Even if there's an error, try to clear localStorage
-    try {
-      localStorage.removeItem(storageKey);
-      emitSessionRemoval();
-    } catch (e) {
-      console.error("Error clearing localStorage:", e);
-    }
-    
-    return { success: false, error: e };
+  } catch (err) {
+    console.error("Unexpected error in signOutAndCleanup:", err);
+    return { success: false, error: err as Error };
   }
 };
