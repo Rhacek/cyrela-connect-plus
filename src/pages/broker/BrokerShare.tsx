@@ -33,7 +33,7 @@ export default function BrokerShare() {
   }, [linksError, statsError]);
 
   const handleCreateLink = (propertyId: string, notes?: string) => {
-    createShareLink.mutate({ propertyId, notes });
+    createShareLink.mutate({ brokerId, propertyId, notes });
     setIsCreateDialogOpen(false);
   };
 
