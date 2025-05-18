@@ -18,6 +18,7 @@ export function useBrokerReferral() {
     const storedBrokerId = localStorage.getItem(BROKER_REFERRAL_KEY);
     
     if (storedBrokerId) {
+      console.log("Using stored broker referral ID:", storedBrokerId);
       setBrokerId(storedBrokerId);
       setIsLoading(false);
       return;
@@ -28,9 +29,12 @@ export function useBrokerReferral() {
     const refParam = urlParams.get("ref");
     
     if (refParam) {
+      console.log("Found broker referral ID in URL:", refParam);
       // Store the broker ID in localStorage for persistence
       localStorage.setItem(BROKER_REFERRAL_KEY, refParam);
       setBrokerId(refParam);
+    } else {
+      console.log("No broker referral ID found");
     }
     
     setIsLoading(false);
@@ -40,6 +44,7 @@ export function useBrokerReferral() {
   const clearBrokerReferral = () => {
     localStorage.removeItem(BROKER_REFERRAL_KEY);
     setBrokerId(null);
+    console.log("Broker referral cleared");
   };
 
   return {

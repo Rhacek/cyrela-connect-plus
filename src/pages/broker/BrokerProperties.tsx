@@ -77,17 +77,17 @@ export default function BrokerProperties() {
             />
           </div>
           
-          {/* Only show "Novo Imóvel" button for admin users */}
-          {isAdmin && (
-            <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-              <Button 
-                variant="outline"
-                className="w-full md:w-auto"
-                onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
-              >
-                {viewMode === 'list' ? 'Visualização em Grid' : 'Visualização em Lista'}
-              </Button>
-              
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+            <Button 
+              variant="outline"
+              className="w-full md:w-auto"
+              onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+            >
+              {viewMode === 'list' ? 'Visualização em Grid' : 'Visualização em Lista'}
+            </Button>
+            
+            {/* Only show "Novo Imóvel" button for admin users */}
+            {isAdmin && (
               <Button 
                 className="w-full md:w-auto"
                 onClick={() => navigate("/admin/properties/new/")}
@@ -95,8 +95,8 @@ export default function BrokerProperties() {
                 <Plus size={16} className="mr-2" />
                 Novo Imóvel
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
         {isLoading ? (

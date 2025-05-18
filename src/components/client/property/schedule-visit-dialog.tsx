@@ -54,26 +54,17 @@ export function ScheduleVisitDialog({
     e.preventDefault();
 
     if (!date) {
-      toast({
-        title: "Selecione uma data para a visita",
-        variant: "destructive"
-      });
+      toast.error("Selecione uma data para a visita");
       return;
     }
 
     if (!name) {
-      toast({
-        title: "Nome é obrigatório",
-        variant: "destructive"
-      });
+      toast.error("Nome é obrigatório");
       return;
     }
 
     if (!email) {
-      toast({
-        title: "Email é obrigatório",
-        variant: "destructive"
-      });
+      toast.error("Email é obrigatório");
       return;
     }
 
@@ -94,26 +85,14 @@ export function ScheduleVisitDialog({
       });
 
       if (result.success) {
-        toast({
-          title: "Visita agendada com sucesso!",
-          description: "O corretor entrará em contato para confirmar.",
-          variant: "default"
-        });
+        toast.success("Visita agendada com sucesso! O corretor entrará em contato para confirmar.");
         resetForm();
         onClose();
       } else {
-        toast({
-          title: "Erro ao agendar visita",
-          description: result.error,
-          variant: "destructive"
-        });
+        toast.error(`Erro ao agendar visita: ${result.error}`);
       }
     } catch (error: any) {
-      toast({
-        title: "Erro ao agendar visita",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(`Erro ao agendar visita: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
