@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { leadsService } from "@/services/leads.service";
 import { Lead, LeadStatus, Property, Performance } from "@/types";
-import { propertiesService } from "@/services/properties/query.service";
+import { queryService } from "@/services/properties/query.service"; // Fixed: updated the import
 import { getCurrentMonthPerformance } from "@/services/performance/performance-query.service";
 
 export const useDashboardData = (brokerId: string | undefined) => {
@@ -27,7 +27,7 @@ export const useDashboardData = (brokerId: string | undefined) => {
     error: propertiesError
   } = useQuery({
     queryKey: ['highlightedProperties'],
-    queryFn: () => propertiesService.getHighlightedProperties(),
+    queryFn: () => queryService.getAllActiveProperties({ isHighlighted: true }), // Fixed: use queryService instead
     enabled: true
   });
   

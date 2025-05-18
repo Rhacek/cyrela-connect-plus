@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { DashboardHeader } from "@/components/broker/dashboard/dashboard-header";
 import { StatsGrid } from "@/components/broker/dashboard/stats-grid";
@@ -8,6 +9,7 @@ import { QuickAccess } from "@/components/broker/dashboard/quick-access";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useDashboardData } from "@/hooks/dashboard/use-dashboard-data";
+import { Performance, Target } from "@/types";
 
 export default function BrokerDashboard() {
   const { session } = useAuth();
@@ -17,6 +19,7 @@ export default function BrokerDashboard() {
   const {
     leads,
     properties,
+    performance,
     isLoadingLeads,
     isLoadingProperties,
     refetchLeads,
@@ -27,14 +30,58 @@ export default function BrokerDashboard() {
     refetchLeads();
     refetchMetrics();
   };
+
+  // Default empty performance and target objects for when data is still loading
+  const defaultPerformance: Performance = {
+    id: "",
+    brokerId: brokerId || "",
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    shares: 0,
+    leads: 0,
+    schedules: 0,
+    visits: 0,
+    sales: 0
+  };
+
+  const defaultTarget: Target = {
+    id: "",
+    brokerId: brokerId || "",
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+    shareTarget: 0,
+    leadTarget: 0,
+    scheduleTarget: 0,
+    visitTarget: 0,
+    saleTarget: 0
+  };
+
+  // Chart data for the performance chart
+  const chartData = [
+    { name: "Jan", visits: 0, sales: 0 },
+    { name: "Fev", visits: 0, sales: 0 },
+    { name: "Mar", visits: 0, sales: 0 },
+    { name: "Abr", visits: 0, sales: 0 },
+    { name: "Mai", visits: 0, sales: 0 },
+    { name: "Jun", visits: 0, sales: 0 },
+  ];
   
   return (
     <div className="w-full">
-      <DashboardHeader />
+      <DashboardHeader 
+        title="Dashboard" 
+        description={`Bem-vindo ${session?.name ? ', ' + session.name : ''}! Aqui está o resumo do seu desempenho.`}
+        buttonLabel="Cadastrar lead"
+        onButtonClick={() => console.log("Cadastrar lead clicked")}
+      />
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         <div className="lg:col-span-8 space-y-6">
-          <StatsGrid />
+          <StatsGrid 
+            performance={performance || defaultPerformance} 
+            target={defaultTarget} 
+            isLoading={!performance}
+          />
           
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-cyrela-gray-lighter">
             <div className="flex items-center justify-between">
@@ -80,7 +127,13 @@ export default function BrokerDashboard() {
             )}
           </div>
           
-          <ChartCard />
+          <ChartCard 
+            title="Desempenho Mensal" 
+            subtitle="Visitas e Vendas"
+            chartType="bar" 
+            data={chartData}
+            description="Visualize o progresso de suas visitas e vendas ao longo dos últimos meses."
+          />
         </div>
       </div>
     </div>

@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { CalendarClock, MapPin } from "lucide-react";
-import { Lead } from "@/types";
+import { Lead, LeadStatus } from "@/types";
 import { useAuth } from "@/context/auth-context";
 import { appointmentsService } from "@/services/appointments.service";
 import { incrementPerformanceMetric } from "@/services/performance/performance-mutation.service";
@@ -76,7 +75,7 @@ export function ScheduleVisitDialog({ lead, isOpen, onClose, onSuccess }: Schedu
 
       // Update lead status if it's in NEW or CONTACTED state
       if (lead.status === "NEW" || lead.status === "CONTACTED") {
-        await updateLeadStatus(lead.id, "SCHEDULED");
+        await updateLeadStatus(lead.id, LeadStatus.SCHEDULED);
       }
 
       // Increment performance metric
@@ -97,7 +96,7 @@ export function ScheduleVisitDialog({ lead, isOpen, onClose, onSuccess }: Schedu
     }
   };
 
-  const updateLeadStatus = async (leadId: string, status: "SCHEDULED") => {
+  const updateLeadStatus = async (leadId: string, status: LeadStatus) => {
     try {
       const { leadsService } = await import("@/services/leads.service");
       await leadsService.updateLeadStatus(leadId, status);

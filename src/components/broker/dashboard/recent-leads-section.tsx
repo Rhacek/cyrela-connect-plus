@@ -2,14 +2,21 @@
 import { useState } from "react";
 import { LeadCard } from "./lead-card";
 import { Lead } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface RecentLeadsSectionProps {
   leads: Lead[];
   isLoading?: boolean;
   onLeadUpdated?: () => void;
+  className?: string; // Added className prop
 }
 
-export function RecentLeadsSection({ leads, isLoading, onLeadUpdated }: RecentLeadsSectionProps) {
+export function RecentLeadsSection({ 
+  leads, 
+  isLoading, 
+  onLeadUpdated,
+  className 
+}: RecentLeadsSectionProps) {
   const [expandedLeads, setExpandedLeads] = useState<boolean>(false);
   
   // Show only first 3 leads by default
@@ -18,7 +25,7 @@ export function RecentLeadsSection({ leads, isLoading, onLeadUpdated }: RecentLe
   
   if (isLoading) {
     return (
-      <div className="animate-pulse mt-4 space-y-4">
+      <div className={cn("animate-pulse mt-4 space-y-4", className)}>
         {[1, 2, 3].map((i) => (
           <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
         ))}
@@ -28,14 +35,14 @@ export function RecentLeadsSection({ leads, isLoading, onLeadUpdated }: RecentLe
   
   if (leads.length === 0) {
     return (
-      <div className="mt-4 p-4 border border-dashed border-gray-300 rounded-lg">
+      <div className={cn("mt-4 p-4 border border-dashed border-gray-300 rounded-lg", className)}>
         <p className="text-center text-gray-500">Nenhum lead recente encontrado.</p>
       </div>
     );
   }
   
   return (
-    <div className="mt-4 space-y-4">
+    <div className={cn("mt-4 space-y-4", className)}>
       {displayedLeads.map((lead) => (
         <LeadCard 
           key={lead.id} 
