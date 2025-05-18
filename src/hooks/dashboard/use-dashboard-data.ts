@@ -27,7 +27,7 @@ export const useDashboardData = (brokerId: string | undefined) => {
     error: propertiesError
   } = useQuery({
     queryKey: ['highlightedProperties'],
-    queryFn: () => queryService.getAllActiveProperties({ highlighted: true }), // Fixed: use 'highlighted' instead of 'isHighlighted'
+    queryFn: () => queryService.getAllActiveProperties({ highlighted: true }), // Using queryService directly since propertiesService.getBrokerProperties doesn't exist
     enabled: true
   });
   

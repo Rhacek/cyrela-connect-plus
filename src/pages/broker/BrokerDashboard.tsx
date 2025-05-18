@@ -67,7 +67,7 @@ export default function BrokerDashboard() {
   ];
   
   // Get the user's name from the session metadata if available
-  const userName = session?.user?.user_metadata?.name || "";
+  const userName = session?.user_metadata?.name || "";
   
   return (
     <div className="w-full">
