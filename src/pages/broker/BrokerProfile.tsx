@@ -8,11 +8,13 @@ import { ProfileForm } from "@/components/broker/profile/profile-form";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/auth-context";
 import { brokerService } from "@/services/broker.service";
+import { uploadAvatar, updateProfileAvatar } from "@/services/avatar.service";
 import type { BrokerProfile as BrokerProfileType } from "@/services/broker.service";
 
 const BrokerProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const isMobile = useIsMobile();
   const { session } = useAuth();
   const brokerId = session?.id;
@@ -31,14 +33,40 @@ const BrokerProfile = () => {
   
   // Mutation for updating profile data
   const updateProfile = useMutation({
-    mutationFn: (data: typeof profileData) => {
+    mutationFn: async (data: typeof profileData) => {
       if (!brokerId || !data) return Promise.resolve(false);
-      return brokerService.updateBrokerProfile(brokerId, data);
+      
+      let updatedData = { ...data };
+      
+      // If there's a new profile image, upload it
+      if (profileImage && brokerId) {
+        setIsUploadingImage(true);
+        try {
+          const imageUrl = await uploadAvatar(profileImage, brokerId);
+          
+          if (imageUrl) {
+            // Update profile with new image URL
+            const success = await updateProfileAvatar(brokerId, imageUrl);
+            if (success) {
+              updatedData.profileImage = imageUrl;
+            }
+          }
+        } catch (err) {
+          console.error("Error uploading image:", err);
+          toast.error("Erro ao atualizar imagem de perfil");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+      
+      // Update other profile data
+      return brokerService.updateBrokerProfile(brokerId, updatedData);
     },
     onSuccess: (success) => {
       if (success) {
         toast.success("Perfil atualizado com sucesso!");
         setIsEditing(false);
+        setProfileImage(null);
         refetch();
       } else {
         toast.error("Erro ao atualizar perfil");
@@ -69,9 +97,6 @@ const BrokerProfile = () => {
   
   const handleProfileFormSubmit = (data: typeof profileData) => {
     if (!data) return;
-    
-    // Here you would normally upload the image first, then update the profile
-    // For this implementation, we'll just update the profile data
     updateProfile.mutate(data);
   };
   

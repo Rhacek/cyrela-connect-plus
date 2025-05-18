@@ -4,6 +4,8 @@ import { User, PencilLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { toast } from "@/hooks/use-toast";
+import { uploadAvatar } from "@/services/avatar.service";
 
 interface ProfileImageUploadProps {
   currentImage?: string;
@@ -20,6 +22,7 @@ export function ProfileImageUpload({
 }: ProfileImageUploadProps) {
   const { session } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Try to get profile image from session if not provided
   useEffect(() => {
@@ -28,12 +31,27 @@ export function ProfileImageUpload({
     }
   }, [currentImage, session]);
   
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem válida');
+        return;
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('A imagem deve ter no máximo 2MB');
+        return;
+      }
+      
+      // Create local preview
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
+      
+      // Call parent callback
       onImageChange(file);
     }
   };
@@ -52,12 +70,21 @@ export function ProfileImageUpload({
           ) : (
             <User size={64} className="text-cyrela-gray-dark" />
           )}
+          
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          )}
         </div>
         
         {isEditing && (
           <label 
             htmlFor="profile-image-upload" 
-            className="absolute bottom-0 right-0 bg-cyrela-blue text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-opacity-90 transition-all"
+            className={cn(
+              "absolute bottom-0 right-0 bg-cyrela-blue text-white p-2 rounded-full cursor-pointer shadow-md hover:bg-opacity-90 transition-all",
+              isUploading && "opacity-50 cursor-not-allowed"
+            )}
           >
             <PencilLine size={16} />
             <input 
@@ -66,6 +93,7 @@ export function ProfileImageUpload({
               className="hidden" 
               accept="image/*"
               onChange={handleFileChange}
+              disabled={isUploading}
             />
           </label>
         )}
