@@ -63,6 +63,7 @@ const AdminBrokers = () => {
   return (
     <div className="space-y-6">
       <BrokerListHeader 
+        totalBrokers={brokers.length}
         searchQuery={searchQuery} 
         onSearchChange={setSearchQuery}
       />

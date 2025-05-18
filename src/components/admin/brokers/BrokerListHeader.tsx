@@ -6,9 +6,15 @@ import { UserPlus, Target } from "lucide-react";
 
 interface BrokerListHeaderProps {
   totalBrokers: number;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
 
-export function BrokerListHeader({ totalBrokers }: BrokerListHeaderProps) {
+export function BrokerListHeader({ 
+  totalBrokers, 
+  searchQuery, 
+  onSearchChange 
+}: BrokerListHeaderProps) {
   const navigate = useNavigate();
 
   return (
