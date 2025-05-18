@@ -1,3 +1,4 @@
+
 import { 
   supabase, 
   refreshSession 
@@ -51,7 +52,8 @@ export const useAuthActions = (
         // Verify session persistence
         setTimeout(async () => {
           const sessionCheck = await getCurrentSession();
-          console.log("Session check after login:", !!sessionCheck?.user?.id);
+          // Fix the incorrect property access
+          console.log("Session check after login:", !!sessionCheck?.id);
         }, 500);
       } else {
         console.error("No session returned after successful login");
