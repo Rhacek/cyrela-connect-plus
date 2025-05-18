@@ -15,6 +15,7 @@ import { useState } from "react";
 import { ShareQrCodeModal } from "./share-qr-code-modal";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { User } from "lucide-react";
+import { formatRelativeDate } from "@/lib/format-date";
 
 interface ShareLinkTableProps {
   links: SharedLink[];
@@ -104,13 +105,15 @@ export function ShareLinkTable({ links }: ShareLinkTableProps) {
                     {link.url}
                   </a>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{formatDate(link.createdAt)}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {formatRelativeDate(link.createdAt)}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex items-center">
                     <span className="font-medium">{link.clicks}</span>
                     {link.lastClickedAt && (
                       <span className="text-xs text-muted-foreground ml-2">
-                        último: {formatDate(link.lastClickedAt)}
+                        último: {formatRelativeDate(link.lastClickedAt)}
                       </span>
                     )}
                   </div>
