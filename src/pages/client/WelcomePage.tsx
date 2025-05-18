@@ -1,11 +1,30 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Search } from "lucide-react";
+import { useBrokerReferral } from "@/hooks/use-broker-referral";
+import { useEffect } from "react";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
+  const { brokerId } = useBrokerReferral();
+  
+  // Effect to show different text if coming from a broker referral
+  useEffect(() => {
+    if (brokerId) {
+      console.log("Client arriving via broker referral:", brokerId);
+    }
+  }, [brokerId]);
+  
+  const handleStartSearch = () => {
+    // If we have a broker referral, go to their page
+    if (brokerId) {
+      navigate("/client/broker");
+    } else {
+      // Otherwise go to regular search
+      navigate("/client/onboarding");
+    }
+  };
   
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-cyrela-gray-dark to-black">
@@ -41,13 +60,16 @@ const WelcomePage = () => {
             </h1>
             
             <p className="text-lg md:text-xl text-cyrela-gray-lightest mb-10 max-w-3xl mx-auto">
-              São Paulo, alto padrão, novos ou em construção
+              {brokerId 
+                ? "Um corretor exclusivo está pronto para ajudar na sua busca" 
+                : "São Paulo, alto padrão, novos ou em construção"
+              }
             </p>
             
             <Button className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" 
-                   onClick={() => navigate("/client/broker")}>
+                   onClick={handleStartSearch}>
               <Search className="mr-2 h-5 w-5" />
-              Buscar imóveis
+              {brokerId ? "Conhecer seu corretor" : "Buscar imóveis"}
             </Button>
           </div>
         </main>

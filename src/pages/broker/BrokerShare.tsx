@@ -5,6 +5,7 @@ import { ShareHeader } from "@/components/broker/share/share-header";
 import { ShareStatsGrid } from "@/components/broker/share/share-stats-grid";
 import { ShareLinkTable } from "@/components/broker/share/share-link-table";
 import { CreateShareLinkDialog } from "@/components/broker/share/create-share-link-dialog";
+import { ShareBrokerLink } from "@/components/broker/share/share-broker-link";
 import { useAuth } from "@/context/auth-context";
 import { ShareLoading } from "@/components/broker/share/share-loading";
 import { useBrokerShares } from "@/hooks/use-broker-shares";
@@ -41,6 +42,8 @@ export default function BrokerShare() {
     <div className="w-full">
       <div className="container py-6 md:py-8 max-w-7xl mx-auto">
         <ShareHeader onCreateLink={() => setIsCreateDialogOpen(true)} />
+        
+        <ShareBrokerLink />
         
         {isLoadingStats ? (
           <ShareLoading message="Carregando estatísticas..." />

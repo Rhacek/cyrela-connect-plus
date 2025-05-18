@@ -2,24 +2,61 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
-import { Search, ArrowRight, Phone } from "lucide-react";
+import { Search, ArrowRight, Phone, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useBrokerReferral } from "@/hooks/use-broker-referral";
+import { useQuery } from "@tanstack/react-query";
+import { brokerProfileService } from "@/services/broker-profile.service";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BrokerIntroPage = () => {
   const navigate = useNavigate();
+  const { brokerId, isLoading: isLoadingReferral } = useBrokerReferral();
   
-  // Mock broker data - would come from API/context in a real implementation
-  const broker = {
-    name: "Ana Silva",
-    photo: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-    creci: "154872-F",
-    phone: "(11) 98765-4321",
-    experience: "5 anos",
-    specialties: "Imóveis de alto padrão, Zona Sul",
-    bio: "Corretora com mais de 5 anos de experiência no mercado imobiliário de São Paulo, especializada em imóveis de alto padrão na zona sul da cidade. Comprometida em encontrar o imóvel perfeito para cada cliente."
-  };
+  // Fetch broker data if we have an ID
+  const { 
+    data: broker, 
+    isLoading: isLoadingBroker,
+    error 
+  } = useQuery({
+    queryKey: ['brokerPublicProfile', brokerId],
+    queryFn: () => brokerId ? brokerProfileService.getPublicProfile(brokerId) : null,
+    enabled: !!brokerId,
+  });
+
+  const isLoading = isLoadingReferral || isLoadingBroker;
+  
+  // Redirect to welcome page if no broker found after loading
+  useEffect(() => {
+    if (!isLoading && !broker && brokerId) {
+      navigate("/client/welcome");
+    }
+  }, [broker, isLoading, brokerId, navigate]);
+  
+  // Handle missing broker data
+  if (!isLoading && !broker) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
+        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Corretor não encontrado</h1>
+        <p className="text-gray-600 mb-6 text-center">
+          O corretor que você está procurando não está disponível ou o link é inválido.
+        </p>
+        <Button 
+          onClick={() => navigate("/client/welcome")}
+          className="bg-cyrela-red hover:bg-cyrela-red/90"
+        >
+          Voltar para a página inicial
+        </Button>
+      </div>
+    );
+  }
 
   const handleWhatsAppClick = () => {
+    if (!broker?.phone) return;
+    
     // Format phone number for WhatsApp URL by removing any non-digit characters
     const formattedPhone = broker.phone.replace(/\D/g, "");
     // Create WhatsApp URL with pre-filled message
@@ -51,54 +88,73 @@ const BrokerIntroPage = () => {
         
         {/* Main content */}
         <main className="flex-1 flex flex-col items-center justify-center px-4">
-          <div className="max-w-4xl text-center animate-fade-in">
-            <span className="inline-block mb-6 text-cyrela-gray-lightest font-light text-lg md:text-xl">
-              Seu corretor especializado estará com você em cada etapa
-            </span>
-            
-            <div className="flex flex-col items-center mb-8">
-              <Avatar className="w-32 h-32 mb-4 border-4 border-white shadow-lg">
-                <AvatarImage src={broker.photo} alt={broker.name} />
-                <AvatarFallback className="text-3xl bg-cyrela-red text-white">
-                  {broker.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
+          {isLoading ? (
+            <Card className="p-8 w-full max-w-md">
+              <div className="flex flex-col items-center">
+                <Skeleton className="w-32 h-32 rounded-full mb-4" />
+                <Skeleton className="h-8 w-2/3 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-4" />
+                <Skeleton className="h-24 w-full mb-6" />
+                <Skeleton className="h-10 w-1/2" />
+              </div>
+            </Card>
+          ) : (
+            <div className="max-w-4xl text-center animate-fade-in">
+              <span className="inline-block mb-6 text-cyrela-gray-lightest font-light text-lg md:text-xl">
+                Seu corretor especializado estará com você em cada etapa
+              </span>
               
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 font-poppins leading-tight">
-                {broker.name}
-              </h1>
-              
-              <p className="text-cyrela-gray-lightest mb-2">
-                CRECI {broker.creci} • {broker.experience} de experiência
-              </p>
-              
-              <p className="text-cyrela-gray-lightest mb-4">
-                Especialista em: {broker.specialties}
-              </p>
-              
-              <div className="max-w-lg text-center">
-                <p className="text-white mb-8">
-                  {broker.bio}
-                </p>
+              <div className="flex flex-col items-center mb-8">
+                <Avatar className="w-32 h-32 mb-4 border-4 border-white shadow-lg">
+                  <AvatarImage src={broker?.profileImage} alt={broker?.name} />
+                  <AvatarFallback className="text-3xl bg-cyrela-red text-white">
+                    {broker?.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 font-poppins leading-tight">
+                  {broker?.name}
+                </h1>
+                
+                {broker?.registryNumber && (
+                  <p className="text-cyrela-gray-lightest mb-2">
+                    CRECI {broker.registryNumber}
+                  </p>
+                )}
+                
+                {(broker?.company || broker?.brokerage) && (
+                  <p className="text-cyrela-gray-lightest mb-2">
+                    {broker.company || broker.brokerage}
+                  </p>
+                )}
+                
+                {broker?.city && (
+                  <p className="text-cyrela-gray-lightest mb-4">
+                    Região: {broker.city} {broker.zone ? `- ${broker.zone}` : ''}
+                  </p>
+                )}
+                
+                {broker?.phone && (
+                  <Button
+                    onClick={handleWhatsAppClick}
+                    className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-full flex items-center gap-2 mt-2 mb-8"
+                  >
+                    <Phone size={18} />
+                    Falar com {broker.name.split(' ')[0]}
+                  </Button>
+                )}
               </div>
               
-              <Button
-                onClick={handleWhatsAppClick}
-                className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-full flex items-center gap-2 mt-2 mb-8"
+              <Button 
+                className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" 
+                onClick={() => navigate("/client/onboarding")}
               >
-                <Phone size={18} />
-                Falar com {broker.name.split(' ')[0]}
+                <Search className="mr-2 h-5 w-5" />
+                Encontrar meu imóvel
               </Button>
             </div>
-            
-            <Button 
-              className="py-6 px-8 text-lg rounded-md bg-cyrela-red hover:bg-cyrela-red/90 transition-all duration-300 transform hover:scale-105" 
-              onClick={() => navigate("/client/onboarding")}
-            >
-              <Search className="mr-2 h-5 w-5" />
-              Encontrar meu imóvel
-            </Button>
-          </div>
+          )}
         </main>
         
         {/* Footer */}
@@ -108,14 +164,16 @@ const BrokerIntroPage = () => {
       </div>
       
       {/* Floating WhatsApp button */}
-      <div className="fixed bottom-6 right-6 z-30">
-        <Button
-          onClick={handleWhatsAppClick}
-          className="rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white h-14 w-14 flex items-center justify-center"
-        >
-          <Phone size={24} />
-        </Button>
-      </div>
+      {broker?.phone && (
+        <div className="fixed bottom-6 right-6 z-30">
+          <Button
+            onClick={handleWhatsAppClick}
+            className="rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white h-14 w-14 flex items-center justify-center"
+          >
+            <Phone size={24} />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

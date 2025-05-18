@@ -4,9 +4,20 @@ import { OnboardingForm } from "@/components/client/onboarding-form";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useBrokerReferral } from "@/hooks/use-broker-referral";
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
+  const { brokerId } = useBrokerReferral();
+
+  const handleGoBack = () => {
+    // Go back to broker page if we came from a referral
+    if (brokerId) {
+      navigate("/client/broker");
+    } else {
+      navigate("/client/welcome");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-cyrela-gray-lightest flex flex-col">
@@ -16,7 +27,7 @@ const OnboardingPage = () => {
           <Button
             variant="ghost"
             className="text-cyrela-gray-dark hover:text-cyrela-red"
-            onClick={() => navigate("/client/broker")}
+            onClick={handleGoBack}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
