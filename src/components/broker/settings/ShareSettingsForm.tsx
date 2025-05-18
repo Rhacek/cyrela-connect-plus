@@ -13,35 +13,33 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { BrokerShareSettings, brokerSettingsService } from "@/services/broker-settings.service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Define the schema for share settings
 const shareFormSchema = z.object({
   defaultExpirationEnabled: z.boolean().default(true),
-  defaultExpirationDays: z.coerce.number().min(1).max(365).default(30),
+  defaultExpirationDays: z.number().min(1).max(365),
   autoGenerateNotes: z.boolean().default(false),
   notifyOnShareClick: z.boolean().default(true),
-  defaultShareMode: z.enum(["standard", "short", "branded"]).default("standard"),
-  appendUTMParameters: z.boolean().default(true)
+  defaultShareMode: z.enum(["standard", "short", "branded"]),
+  appendUTMParameters: z.boolean().default(true),
 });
 
 type ShareFormValues = z.infer<typeof shareFormSchema>;
 
-export interface ShareSettings {
-  defaultExpirationEnabled: boolean;
-  defaultExpirationDays: number;
-  autoGenerateNotes: boolean;
-  notifyOnShareClick: boolean;
-  defaultShareMode: "standard" | "short" | "branded";
-  appendUTMParameters: boolean;
-}
-
 interface ShareSettingsFormProps {
   loading: boolean;
-  initialData?: ShareSettings;
+  initialData?: BrokerShareSettings;
   onSuccess?: () => void;
 }
 
@@ -60,16 +58,17 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
     },
   });
 
-  // Get the value of defaultExpirationEnabled to conditionally render the days input
-  const expirationEnabled = form.watch("defaultExpirationEnabled");
-
   const onSubmit = async (values: ShareFormValues) => {
     try {
       setIsSubmitting(true);
-      // Use existing broker settings service to update share settings
-      // We're extending the broker settings service functionality
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulating API call
-      
+      await brokerSettingsService.updateBrokerShareSettings({
+        defaultExpirationEnabled: values.defaultExpirationEnabled,
+        defaultExpirationDays: values.defaultExpirationDays,
+        autoGenerateNotes: values.autoGenerateNotes,
+        notifyOnShareClick: values.notifyOnShareClick,
+        defaultShareMode: values.defaultShareMode,
+        appendUTMParameters: values.appendUTMParameters
+      });
       toast.success("Configurações de compartilhamento atualizadas com sucesso!");
       onSuccess?.();
     } catch (error) {
@@ -83,7 +82,7 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3, 4, 5].map((index) => (
+        {[1, 2, 3, 4, 5, 6].map((index) => (
           <Skeleton key={index} className="w-full h-20" />
         ))}
         <Skeleton className="w-1/4 h-10 ml-auto" />
@@ -98,75 +97,31 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
         className="space-y-4"
       >
         <div className="space-y-4 mb-6">
-          <h3 className="text-lg font-medium">Expiração de Links</h3>
-          
-          <FormField
-            control={form.control}
-            name="defaultExpirationEnabled"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Expiração Automática</FormLabel>
-                  <FormDescription>
-                    Definir prazo de expiração para links compartilhados
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          {expirationEnabled && (
-            <FormField
-              control={form.control}
-              name="defaultExpirationDays"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dias até expiração</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} min={1} max={365} />
-                  </FormControl>
-                  <FormDescription>
-                    Número de dias até que um link compartilhado expire
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
-
-        <div className="space-y-4 mb-6">
-          <h3 className="text-lg font-medium">Preferências de Compartilhamento</h3>
+          <h3 className="text-lg font-medium">Links de Compartilhamento</h3>
           
           <FormField
             control={form.control}
             name="defaultShareMode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Formato de URL Padrão</FormLabel>
+                <FormLabel>Formato de URL padrão</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o formato de URL" />
+                      <SelectValue placeholder="Selecione um formato" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="standard">Padrão (URL completa)</SelectItem>
-                    <SelectItem value="short">Encurtada</SelectItem>
-                    <SelectItem value="branded">Personalizada com marca</SelectItem>
+                    <SelectItem value="short">URL curta</SelectItem>
+                    <SelectItem value="branded">URL personalizada</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Formato preferido para links compartilhados
+                  Escolha o formato de URL padrão para compartilhamentos
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -179,30 +134,9 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">Parâmetros UTM</FormLabel>
+                  <FormLabel className="text-base">Adicionar parâmetros UTM</FormLabel>
                   <FormDescription>
-                    Adicionar parâmetros UTM para análise de tráfego
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="autoGenerateNotes"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Notas Automáticas</FormLabel>
-                  <FormDescription>
-                    Gerar notas automáticas ao compartilhar imóveis
+                    Adicionar parâmetros UTM para rastreamento de marketing
                   </FormDescription>
                 </div>
                 <FormControl>
@@ -217,17 +151,86 @@ export const ShareSettingsForm = ({ loading, initialData, onSuccess }: ShareSett
         </div>
 
         <div className="space-y-4 mb-6">
-          <h3 className="text-lg font-medium">Notificações de Compartilhamento</h3>
+          <h3 className="text-lg font-medium">Expiração de Links</h3>
           
+          <FormField
+            control={form.control}
+            name="defaultExpirationEnabled"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Habilitar expiração automática</FormLabel>
+                  <FormDescription>
+                    Links compartilhados expirarão automaticamente
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          {form.watch("defaultExpirationEnabled") && (
+            <FormField
+              control={form.control}
+              name="defaultExpirationDays"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dias até expiração</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field} 
+                      onChange={e => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Número de dias até que os links compartilhados expirem
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
+        <div className="space-y-4 mb-6">
+          <h3 className="text-lg font-medium">Opções Adicionais</h3>
+          
+          <FormField
+            control={form.control}
+            name="autoGenerateNotes"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Gerar notas automaticamente</FormLabel>
+                  <FormDescription>
+                    Adicionar data de compartilhamento como nota automaticamente
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="notifyOnShareClick"
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">Notificar Cliques</FormLabel>
+                  <FormLabel className="text-base">Notificar sobre cliques</FormLabel>
                   <FormDescription>
-                    Receber notificações quando alguém clicar em um link compartilhado
+                    Receber notificação quando alguém clicar em um link compartilhado
                   </FormDescription>
                 </div>
                 <FormControl>
