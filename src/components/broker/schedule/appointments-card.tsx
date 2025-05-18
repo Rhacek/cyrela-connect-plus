@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { AppointmentsList } from "./appointments-list";
-import { Appointment } from "./appointment-item";
+import { Appointment } from "@/types/appointment";
 import { AppointmentTypeFilter } from "./appointment-type-filter";
 
 interface AppointmentsCardProps {
@@ -11,13 +11,15 @@ interface AppointmentsCardProps {
   filteredAppointments: Appointment[];
   typeFilter: string[];
   setTypeFilter: (types: string[]) => void;
+  onNewAppointment: () => void;
 }
 
 export function AppointmentsCard({ 
   formattedSelectedDate, 
   filteredAppointments,
   typeFilter,
-  setTypeFilter
+  setTypeFilter,
+  onNewAppointment
 }: AppointmentsCardProps) {
   return (
     <Card className="h-full border-cyrela-gray-lighter shadow-md">
@@ -33,13 +35,21 @@ export function AppointmentsCard({
             onFilterChange={setTypeFilter} 
           />
         </div>
-        <Button size="sm" className="shadow-sm">
+        <Button size="sm" className="shadow-sm" onClick={onNewAppointment}>
           <Plus className="h-4 w-4 mr-1" />
           Novo
         </Button>
       </CardHeader>
       <CardContent className="p-4">
-        <AppointmentsList appointments={filteredAppointments} />
+        <AppointmentsList 
+          appointments={filteredAppointments} 
+          onNewAppointment={onNewAppointment}
+          onStatusUpdate={() => {
+            // This will be passed down to the appointment item component
+            // and called when an appointment status is updated
+            // It will trigger a refetch of the appointments data
+          }}
+        />
       </CardContent>
     </Card>
   );

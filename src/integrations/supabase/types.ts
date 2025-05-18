@@ -9,6 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          broker_id: string
+          client_email: string
+          client_id: string | null
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          property_id: string
+          reminder_sent: boolean
+          reminder_sent_at: string | null
+          status: string
+          time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          broker_id: string
+          client_email: string
+          client_id?: string | null
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          property_id: string
+          reminder_sent?: boolean
+          reminder_sent_at?: string | null
+          status?: string
+          time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          broker_id?: string
+          client_email?: string
+          client_id?: string | null
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          property_id?: string
+          reminder_sent?: boolean
+          reminder_sent_at?: string | null
+          status?: string
+          time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to_id: string | null
@@ -540,6 +605,14 @@ export type Database = {
       is_broker: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      mark_appointment_reminder_sent: {
+        Args: { appointment_id: string }
+        Returns: undefined
+      }
+      update_appointment_status: {
+        Args: { appointment_id: string; new_status: string }
+        Returns: undefined
       }
     }
     Enums: {

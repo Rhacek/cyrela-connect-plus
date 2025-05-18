@@ -4,15 +4,16 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-import { Appointment } from "@/components/broker/schedule/appointment-item";
 import { CalendarCard } from "@/components/broker/schedule/calendar-card";
 import { AppointmentsCard } from "@/components/broker/schedule/appointments-card";
 import { useAuth } from "@/context/auth-context";
 import { appointmentsService } from "@/services/appointments.service";
+import { CreateAppointmentDialog } from "@/components/broker/schedule/create-appointment-dialog";
 
 export default function BrokerSchedule() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [typeFilter, setTypeFilter] = useState<string[]>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { session } = useAuth();
   const brokerId = session?.id;
   
@@ -20,7 +21,8 @@ export default function BrokerSchedule() {
   const { 
     data: appointments = [],
     isLoading, 
-    error
+    error,
+    refetch
   } = useQuery({
     queryKey: ['brokerAppointments', brokerId],
     queryFn: () => appointmentsService.getBrokerAppointments(brokerId || ""),
@@ -51,6 +53,18 @@ export default function BrokerSchedule() {
     }
   );
 
+  // Handle creating a new appointment
+  const handleCreateAppointment = async () => {
+    setIsCreateDialogOpen(true);
+  };
+
+  // Handle successful appointment creation
+  const handleAppointmentCreated = () => {
+    refetch();
+    setIsCreateDialogOpen(false);
+    toast.success("Agendamento criado com sucesso");
+  };
+
   // Format the selected date for display
   const formattedSelectedDate = date 
     ? format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -79,10 +93,20 @@ export default function BrokerSchedule() {
               filteredAppointments={filteredAppointments}
               typeFilter={typeFilter}
               setTypeFilter={setTypeFilter}
+              onNewAppointment={handleCreateAppointment}
             />
           )}
         </div>
       </div>
+
+      {isCreateDialogOpen && (
+        <CreateAppointmentDialog
+          isOpen={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          onAppointmentCreated={handleAppointmentCreated}
+          selectedDate={date || new Date()}
+        />
+      )}
     </div>
   );
 }
