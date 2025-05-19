@@ -1,6 +1,12 @@
 
 import { ReactNode } from "react";
 
+export interface OnboardingStepData {
+  title: string;
+  description: string;
+  component: React.ComponentType<any>;
+}
+
 export type OnboardingStep = React.ComponentType<any>;
 
 export interface OnboardingFormData {

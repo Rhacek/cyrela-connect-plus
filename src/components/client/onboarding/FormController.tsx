@@ -3,21 +3,7 @@ import { StepContainer } from "./StepContainer";
 import { StepNavigation } from "./StepNavigation";
 import { NavigationButtons } from "./NavigationButtons";
 import { useFormContext } from "./context/FormContext";
-import { ContactStep } from "./steps/ContactStep";
-import { LocationStep } from "./steps/LocationStep";
-import { DetailsStep } from "./steps/DetailsStep";
-import { ObjectiveStep } from "./steps/ObjectiveStep";
-import { ReviewStep } from "./steps/ReviewStep";
-import { OnboardingStep } from "./types";
-
-// Define steps array with explicit typing
-const steps: OnboardingStep[] = [
-  ContactStep,
-  LocationStep,
-  DetailsStep,
-  ObjectiveStep,
-  ReviewStep
-];
+import { ONBOARDING_STEPS } from "./steps";
 
 interface FormControllerProps {
   onSubmit: (formData: any) => void;
@@ -35,11 +21,14 @@ export function FormController({ onSubmit }: FormControllerProps) {
     loadingProgress
   } = useFormContext();
 
+  // Get step components from the ONBOARDING_STEPS array
+  const stepComponents = ONBOARDING_STEPS.map(step => step.component);
+
   const handleSubmitClick = () => {
     handleNext();
     
     // Only call onSubmit if we're on the last step
-    if (currentStep === steps.length - 1) {
+    if (currentStep === stepComponents.length - 1) {
       if (typeof onSubmit === 'function') {
         onSubmit(formData);
         return true;
@@ -51,7 +40,7 @@ export function FormController({ onSubmit }: FormControllerProps) {
   return (
     <div className="space-y-6">
       <StepNavigation 
-        steps={steps} 
+        steps={ONBOARDING_STEPS} 
         currentStep={currentStep} 
         completedSteps={completedSteps} 
         canNavigateToStep={canNavigateToStep}
@@ -59,9 +48,9 @@ export function FormController({ onSubmit }: FormControllerProps) {
       />
       
       <StepContainer isLoading={isLoading} loadingProgress={loadingProgress}>
-        {steps.map((Step, index) => (
+        {stepComponents.map((StepComponent, index) => (
           <div key={index} className={index === currentStep ? "block" : "hidden"}>
-            <Step />
+            <StepComponent {...formData} />
           </div>
         ))}
       </StepContainer>

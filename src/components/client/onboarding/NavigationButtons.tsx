@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useFormContext } from "./context/FormContext";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ONBOARDING_STEPS } from "./steps";
 
 interface NavigationButtonsProps {
   onSubmit?: () => boolean | void;
@@ -16,7 +17,7 @@ export function NavigationButtons({ onSubmit }: NavigationButtonsProps) {
     handleNext
   } = useFormContext();
   
-  const isLastStep = currentStep === 4; // Adjusted for 5 total steps (0-4)
+  const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
   
   const handleNextClick = () => {
     if (isLastStep && onSubmit) {
