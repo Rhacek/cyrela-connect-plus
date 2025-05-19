@@ -5,12 +5,11 @@ import { FormController } from "./onboarding/FormController";
 import { useBrokerReferral } from "@/hooks/use-broker-referral";
 import { leadsService } from "@/services/leads.service";
 import { LeadStatus } from "@/types";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export function OnboardingForm() {
   const navigate = useNavigate();
   const { brokerId } = useBrokerReferral();
-  const { toast } = useToast();
 
   const handleSubmitForm = async (formData: any) => {
     try {
@@ -34,10 +33,8 @@ export function OnboardingForm() {
       const result = await leadsService.createLead(leadData);
       
       if (result) {
-        toast({
-          title: "Formulário enviado com sucesso!",
-          description: "Vamos encontrar o imóvel perfeito para você.",
-          variant: "default",
+        toast.success("Formulário enviado com sucesso!", {
+          description: "Vamos encontrar o imóvel perfeito para você."
         });
         
         // Navigate to results with search parameters
@@ -57,10 +54,8 @@ export function OnboardingForm() {
       }
     } catch (error) {
       console.error("Error creating lead:", error);
-      toast({
-        title: "Erro ao enviar formulário",
-        description: "Por favor, tente novamente mais tarde.",
-        variant: "destructive",
+      toast.error("Erro ao enviar formulário", {
+        description: "Por favor, tente novamente mais tarde."
       });
     }
   };

@@ -8,9 +8,16 @@ import { LocationStep } from "./steps/LocationStep";
 import { DetailsStep } from "./steps/DetailsStep";
 import { ObjectiveStep } from "./steps/ObjectiveStep";
 import { ReviewStep } from "./steps/ReviewStep";
+import { OnboardingStep } from "./types";
 
-// Define steps array here instead of importing it
-const steps = [ContactStep, LocationStep, DetailsStep, ObjectiveStep, ReviewStep];
+// Define steps array with explicit typing
+const steps: OnboardingStep[] = [
+  ContactStep,
+  LocationStep,
+  DetailsStep,
+  ObjectiveStep,
+  ReviewStep
+];
 
 interface FormControllerProps {
   onSubmit: (formData: any) => void;
@@ -29,10 +36,14 @@ export function FormController({ onSubmit }: FormControllerProps) {
   } = useFormContext();
 
   const handleSubmitClick = () => {
-    const result = handleNext();
-    if (result && typeof onSubmit === 'function') {
-      onSubmit(formData);
-      return true;
+    handleNext();
+    
+    // Only call onSubmit if we're on the last step
+    if (currentStep === steps.length - 1) {
+      if (typeof onSubmit === 'function') {
+        onSubmit(formData);
+        return true;
+      }
     }
     return false;
   };

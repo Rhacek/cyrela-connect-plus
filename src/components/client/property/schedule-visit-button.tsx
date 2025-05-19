@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { ScheduleVisitDialog } from "./schedule-visit-dialog";
@@ -35,10 +36,11 @@ export function ScheduleVisitButton({ propertyId, brokerId }: ScheduleVisitButto
       
       {brokerId && (
         <ScheduleVisitDialog 
-          open={dialogOpen} 
-          onOpenChange={setDialogOpen}
+          isOpen={dialogOpen} 
+          onClose={() => setDialogOpen(false)}
           propertyId={propertyId}
           brokerId={brokerId}
+          propertyTitle="Visualizar imóvel" // Providing a default property title for now
         />
       )}
     </>

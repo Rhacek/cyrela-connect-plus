@@ -15,6 +15,6 @@ export interface FormContextProps {
   canNavigateToStep: (stepIndex: number) => boolean;
   navigateToStep: (stepIndex: number) => void;
   canAdvanceToNextStep: () => boolean;
-  handleNext: () => void;
+  handleNext: () => OnboardingFormData | undefined;
   handleBack: () => void;
 }

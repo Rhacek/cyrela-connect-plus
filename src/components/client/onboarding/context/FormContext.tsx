@@ -1,3 +1,4 @@
+
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { OnboardingFormData } from "../types";
 import { FormContextProps } from "./formTypes";
@@ -45,7 +46,7 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleNext = () => {
-    const totalSteps = 5; // Updated total number of steps (removed review step)
+    const totalSteps = 5; // Total number of steps
     
     if (currentStep < totalSteps - 1) {
       setIsLoading(true);
@@ -53,9 +54,11 @@ export const FormProvider = ({ children }: { children: ReactNode }) => {
         setCurrentStep(prev => prev + 1);
         setIsLoading(false);
       }, 400);
-    } else {
-      // Submit the form instead of redirecting directly
-      setIsLoading(true);
+      return;
+    }
+    
+    // On the last step, return the form data
+    if (currentStep === totalSteps - 1) {
       return formData;
     }
   };

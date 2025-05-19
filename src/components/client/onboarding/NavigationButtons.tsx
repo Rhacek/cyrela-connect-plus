@@ -22,7 +22,8 @@ export function NavigationButtons({ onSubmit }: NavigationButtonsProps) {
     if (isLastStep && onSubmit) {
       return onSubmit();
     } else {
-      return handleNext();
+      handleNext();
+      return true;
     }
   };
   
