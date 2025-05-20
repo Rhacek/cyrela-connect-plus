@@ -122,6 +122,9 @@ export function LeadCard({ lead, onUpdate }: LeadCardProps) {
     }
   };
 
+  // Garantir que o status seja exibido mesmo se for null ou undefined
+  const displayStatus = lead.status || "NOVO";
+
   return (
     <>
       <Card>
@@ -135,11 +138,9 @@ export function LeadCard({ lead, onUpdate }: LeadCardProps) {
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              {lead.status && (
-                <Badge variant={getStatusBadgeVariant(lead.status)}>
-                  {lead.status}
-                </Badge>
-              )}
+              <Badge variant={getStatusBadgeVariant(displayStatus)}>
+                {displayStatus}
+              </Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" disabled={isUpdating}>

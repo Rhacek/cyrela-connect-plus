@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -13,41 +13,60 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { appointmentsService } from "@/services/appointments.service";
+import { propertiesService } from "@/services/properties.service";
 import { Property } from "@/types";
 import { addDays, format, isAfter, isBefore, startOfToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 import { PropertySelect } from "./property-select";
 
 interface ScheduleVisitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   leadId: string;
-  onSuccess?: () => void;
   initialPropertyId?: string;
+  onSuccess?: () => void;
 }
 
 export function ScheduleVisitDialog({
   open,
   onOpenChange,
   leadId,
-  onSuccess,
-  initialPropertyId
+  initialPropertyId,
+  onSuccess
 }: ScheduleVisitDialogProps) {
   const [date, setDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [time, setTime] = useState<string>("10:00");
   const [notes, setNotes] = useState<string>("");
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(initialPropertyId || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const { toast } = useToast();
+  const { session } = useAuth();
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setDate(addDays(new Date(), 1));
+      setTime("10:00");
+      setNotes("");
+      setSelectedPropertyId(initialPropertyId || null);
+      setIsLoading(false);
+      setIsSubmitting(false);
+    } else {
+      setShowCalendar(false);
+    }
+  }, [open, initialPropertyId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !selectedProperty) {
+    if (!date || !selectedPropertyId || !session?.id) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Selecione um imóvel e uma data para a visita",
         variant: "destructive"
       });
       return;
@@ -72,11 +91,12 @@ export function ScheduleVisitDialog({
     
     try {
       await appointmentsService.create({
-        leadId,
-        propertyId: selectedProperty.id,
+        clientId: leadId,
+        propertyId: selectedPropertyId,
         scheduledAt: visitDateTime.toISOString(),
         notes,
-        status: "AGENDADA"
+        status: "AGENDADA",
+        brokerId: session.id
       });
       
       toast({
@@ -89,7 +109,7 @@ export function ScheduleVisitDialog({
       setDate(addDays(new Date(), 1));
       setTime("10:00");
       setNotes("");
-      setSelectedProperty(null);
+      setSelectedPropertyId(null);
       
       // Callback
       onSuccess?.();
@@ -105,8 +125,8 @@ export function ScheduleVisitDialog({
     }
   };
 
-  const handlePropertySelect = (property: Property | null) => {
-    setSelectedProperty(property);
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar);
   };
   
   return (
@@ -116,15 +136,16 @@ export function ScheduleVisitDialog({
           <DialogHeader>
             <DialogTitle>Agendar Visita</DialogTitle>
             <DialogDescription>
-              Agende uma visita ao imóvel para o lead.
+              Agende uma visita para o lead selecionado
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="property">Imóvel</Label>
-              <PropertySelect 
-                onPropertySelect={handlePropertySelect} 
+              <PropertySelect
+                value={selectedPropertyId}
+                onChange={setSelectedPropertyId}
                 initialPropertyId={initialPropertyId}
               />
             </div>
@@ -134,23 +155,29 @@ export function ScheduleVisitDialog({
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Button
-                    variant="outline"
                     type="button"
+                    variant="outline"
                     className={`w-full justify-start text-left font-normal ${!date ? 'text-muted-foreground' : ''}`}
+                    onClick={toggleCalendar}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
                   </Button>
-                  <div className="absolute top-full z-50 mt-1">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(date) => isBefore(date, startOfToday())}
-                      initialFocus
-                      locale={ptBR}
-                    />
-                  </div>
+                  {showCalendar && (
+                    <div className="absolute top-full z-50 mt-1 bg-background border rounded-md shadow-md">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={(newDate) => {
+                          setDate(newDate);
+                          setShowCalendar(false);
+                        }}
+                        disabled={(date) => isBefore(date, startOfToday())}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex-none w-full sm:w-24">
@@ -189,7 +216,7 @@ export function ScheduleVisitDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting || !date || !selectedProperty}
+              disabled={isSubmitting || !selectedPropertyId || !date}
             >
               {isSubmitting ? "Agendando..." : "Agendar Visita"}
             </Button>

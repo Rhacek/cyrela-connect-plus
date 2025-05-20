@@ -1,136 +1,144 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/auth-context";
-import { SubscriptionProvider } from "@/context/subscription-context";
-import { ProtectedRoute } from "@/components/auth/protected-route";
-import { UserRole } from "@/types";
+import { BrowserRouter } from "react-router-dom";
+import { Suspense, lazy } from "react";
+import { AuthProvider } from "./context/auth-context";
+import { SubscriptionProvider } from "./context/subscription-context";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Pages
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import AuthPage from "./pages/AuthPage";
+// Layouts
+import AdminLayout from "./components/admin/AdminLayout";
+import BrokerLayout from "./components/broker/BrokerLayout";
+import ClientLayout from "./components/client/ClientLayout";
+import AuthLayout from "./components/auth/AuthLayout";
 
-// Broker pages and layout
-import BrokerLayout from "./components/broker/BrokerLayout"; // Import the BrokerLayout
+// Auth Pages
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminBrokers from "./pages/admin/AdminBrokers";
+import AdminProperties from "./pages/admin/AdminProperties";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPropertyDetail from "./pages/admin/AdminPropertyDetail";
+import AdminBrokerDetail from "./pages/admin/AdminBrokerDetail";
+
+// Broker Pages
 import BrokerDashboard from "./pages/broker/BrokerDashboard";
-import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerProperties from "./pages/broker/BrokerProperties";
-import BrokerSchedule from "./pages/broker/BrokerSchedule";
+import BrokerPropertyDetailPage from "./pages/broker/BrokerPropertyDetailPage";
 import BrokerLeads from "./pages/broker/BrokerLeads";
+import BrokerSchedule from "./pages/broker/BrokerSchedule";
 import BrokerMetrics from "./pages/broker/BrokerMetrics";
-import BrokerShare from "./pages/broker/BrokerShare";
-import BrokerPlans from "./pages/broker/BrokerPlans";
+import BrokerProfile from "./pages/broker/BrokerProfile";
 import BrokerSettings from "./pages/broker/BrokerSettings";
+import BrokerPlans from "./pages/broker/BrokerPlans";
+import BrokerShare from "./pages/broker/BrokerShare";
 
-// Client pages
+// Client Pages
 import WelcomePage from "./pages/client/WelcomePage";
-import BrokerIntroPage from "./pages/client/BrokerIntroPage";
-import OnboardingPage from "./pages/client/OnboardingPage";
 import PropertyListingPage from "./pages/client/PropertyListingPage";
 import PropertyDetailPage from "./pages/client/PropertyDetailPage";
+import OnboardingPage from "./pages/client/OnboardingPage";
+import BrokerIntroPage from "./pages/client/BrokerIntroPage";
 
-// Admin pages
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminProperties from "./pages/admin/AdminProperties";
-import AdminPropertyForm from "./pages/admin/AdminPropertyForm";
-import AdminBrokers from "./pages/admin/AdminBrokers";
-import AdminBrokerForm from "./pages/admin/AdminBrokerForm";
-import AdminBrokerTargets from "./pages/admin/AdminBrokerTargets"; // Import the new page
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminPlans from "./pages/admin/AdminPlans";
+// Other
+import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/auth/protected-route";
+import { Toaster } from "./components/ui/toaster";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
+// Create a client
+const queryClient = new QueryClient();
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <ClientLayout />,
+    errorElement: <NotFound />,
+    children: [
+      { index: true, element: <WelcomePage /> },
+      { path: "properties", element: <PropertyListingPage /> },
+      { path: "properties/:id", element: <PropertyDetailPage /> },
+      { path: "broker/:id", element: <BrokerIntroPage /> },
+    ],
   },
-});
+  {
+    path: "/onboarding",
+    element: <OnboardingPage />,
+  },
+  {
+    path: "/auth",
+    element: <AuthLayout />,
+    children: [
+      { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+    ],
+  },
+  {
+    path: "/admin",
+    element: (
+      <ProtectedRoute requiredRole="ADMIN">
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: "brokers", element: <AdminBrokers /> },
+      { path: "brokers/:id", element: <AdminBrokerDetail /> },
+      { path: "properties", element: <AdminProperties /> },
+      { path: "properties/:id", element: <AdminPropertyDetail /> },
+      { path: "settings", element: <AdminSettings /> },
+    ],
+  },
+  {
+    path: "/broker",
+    element: (
+      <ProtectedRoute requiredRole="BROKER">
+        <BrokerLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <BrokerDashboard /> },
+      { path: "dashboard", element: <BrokerDashboard /> },
+      { path: "properties", element: <BrokerProperties /> },
+      { path: "properties/:id", element: <BrokerPropertyDetailPage /> },
+      { path: "leads", element: <BrokerLeads /> },
+      { path: "schedule", element: <BrokerSchedule /> },
+      { path: "metrics", element: <BrokerMetrics /> },
+      { path: "profile", element: <BrokerProfile /> },
+      { path: "settings", element: <BrokerSettings /> },
+      { path: "plans", element: <BrokerPlans /> },
+      { path: "share", element: <BrokerShare /> },
+    ],
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
-              
-              {/* Broker routes - protected for broker role and using BrokerLayout */}
-              <Route 
-                path="/broker" 
-                element={
-                  <ProtectedRoute allowedRoles={[UserRole.BROKER]}>
-                    <BrokerLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Navigate to="/broker/dashboard" replace />} />
-                <Route path="dashboard" element={<BrokerDashboard />} />
-                <Route path="profile" element={<BrokerProfile />} />
-                <Route path="properties" element={<BrokerProperties />} />
-                <Route path="schedule" element={<BrokerSchedule />} />
-                <Route path="leads" element={<BrokerLeads />} />
-                <Route path="metrics" element={<BrokerMetrics />} />
-                <Route path="share" element={<BrokerShare />} />
-                <Route path="plans" element={<BrokerPlans />} />
-                <Route path="settings" element={<BrokerSettings />} />
-              </Route>
-              
-              {/* Client routes */}
-              <Route path="/client/welcome" element={<WelcomePage />} />
-              <Route path="/client/broker" element={<BrokerIntroPage />} />
-              <Route path="/client/onboarding" element={<OnboardingPage />} />
-              <Route path="/client/results" element={<PropertyListingPage />} />
-              <Route path="/client/property/:id" element={<PropertyDetailPage />} />
-              
-              {/* Admin routes - protected for admin role */}
-              <Route 
-                path="/admin/*" 
-                element={
-                  <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminDashboard />} />
-                <Route path="dashboard" element={<Navigate to="/admin/" replace />} />
-                <Route path="properties/" element={<AdminProperties />} />
-                <Route path="properties/new/" element={<AdminPropertyForm />} />
-                <Route path="properties/:id/edit/" element={<AdminPropertyForm />} />
-                <Route path="brokers/" element={<AdminBrokers />} />
-                <Route path="brokers/new/" element={<AdminBrokerForm />} />
-                <Route path="brokers/:id/edit/" element={<AdminBrokerForm />} />
-                <Route path="brokers/targets/" element={<AdminBrokerTargets />} /> {/* Add new route */}
-                <Route path="settings/" element={<AdminSettings />} />
-                <Route path="plans/" element={<AdminPlans />} />
-              </Route>
-              
-              {/* Redirects to ensure consistent trailing slashes */}
-              <Route path="/admin" element={<Navigate to="/admin/" replace />} />
-              <Route path="/admin/properties" element={<Navigate to="/admin/properties/" replace />} />
-              <Route path="/admin/brokers" element={<Navigate to="/admin/brokers/" replace />} />
-              <Route path="/admin/brokers/targets" element={<Navigate to="/admin/brokers/targets/" replace />} /> {/* Add redirect */}
-              <Route path="/admin/plans" element={<Navigate to="/admin/plans/" replace />} />
-              <Route path="/admin/settings" element={<Navigate to="/admin/settings/" replace />} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
-        </SubscriptionProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <TooltipProvider>
+              <Suspense fallback={<div>Carregando...</div>}>
+                <RouterProvider router={router} />
+              </Suspense>
+              <Toaster />
+            </TooltipProvider>
+          </SubscriptionProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
