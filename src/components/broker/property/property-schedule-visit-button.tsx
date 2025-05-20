@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Property } from "@/types";
 import { useState } from "react";
 import { Calendar } from "lucide-react";
-import { ScheduleVisitDialog } from "./schedule-visit-dialog";
+import { ScheduleVisitDialog } from "../leads/schedule-visit-dialog";
 
 interface PropertyScheduleVisitButtonProps {
   propertyId: string;
@@ -31,7 +31,8 @@ export function PropertyScheduleVisitButton({
       <ScheduleVisitDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        propertyId={propertyId}
+        leadId=""
+        initialPropertyId={propertyId}
       />
     </>
   );

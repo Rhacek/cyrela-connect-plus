@@ -1,231 +1,200 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { format } from "date-fns";
-import { CalendarClock, MapPin } from "lucide-react";
-import { Lead, LeadStatus } from "@/types";
-import { useAuth } from "@/context/auth-context";
-import { appointmentsService } from "@/services/appointments.service";
-import { incrementPerformanceMetric } from "@/services/performance/performance-mutation.service";
-import { toast } from "@/hooks/use-toast";
-import { PropertySelect } from "./property-select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { appointmentsService } from "@/services/appointments.service";
+import { Property } from "@/types";
+import { addDays, format, isAfter, isBefore, startOfToday } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
+import { PropertySelect } from "./property-select";
 
 interface ScheduleVisitDialogProps {
-  lead: Lead;
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  leadId: string;
   onSuccess?: () => void;
+  initialPropertyId?: string;
 }
 
-interface ScheduleVisitFormValues {
-  date: Date;
-  time: string;
-  propertyId: string;
-  notes?: string;
-}
-
-export function ScheduleVisitDialog({ lead, isOpen, onClose, onSuccess }: ScheduleVisitDialogProps) {
-  const { session } = useAuth();
+export function ScheduleVisitDialog({
+  open,
+  onOpenChange,
+  leadId,
+  onSuccess,
+  initialPropertyId
+}: ScheduleVisitDialogProps) {
+  const [date, setDate] = useState<Date | undefined>(addDays(new Date(), 1));
+  const [time, setTime] = useState<string>("10:00");
+  const [notes, setNotes] = useState<string>("");
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const form = useForm<ScheduleVisitFormValues>({
-    defaultValues: {
-      date: new Date(),
-      time: "10:00",
-      propertyId: lead.propertyId || "",
-      notes: ""
-    }
-  });
-
-  const handleSubmit = async (values: ScheduleVisitFormValues) => {
-    if (!session?.id) {
-      toast.error("Sessão expirada. Faça login novamente.");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!date || !selectedProperty) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
       return;
     }
-
+    
+    // Combine date and time
+    const [hours, minutes] = time.split(":").map(Number);
+    const visitDateTime = new Date(date);
+    visitDateTime.setHours(hours, minutes);
+    
+    // Validate date is in the future
+    if (isBefore(visitDateTime, new Date())) {
+      toast({
+        title: "Data inválida",
+        description: "A data e hora da visita devem ser no futuro",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
-
+    
     try {
-      // Create appointment
-      const appointmentData = {
-        propertyId: values.propertyId,
-        brokerId: session.id,
-        clientId: undefined, // No client account for this lead
-        title: `Visita com ${lead.name}`,
-        date: values.date,
-        time: values.time,
-        notes: values.notes,
-        clientName: lead.name,
-        clientEmail: lead.email,
-        clientPhone: lead.phone
-      };
-
-      const result = await appointmentsService.createAppointment(appointmentData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Falha ao agendar visita");
-      }
-
-      // Update lead status if it's in NEW or CONTACTED state
-      if (lead.status === "NEW" || lead.status === "CONTACTED") {
-        await updateLeadStatus(lead.id, LeadStatus.SCHEDULED);
-      }
-
-      // Increment performance metric
-      await incrementPerformanceMetric(session.id, "schedules");
-
-      toast.success("Visita agendada com sucesso!");
+      await appointmentsService.create({
+        leadId,
+        propertyId: selectedProperty.id,
+        scheduledAt: visitDateTime.toISOString(),
+        notes,
+        status: "AGENDADA"
+      });
       
-      if (onSuccess) {
-        onSuccess();
-      }
+      toast({
+        title: "Visita agendada",
+        description: "Visita agendada com sucesso!",
+      });
+      onOpenChange(false);
       
-      onClose();
+      // Reset form
+      setDate(addDays(new Date(), 1));
+      setTime("10:00");
+      setNotes("");
+      setSelectedProperty(null);
+      
+      // Callback
+      onSuccess?.();
     } catch (error) {
       console.error("Error scheduling visit:", error);
-      toast.error("Erro ao agendar visita. Tente novamente.");
+      toast({
+        title: "Erro ao agendar visita",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const updateLeadStatus = async (leadId: string, status: LeadStatus) => {
-    try {
-      const { leadsService } = await import("@/services/leads.service");
-      await leadsService.updateLeadStatus(leadId, status);
-    } catch (error) {
-      console.error("Error updating lead status:", error);
-    }
+  const handlePropertySelect = (property: Property | null) => {
+    setSelectedProperty(property);
   };
-
+  
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="h-5 w-5" />
-            Agendar Visita com {lead.name}
-          </DialogTitle>
-          <DialogDescription>
-            Agende uma visita a um imóvel com este lead.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="propertyId"
-              rules={{ required: "Selecione um imóvel" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Imóvel</FormLabel>
-                  <FormControl>
-                    <PropertySelect
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Selecione um imóvel"
-                      icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                rules={{ required: "Selecione uma data" }}
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Data</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione uma data</span>
-                            )}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          disabled={(date) => date < new Date()}
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="time"
-                rules={{ required: "Informe um horário" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Agendar Visita</DialogTitle>
+            <DialogDescription>
+              Agende uma visita ao imóvel para o lead.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="property">Imóvel</Label>
+              <PropertySelect 
+                onPropertySelect={handlePropertySelect} 
+                initialPropertyId={initialPropertyId}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Adicione informações importantes sobre esta visita"
-                      className="resize-none"
-                      {...field}
+            
+            <div className="grid gap-2">
+              <Label>Data da Visita</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className={`w-full justify-start text-left font-normal ${!date ? 'text-muted-foreground' : ''}`}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP", { locale: ptBR }) : "Selecione uma data"}
+                  </Button>
+                  <div className="absolute top-full z-50 mt-1">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(date) => isBefore(date, startOfToday())}
+                      initialFocus
+                      locale={ptBR}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Agendando..." : "Agendar Visita"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                  </div>
+                </div>
+                
+                <div className="flex-none w-full sm:w-24">
+                  <Input
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="w-full"
+                    min="08:00"
+                    max="18:00"
+                    step="1800"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Input
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Observações adicionais sobre a visita"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !date || !selectedProperty}
+            >
+              {isSubmitting ? "Agendando..." : "Agendar Visita"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

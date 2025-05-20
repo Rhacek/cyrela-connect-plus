@@ -1,9 +1,7 @@
-
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Property } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building, Check, Construction } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { MapPin, Bed, Bath, Square, Home } from "lucide-react";
 
 interface PropertyDetailsProps {
   property: Property;
@@ -18,87 +16,92 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
     });
   };
 
-  const getConstructionStageIcon = (stage?: string) => {
-    switch (stage) {
-      case "Na planta":
-        return <Building size={16} className="mr-1" />;
-      case "Em construção":
-        return <Construction size={16} className="mr-1" />;
-      case "Pronto para morar":
-        return <Check size={16} className="mr-1" />;
-      default:
-        return null;
-    }
-  };
-
-  // Simulating delivery date (in a real app this would come from the API)
-  const getDeliveryDate = () => {
-    if (property.constructionStage === "Pronto para morar") {
-      return "Pronto para morar";
-    } else if (property.constructionStage === "Em construção") {
-      return "Previsão de entrega: Dez 2025";
-    } else {
-      return "Previsão de entrega: Jun 2027";
-    }
-  };
-
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
+    <div className="space-y-6">
+      {/* Descrição */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Descrição</h3>
+        <p className="text-muted-foreground whitespace-pre-line">
+          {property.description || "Sem descrição disponível para este imóvel."}
+        </p>
+      </div>
+
+      {/* Características */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Características</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="flex items-center">
+            <Bed className="h-5 w-5 mr-2 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{property.bedrooms}</p>
+              <p className="text-xs text-muted-foreground">Quartos</p>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <Bath className="h-5 w-5 mr-2 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{property.bathrooms}</p>
+              <p className="text-xs text-muted-foreground">Banheiros</p>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <Square className="h-5 w-5 mr-2 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{property.area}m²</p>
+              <p className="text-xs text-muted-foreground">Área</p>
+            </div>
+          </div>
+          {property.parkingSpots && (
+            <div className="flex items-center">
+              <Home className="h-5 w-5 mr-2 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{property.parkingSpots}</p>
+                <p className="text-xs text-muted-foreground">Vagas</p>
+              </div>
+            </div>
+          )}
+          {property.constructionStage && (
+            <div className="flex items-center">
+              <Home className="h-5 w-5 mr-2 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">{property.constructionStage}</p>
+                <p className="text-xs text-muted-foreground">Estágio</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Endereço */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Endereço</h3>
+        <p className="text-muted-foreground">
+          {property.address}, {property.neighborhood}, {property.city} - {property.state}
+        </p>
+      </div>
+
+      {/* Valores */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Valores</h3>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <CardTitle className="text-2xl font-bold">{property.title}</CardTitle>
-            <p className="text-cyrela-gray-dark mt-1">{property.address}, {property.neighborhood}, {property.city}</p>
+            <p className="text-sm text-muted-foreground">Valor</p>
+            <p className="font-medium">{formatCurrency(property.price)}</p>
           </div>
-          <Badge className="flex items-center bg-white text-black border">
-            {getConstructionStageIcon(property.constructionStage)}
-            {property.constructionStage || "Não informado"}
-          </Badge>
+          {property.condoFee && (
+            <div>
+              <p className="text-sm text-muted-foreground">Condomínio</p>
+              <p className="font-medium">{formatCurrency(property.condoFee)}</p>
+            </div>
+          )}
+          {property.iptu && (
+            <div>
+              <p className="text-sm text-muted-foreground">IPTU</p>
+              <p className="font-medium">{formatCurrency(property.iptu)}</p>
+            </div>
+          )}
         </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="mt-2">
-          <div className="text-cyrela-gray-medium text-sm">
-            {getDeliveryDate()}
-          </div>
-          
-          <div className="mt-4">
-            <div className="text-3xl font-bold text-primary">
-              {formatCurrency(property.price)}
-            </div>
-            <p className="text-cyrela-gray-medium text-sm">
-              Valor de venda
-            </p>
-          </div>
-          
-          <Separator className="my-4" />
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <div>
-              <p className="text-cyrela-gray-medium text-sm">Área</p>
-              <p className="font-semibold">{property.area} m²</p>
-            </div>
-            <div>
-              <p className="text-cyrela-gray-medium text-sm">Quartos</p>
-              <p className="font-semibold">{property.bedrooms}</p>
-            </div>
-            <div>
-              <p className="text-cyrela-gray-medium text-sm">Banheiros</p>
-              <p className="font-semibold">{property.bathrooms}</p>
-            </div>
-            <div>
-              <p className="text-cyrela-gray-medium text-sm">Suítes</p>
-              <p className="font-semibold">{property.suites}</p>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <p className="text-cyrela-gray-medium text-sm">Descrição</p>
-            <p className="mt-1">{property.description}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

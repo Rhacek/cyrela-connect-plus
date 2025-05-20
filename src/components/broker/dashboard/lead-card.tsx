@@ -1,173 +1,214 @@
-import { useState } from "react";
-import { User, Phone, Mail, Calendar, Clock, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lead, LeadStatus } from "@/types";
-import { cn } from "@/lib/utils";
+import { Lead } from "@/types";
+import { useState } from "react";
+import { Phone, Mail, Calendar, MoreHorizontal, Tag } from "lucide-react";
 import { ScheduleVisitDialog } from "../leads/schedule-visit-dialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { leadsService } from "@/services/leads.service";
 
 interface LeadCardProps {
   lead: Lead;
-  showActions?: boolean;
-  className?: string;
-  onLeadUpdated?: () => void;
+  onUpdate?: () => void;
 }
 
-export function LeadCard({ lead, showActions = true, className, onLeadUpdated }: LeadCardProps) {
+export function LeadCard({ lead, onUpdate }: LeadCardProps) {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { toast } = useToast();
 
-  const getStatusColor = (status: LeadStatus) => {
-    switch (status) {
-      case LeadStatus.NEW:
-        return "bg-blue-100 text-blue-800";
-      case LeadStatus.CONTACTED:
-        return "bg-indigo-100 text-indigo-800";
-      case LeadStatus.INTERESTED:
-        return "bg-purple-100 text-purple-800";
-      case LeadStatus.SCHEDULED:
-        return "bg-yellow-100 text-yellow-800";
-      case LeadStatus.VISITED:
-        return "bg-green-100 text-green-800";
-      case LeadStatus.CONVERTED:
-        return "bg-living-gold bg-opacity-20 text-living-gold";
-      case LeadStatus.LOST:
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Funções para lidar com os botões de ação
+  const handlePhoneCall = () => {
+    if (lead.phone) {
+      window.location.href = `tel:${lead.phone}`;
+      
+      // Registrar contato
+      leadsService.registerContact(lead.id, "PHONE_CALL")
+        .then(() => {
+          toast({
+            title: "Contato registrado",
+            description: "Ligação registrada com sucesso"
+          });
+          onUpdate?.();
+        })
+        .catch(error => {
+          console.error("Error registering contact:", error);
+        });
+    } else {
+      toast({
+        title: "Telefone não disponível",
+        description: "Este lead não possui telefone cadastrado",
+        variant: "destructive"
+      });
     }
   };
 
-  const getStatusLabel = (status: LeadStatus) => {
-    switch (status) {
-      case LeadStatus.NEW:
-        return "Novo";
-      case LeadStatus.CONTACTED:
-        return "Contatado";
-      case LeadStatus.INTERESTED:
-        return "Interessado";
-      case LeadStatus.SCHEDULED:
-        return "Agendado";
-      case LeadStatus.VISITED:
-        return "Visitado";
-      case LeadStatus.CONVERTED:
-        return "Convertido";
-      case LeadStatus.LOST:
-        return "Perdido";
-      default:
-        return status;
+  const handleSendEmail = () => {
+    if (lead.email) {
+      window.location.href = `mailto:${lead.email}`;
+      
+      // Registrar contato
+      leadsService.registerContact(lead.id, "EMAIL")
+        .then(() => {
+          toast({
+            title: "Contato registrado",
+            description: "Email registrado com sucesso"
+          });
+          onUpdate?.();
+        })
+        .catch(error => {
+          console.error("Error registering contact:", error);
+        });
+    } else {
+      toast({
+        title: "Email não disponível",
+        description: "Este lead não possui email cadastrado",
+        variant: "destructive"
+      });
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleScheduleVisit = () => {
+    setScheduleDialogOpen(true);
   };
 
   const handleScheduleSuccess = () => {
-    if (onLeadUpdated) {
-      onLeadUpdated();
+    onUpdate?.();
+  };
+
+  const updateLeadStatus = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      await leadsService.updateStatus(lead.id, status);
+      toast({
+        title: "Status atualizado",
+        description: `Lead marcado como ${status.toLowerCase()}`
+      });
+      onUpdate?.();
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Função para determinar a cor do badge baseado no status
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case 'QUENTE':
+        return 'destructive';
+      case 'MORNO':
+        return 'default';
+      case 'FRIO':
+        return 'secondary';
+      case 'VISITA':
+        return 'outline';
+      case 'DESQUALIFICADO':
+        return 'secondary';
+      default:
+        return 'secondary';
     }
   };
 
   return (
-    <div className={cn(
-      "bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-cyrela-gray-lighter flex flex-col",
-      lead.isManual && "border-l-4 border-l-cyrela-blue",
-      className
-    )}>
-      <div className="flex justify-between items-start">
-        <div className="flex items-center min-w-0 flex-1">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-cyrela-gray-lighter flex items-center justify-center shrink-0">
-            <User size={16} className="sm:hidden text-cyrela-gray-dark" />
-            <User size={20} className="hidden sm:block text-cyrela-gray-dark" />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{lead.name}</CardTitle>
+              <CardDescription>
+                {lead.email && <div>{lead.email}</div>}
+                {lead.phone && <div>{lead.phone}</div>}
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              {lead.status && (
+                <Badge variant={getStatusBadgeVariant(lead.status)}>
+                  {lead.status}
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" disabled={isUpdating}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => updateLeadStatus("FRIO")}>
+                    <Tag className="mr-2 h-4 w-4" />
+                    Marcar como Frio
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateLeadStatus("MORNO")}>
+                    <Tag className="mr-2 h-4 w-4" />
+                    Marcar como Morno
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateLeadStatus("QUENTE")}>
+                    <Tag className="mr-2 h-4 w-4" />
+                    Marcar como Quente
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateLeadStatus("VISITA")}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Marcar como Visita
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => updateLeadStatus("DESQUALIFICADO")}>
+                    <Tag className="mr-2 h-4 w-4" />
+                    Desqualificar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <div className="ml-2 sm:ml-3 min-w-0 flex-1 overflow-hidden">
-            <h3 className="text-sm sm:text-base font-medium truncate">{lead.name}</h3>
-            <p className="text-xs sm:text-sm text-cyrela-gray-dark truncate">{lead.source}</p>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm">
+            <p><strong>Interesse:</strong> {lead.interest || "Não informado"}</p>
+            <p><strong>Orçamento:</strong> {lead.budget ? 
+              lead.budget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 
+              "Não informado"}
+            </p>
+            <p><strong>Criado em:</strong> {new Date(lead.createdAt).toLocaleDateString('pt-BR')}</p>
+            {lead.lastContact && (
+              <p><strong>Último contato:</strong> {new Date(lead.lastContact).toLocaleDateString('pt-BR')}</p>
+            )}
           </div>
-        </div>
-        
-        <Badge className={cn(
-          "px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-normal whitespace-nowrap ml-1 sm:ml-2 shrink-0",
-          getStatusColor(lead.status)
-        )}>
-          {getStatusLabel(lead.status)}
-        </Badge>
-      </div>
-      
-      <div className="mt-2 sm:mt-3 space-y-1 sm:space-y-2">
-        <div className="flex items-center text-xs sm:text-sm">
-          <Phone size={14} className="mr-1.5 sm:mr-2 text-cyrela-gray-dark shrink-0" />
-          <span className="truncate">{lead.phone}</span>
-        </div>
-        
-        <div className="flex items-center text-xs sm:text-sm">
-          <Mail size={14} className="mr-1.5 sm:mr-2 text-cyrela-gray-dark shrink-0" />
-          <span className="truncate">{lead.email}</span>
-        </div>
-        
-        <div className="flex items-center text-xs sm:text-sm flex-wrap">
-          <div className="flex items-center mr-3 sm:mr-4 mb-1">
-            <Calendar size={14} className="mr-1.5 sm:mr-2 text-cyrela-gray-dark shrink-0" />
-            <span>{formatDate(lead.createdAt)}</span>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm" onClick={handlePhoneCall}>
+              <Phone className="mr-2 h-4 w-4" />
+              Ligar
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSendEmail}>
+              <Mail className="mr-2 h-4 w-4" />
+              Email
+            </Button>
           </div>
-          <div className="flex items-center">
-            <Clock size={14} className="mr-1.5 sm:mr-2 text-cyrela-gray-dark shrink-0" />
-            <span>{formatTime(lead.createdAt)}</span>
-          </div>
-        </div>
-      </div>
-      
-      {lead.notes && (
-        <div className="mt-2 sm:mt-3 p-1.5 sm:p-2 bg-cyrela-gray-lightest rounded text-xs sm:text-sm">
-          <p className="text-cyrela-gray-dark line-clamp-2">{lead.notes}</p>
-        </div>
-      )}
-      
-      {showActions && (
-        <div className="mt-2 sm:mt-3 flex flex-wrap gap-1 sm:gap-2">
-          <Button variant="outline" size="sm" className="bg-white text-xs px-2 py-1 h-auto">
-            <Phone size={14} className="mr-1 sm:mr-2 shrink-0" />
-            <span className="truncate">Ligar</span>
+          <Button size="sm" onClick={handleScheduleVisit}>
+            <Calendar className="mr-2 h-4 w-4" />
+            Agendar Visita
           </Button>
-          
-          <Button variant="outline" size="sm" className="bg-white text-xs px-2 py-1 h-auto">
-            <Mail size={14} className="mr-1 sm:mr-2 shrink-0" />
-            <span className="truncate">Email</span>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white text-xs px-2 py-1 h-auto"
-            onClick={() => setScheduleDialogOpen(true)}
-          >
-            <CalendarClock size={14} className="mr-1 sm:mr-2 shrink-0" />
-            <span className="truncate">Agendar visita</span>
-          </Button>
-          
-          <Button className="ml-auto bg-cyrela-blue hover:bg-cyrela-blue hover:opacity-90 text-white shrink-0 text-xs px-2 py-1 h-auto" size="sm">
-            Atualizar
-          </Button>
-        </div>
-      )}
-      
+        </CardFooter>
+      </Card>
+
       <ScheduleVisitDialog
-        lead={lead}
-        isOpen={scheduleDialogOpen}
-        onClose={() => setScheduleDialogOpen(false)}
+        open={scheduleDialogOpen}
+        onOpenChange={setScheduleDialogOpen}
+        leadId={lead.id}
         onSuccess={handleScheduleSuccess}
       />
-    </div>
+    </>
   );
 }

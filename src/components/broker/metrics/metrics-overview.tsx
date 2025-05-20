@@ -1,103 +1,323 @@
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Performance, Target } from "@/types";
-import { Share, Users, Calendar, TrendingUp, TrendingDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/auth-context";
+import { performanceService } from "@/services/performance.service";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowUpRight, ArrowDownRight, Users, Home, Calendar } from "lucide-react";
 
-interface MetricsOverviewProps {
-  performance: Performance;
-  target: Target;
-  isLoading?: boolean;
-}
+export function MetricsOverview() {
+  const { session } = useAuth();
+  const [period, setPeriod] = useState<"week" | "month" | "year">("month");
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export function MetricsOverview({ performance, target, isLoading = false }: MetricsOverviewProps) {
-  // Calculate completion percentages
-  const metrics = [
-    {
-      name: "Compartilhamentos",
-      value: performance.shares,
-      target: target.shareTarget,
-      icon: Share,
-      color: "bg-blue-500"
-    },
-    {
-      name: "Leads",
-      value: performance.leads,
-      target: target.leadTarget,
-      icon: Users,
-      color: "bg-green-500"
-    },
-    {
-      name: "Agendamentos",
-      value: performance.schedules,
-      target: target.scheduleTarget,
-      icon: Calendar,
-      color: "bg-orange-500"
-    },
-    {
-      name: "Visitas",
-      value: performance.visits,
-      target: target.visitTarget,
-      icon: TrendingUp,
-      color: "bg-purple-500"
-    },
-    {
-      name: "Vendas",
-      value: performance.sales,
-      target: target.saleTarget,
-      icon: TrendingDown,
-      color: "bg-red-500"
-    }
-  ];
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!session?.id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await performanceService.getBrokerMetrics(session.id, period);
+        setMetrics(data);
+      } catch (err) {
+        console.error("Error fetching metrics:", err);
+        setError("Não foi possível carregar as métricas. Tente novamente mais tarde.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+    
+    // Atualizar métricas a cada 5 minutos
+    const intervalId = setInterval(fetchMetrics, 5 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, [session?.id, period]);
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 0,
+    });
+  };
+
+  const getPercentageChange = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const renderSkeleton = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Leads</CardDescription>
+            <Skeleton className="h-7 w-20" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-24" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Visitas</CardDescription>
+            <Skeleton className="h-7 w-20" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-24" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Vendas</CardDescription>
+            <Skeleton className="h-7 w-20" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-24" />
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Desempenho</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[200px] w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderError = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Erro</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-destructive">{error}</p>
+      </CardContent>
+    </Card>
+  );
+
+  if (error) return renderError();
+  if (loading || !metrics) return renderSkeleton();
+
+  const { leads, visits, sales, performance } = metrics;
+  
+  // Preparar dados para o gráfico
+  const chartData = performance.map((item: any) => ({
+    name: item.label,
+    leads: item.leads,
+    visits: item.visits,
+    sales: item.sales,
+  }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-      {metrics.map((metric) => {
-        const percentage = metric.target > 0 
-          ? Math.min(100, Math.round((metric.value / metric.target) * 100))
-          : 0;
-        
-        return (
-          <Card key={metric.name} className="bg-white">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className={cn("p-2 rounded-md text-white", metric.color)}>
-                  <metric.icon size={18} />
-                </div>
-                <h3 className="font-medium text-sm">{metric.name}</h3>
-              </div>
-              
-              {isLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-32" />
-                  <Skeleton className="h-2 w-full" />
-                  <Skeleton className="h-4 w-16 ml-auto" />
-                </div>
-              ) : (
-                <>
-                  <div className="mb-2">
-                    <span className="text-2xl font-bold">
-                      {metric.value.toLocaleString("pt-BR")}
-                    </span>
-                    <span className="text-sm text-cyrela-gray-dark ml-1">
-                      / {metric.target.toLocaleString("pt-BR")}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Progress value={percentage} className="h-2" />
-                    <p className="text-xs text-cyrela-gray-dark text-right">
-                      {percentage}% concluído
-                    </p>
-                  </div>
-                </>
-              )}
+    <div className="space-y-4">
+      <Tabs defaultValue={period} onValueChange={(v) => setPeriod(v as "week" | "month" | "year")}>
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="week">Semana</TabsTrigger>
+            <TabsTrigger value="month">Mês</TabsTrigger>
+            <TabsTrigger value="year">Ano</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="week" className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              title="Leads"
+              value={leads.current}
+              previousValue={leads.previous}
+              icon={<Users className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Visitas"
+              value={visits.current}
+              previousValue={visits.previous}
+              icon={<Calendar className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Vendas"
+              value={sales.current}
+              previousValue={sales.previous}
+              prefix={formatCurrency(sales.current)}
+              suffix=""
+              icon={<Home className="h-4 w-4" />}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Desempenho</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="leads" fill="#8884d8" name="Leads" />
+                  <Bar dataKey="visits" fill="#82ca9d" name="Visitas" />
+                  <Bar dataKey="sales" fill="#ffc658" name="Vendas" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
-        );
-      })}
+        </TabsContent>
+
+        <TabsContent value="month" className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              title="Leads"
+              value={leads.current}
+              previousValue={leads.previous}
+              icon={<Users className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Visitas"
+              value={visits.current}
+              previousValue={visits.previous}
+              icon={<Calendar className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Vendas"
+              value={sales.current}
+              previousValue={sales.previous}
+              prefix={formatCurrency(sales.current)}
+              suffix=""
+              icon={<Home className="h-4 w-4" />}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Desempenho</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="leads" fill="#8884d8" name="Leads" />
+                  <Bar dataKey="visits" fill="#82ca9d" name="Visitas" />
+                  <Bar dataKey="sales" fill="#ffc658" name="Vendas" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="year" className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              title="Leads"
+              value={leads.current}
+              previousValue={leads.previous}
+              icon={<Users className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Visitas"
+              value={visits.current}
+              previousValue={visits.previous}
+              icon={<Calendar className="h-4 w-4" />}
+            />
+            <MetricCard
+              title="Vendas"
+              value={sales.current}
+              previousValue={sales.previous}
+              prefix={formatCurrency(sales.current)}
+              suffix=""
+              icon={<Home className="h-4 w-4" />}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Desempenho</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="leads" fill="#8884d8" name="Leads" />
+                  <Bar dataKey="visits" fill="#82ca9d" name="Visitas" />
+                  <Bar dataKey="sales" fill="#ffc658" name="Vendas" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+interface MetricCardProps {
+  title: string;
+  value: number;
+  previousValue: number;
+  prefix?: string;
+  suffix?: string;
+  icon?: React.ReactNode;
+}
+
+function MetricCard({
+  title,
+  value,
+  previousValue,
+  prefix = "",
+  suffix = "",
+  icon,
+}: MetricCardProps) {
+  const percentageChange = getPercentageChange(value, previousValue);
+  const isPositive = percentageChange >= 0;
+
+  function getPercentageChange(current: number, previous: number) {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardDescription className="flex items-center">
+          {icon && <span className="mr-1">{icon}</span>}
+          {title}
+        </CardDescription>
+        {prefix ? (
+          <CardTitle>{prefix}</CardTitle>
+        ) : (
+          <CardTitle>{value}</CardTitle>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center text-sm text-muted-foreground">
+          {isPositive ? (
+            <ArrowUpRight className="mr-1 h-4 w-4 text-emerald-500" />
+          ) : (
+            <ArrowDownRight className="mr-1 h-4 w-4 text-rose-500" />
+          )}
+          <span className={isPositive ? "text-emerald-500" : "text-rose-500"}>
+            {isPositive ? "+" : ""}
+            {percentageChange.toFixed(1)}%
+          </span>
+          <span className="ml-1">vs. período anterior</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,43 +1,19 @@
-
-import { MapPin, Bed, Bath, Square, Car, Check, Construction, Building, ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Property, PropertyStatus } from "@/types";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { OptimizedImage } from "@/components/ui/optimized-image";
+import { Card, CardContent } from "@/components/ui/card";
+import { Property } from "@/types";
+import { useNavigate } from "react-router-dom";
+import { Bed, Bath, Square, MapPin } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface PropertyCardProps {
   property: Property;
-  showActions?: boolean;
-  className?: string;
-  linkPrefix?: string;
 }
 
-export function PropertyCard({ 
-  property, 
-  showActions = true, 
-  className,
-  linkPrefix = "/broker/properties" 
-}: PropertyCardProps) {
-  const getConstructionStageColor = (stage?: string) => {
-    // Use white background with black text for all stages
-    return "bg-white text-black";
-  };
+export function PropertyCard({ property }: PropertyCardProps) {
+  const navigate = useNavigate();
 
-  const getConstructionStageIcon = (stage?: string) => {
-    switch (stage) {
-      case "Na planta":
-        return <Building size={14} className="mr-1 text-black" />;
-      case "Em construção":
-        return <Construction size={14} className="mr-1 text-black" />;
-      case "Pronto para morar":
-        return <Check size={14} className="mr-1 text-black" />;
-      default:
-        return null;
-    }
+  const handleViewDetails = () => {
+    navigate(`/broker/properties/${property.id}`);
   };
 
   const formatCurrency = (value: number) => {
@@ -48,133 +24,73 @@ export function PropertyCard({
     });
   };
 
-  // Simulating delivery date (in a real app this would come from the API)
-  const getDeliveryDate = () => {
-    if (property.constructionStage === "Pronto para morar") {
-      return "Pronto";
-    } else if (property.constructionStage === "Em construção") {
-      return "Dez 2025";
-    } else {
-      return "Jun 2027";
+  // Função para obter a URL da imagem principal com fallback
+  const getMainImageUrl = () => {
+    if (property.images && property.images.length > 0) {
+      // Tenta encontrar a imagem principal
+      const mainImage = property.images.find(img => img.isMain);
+      
+      // Se encontrou a imagem principal, retorna sua URL
+      if (mainImage && mainImage.url) {
+        return mainImage.url;
+      }
+      
+      // Caso contrário, retorna a primeira imagem
+      if (property.images[0].url) {
+        return property.images[0].url;
+      }
     }
+    
+    // Fallback para imagem padrão
+    return "https://placehold.co/600x400?text=Imóvel+Cyrela";
   };
-
-  const getPropertyImageUrl = () => {
-    if (property.images && property.images.length > 0 && property.images[0]?.url) {
-      return property.images[0].url;
-    }
-    return "/placeholder.svg";
-  };
-
-  const propertyLink = `${linkPrefix}/${property.id}`;
 
   return (
-    <Card className={cn(
-      "overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full",
-      className
-    )}>
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="relative">
-        <Link to={propertyLink}>
-          <OptimizedImage
-            src={getPropertyImageUrl()}
+        <AspectRatio ratio={16 / 9}>
+          <img
+            src={getMainImageUrl()}
             alt={property.title}
-            className="w-full h-48 sm:h-56 object-cover"
-            fallbackSrc="/placeholder.svg"
+            className="object-cover w-full h-full"
+            onError={(e) => {
+              // Fallback se a imagem falhar ao carregar
+              (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Imóvel+Cyrela";
+            }}
           />
-        </Link>
-        
-        {/* Construction Stage Badge in top-left */}
-        <div className="absolute top-0 left-0 p-2 sm:p-3 flex flex-col gap-1.5">
-          {/* Dark translucent background for badges */}
-          <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-40 rounded-lg z-0"></div>
-          
-          {/* Construction Stage Badge */}
-          <Badge className={cn(
-            "px-2.5 py-1 text-xs font-medium rounded-md flex items-center z-10 relative",
-            getConstructionStageColor(property.constructionStage)
-          )}>
-            {getConstructionStageIcon(property.constructionStage)}
-            {property.constructionStage || "Não informado"}
-          </Badge>
+        </AspectRatio>
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded text-sm font-medium">
+          {formatCurrency(property.price)}
         </div>
-        
-        {/* Star icon for highlighted properties in top-right */}
-        {property.isHighlighted && (
-          <div className="absolute top-2 right-2 z-20">
-            <div className="flex items-center justify-center bg-black bg-opacity-40 rounded-full w-8 h-8">
-              <Star 
-                size={18} 
-                className="text-white fill-white animate-pulse"
-              />
-            </div>
-          </div>
-        )}
       </div>
-      
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="mb-3">
-          <Link to={propertyLink} className="hover:underline">
-            <h3 className="font-semibold text-base sm:text-lg line-clamp-1 font-poppins">{property.title}</h3>
-          </Link>
-          <div className="flex items-center mt-1 text-cyrela-gray-dark text-xs sm:text-sm font-inter">
-            <MapPin size={14} className="mr-1 shrink-0" />
-            <span className="line-clamp-1">
-              {property.neighborhood}, {property.city}
-            </span>
-          </div>
-          <div className="text-xs text-cyrela-gray-medium mt-1">
-            Entrega: {getDeliveryDate()}
-          </div>
+      <CardContent className="p-4">
+        <h3 className="font-semibold text-lg mb-1 line-clamp-1">{property.title}</h3>
+        <div className="flex items-center text-muted-foreground text-sm mb-3">
+          <MapPin size={14} className="mr-1" />
+          <span className="line-clamp-1">
+            {property.neighborhood}, {property.city}
+          </span>
         </div>
-        
-        <div className="flex items-center justify-between text-xs text-cyrela-gray-dark mb-3">
-          <div className="flex items-center">
-            <div className="flex items-center mr-3">
-              <Square size={14} className="mr-1" />
-              <span>{property.area}m²</span>
-            </div>
-            
-            <Separator orientation="vertical" className="h-4 mx-2 bg-cyrela-gray-lighter" />
-            
-            <div className="flex items-center mr-3">
-              <Bed size={14} className="mr-1" />
-              <span>{property.bedrooms}</span>
-            </div>
-            
-            <Separator orientation="vertical" className="h-4 mx-2 bg-cyrela-gray-lighter" />
-            
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex space-x-4">
             <div className="flex items-center">
-              <Bath size={14} className="mr-1" />
-              <span>{property.bathrooms}</span>
+              <Bed size={16} className="mr-1" />
+              <span className="text-sm">{property.bedrooms}</span>
+            </div>
+            <div className="flex items-center">
+              <Bath size={16} className="mr-1" />
+              <span className="text-sm">{property.bathrooms}</span>
+            </div>
+            <div className="flex items-center">
+              <Square size={16} className="mr-1" />
+              <span className="text-sm">{property.area}m²</span>
             </div>
           </div>
         </div>
-        
-        <Separator className="bg-cyrela-gray-lighter mb-3" />
-        
-        <div className="mb-4">
-          <span className="text-xs text-cyrela-gray-medium">A partir de:</span>
-          <div className="flex items-center mt-0.5">
-            <span className="text-lg sm:text-xl font-bold text-primary font-poppins">
-              {formatCurrency(property.price)}
-            </span>
-          </div>
-        </div>
-        
-        {showActions && (
-          <div className="mt-auto">
-            <Button 
-              className="w-full bg-primary hover:bg-primary hover:opacity-90 text-white font-inter text-sm py-2 h-10 flex items-center justify-center" 
-              asChild
-            >
-              <Link to={propertyLink}>
-                Ver imóvel
-                <ArrowRight size={16} className="ml-1" />
-              </Link>
-            </Button>
-          </div>
-        )}
-      </div>
+        <Button onClick={handleViewDetails} className="w-full">
+          Ver detalhes
+        </Button>
+      </CardContent>
     </Card>
   );
 }
